@@ -1,0 +1,119 @@
+{{- if not .Values.UseExistingDB.Enabled }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "xl-deploy.fullname" . }}-postgresql
+  labels:
+    app: {{ template "xl-deploy.name" . }}-postgresql
+    release: {{ .Release.Name }}
+data:
+  init.sql: |-
+    CREATE USER "xld" WITH ENCRYPTED PASSWORD 'xld';
+    CREATE DATABASE "xld-db";
+    GRANT ALL PRIVILEGES ON DATABASE "xld-db" TO "xld";
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "xl-deploy.fullname" . }}-postgresql
+  labels:
+    app: {{ template "xl-deploy.name" . }}-postgresql
+    release: {{ .Release.Name }}
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: {{ template "xl-deploy.name" . }}-postgresql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "xl-deploy.fullname" . }}-postgresql
+  labels:
+    app: {{ template "xl-deploy.name" . }}-postgresql
+    release: {{ .Release.Name }}
+spec:
+  serviceName: {{ template "xl-deploy.fullname" . }}-postgresql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "xl-deploy.name" . }}-postgresql
+  template:
+    metadata:
+      labels:
+        app: {{ template "xl-deploy.name" . }}-postgresql
+        release: {{ .Release.Name }}
+    spec:
+      {{- if eq .Values.K8sSetup.Platform "Openshift"}}
+      serviceAccountName: {{ template "xl-deploy.name" . }}-sa
+      {{- end }}
+      initContainers:
+        - name: fix-the-volume-permission
+          image: xebialabs/tiny-tools
+          imagePullPolicy: Always
+          command:
+            - sh
+            - -c
+            - chown -R 70:70 /var/lib/postgresql/data
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+        - name: "remove-lost-found"
+          image: xebialabs/tiny-tools
+          imagePullPolicy: "IfNotPresent"
+          command:
+            - 'sh'
+            - '-c'
+            - 'rm -rf /var/lib/postgresql/data/lost+found'
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: data
+
+      containers:
+        - name: {{ template "xl-deploy.fullname" . }}-postgresql
+          image: postgres:10.5
+          command: ["docker-entrypoint.sh"]
+          args:
+            - "-c"
+            - "max_connections=512"
+            - "-c"
+            - "synchronous_commit=off"
+            - "-c"
+            - "effective_cache_size=1GB"
+            - "-c"
+            - "shared_buffers=512MB"
+            - "-c"
+            - "max_wal_size=256MB"
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: "0.5"
+            limits:
+              memory: 2Gi
+              cpu: "1"
+          ports:
+            - containerPort: 5432
+              name: postgresql
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: sql
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: sql
+          configMap:
+            name: {{ template "xl-deploy.fullname" . }}-postgresql
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "{{ .Values.Persistence.StorageClass }}"
+        resources:
+          requests:
+            storage: 10Gi
+{{- end }}
