@@ -1,4 +1,3 @@
-{{$XLD_ADMIN_PASS := .Values.AdminPassword | default "admin" }}
 {{$XLD_DB_USER := .Values.UseExistingDB.XL_DB_USERNAME | default "xld"}}
 {{$XLD_DB_PASS := .Values.UseExistingDB.XL_DB_PASSWORD | default "xld"}}
 
@@ -91,7 +90,10 @@ spec:
           {{- end }}
           env:
             - name: ADMIN_PASSWORD
-              value: {{$XLD_ADMIN_PASS}}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: deploy-password
             - name: XL_CLUSTER_MODE
               value: default
             - name: XL_DB_URL

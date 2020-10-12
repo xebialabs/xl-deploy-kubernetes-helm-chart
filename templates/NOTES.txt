@@ -9,3 +9,5 @@
   http{{ if $.Values.route.tls }}s{{ end }}://{{ . }}{{ $.Values.route.path }}
 {{- end }}
 {{- end }}
+2. To get the password run:
+kubectl get secret --namespace {{ .Release.Namespace }} {{ include "xl-deploy.fullname" . }} -o jsonpath="{.data.deploy-password}" | base64 --decode; echo

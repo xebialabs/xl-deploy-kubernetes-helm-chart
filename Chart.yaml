@@ -5,10 +5,10 @@ name: xl-deploy
 version: 9.7
 
 dependencies:
-- name: ingress-nginx
-  version: 3.1.0
-  repository: "https://kubernetes.github.io/ingress-nginx"
-  condition: ingress-nginx.install
+- name: haproxy-ingress
+  version: 0.0.27
+  repository: "https://kubernetes-charts-incubator.storage.googleapis.com/"
+  condition: haproxy-ingress.install
 
 - name: activemq-artemis
   version: 0.0.2

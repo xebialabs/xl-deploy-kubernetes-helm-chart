@@ -6,8 +6,8 @@
 K8sSetup:
   Platform: PlainK8s
 
-XldMasterCount: 2
-XldWorkerCount: 2
+XldMasterCount: 3
+XldWorkerCount: 3
 
 ## XL-Deploy image version
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
@@ -21,10 +21,13 @@ ImagePullPolicy: "Always"
 ## Secrets must be manually created in the namespace.
 # ImagePullSecret: xlDeploy
 
-## Install nginx subchart. If you have nginx already installed, set 'install' to 'false'.
+## Install haproxy subchart. If you have haproxy already installed, set 'install' to 'false'.
 ## If you have any other ingress controller installed, you can set the 'install' to 'false'.
-ingress-nginx:
+haproxy-ingress:
   install: true
+  controller:
+    service:
+      type: NodePort
 
 ## Ingress Configuration
 ## Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
@@ -32,20 +35,21 @@ ingress:
   Enabled: true
   annotations:
     # ingress.kubernetes.io/tls-acme: "true"
-    kubernetes.io/ingress.class: nginx
+    ingress.kubernetes.io/ssl-redirect: "false"
+    kubernetes.io/ingress.class: haproxy
     ingress.kubernetes.io/rewrite-target: /
     ingress.kubernetes.io/affinity: cookie
-    ingress.kubernetes.io/session-cookie-name: JSESSIONID
+    ingress.kubernetes.io/session-cookie-name: SESSION_XLD
     ingress.kubernetes.io/session-cookie-strategy: prefix
     ingress.kubernetes.io/config-backend: |
-      option httpchk GET /ha/health HTTP/1.0
-  path: /
-  hosts:
-    - app.example.com
-  tls:
-    - secretName: example-secretsName
-      hosts:
-        - example.com
+      option httpchk GET /deployit/ha/health HTTP/1.0
+  path: /xl-deploy/
+  tls: false
+
+#  tls:
+#    - secretName: example-secretsName
+#      hosts:
+#        - example.com
 
 AdminPassword:
   # Provide the admin password to be used
@@ -65,11 +69,11 @@ resources: {}
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   # limits:
-  #  cpu: 100m
-  #  memory: 128Mi
+  #  cpu: 3
+  #  memory: 3Gi
   # requests:
-  #  cpu: 100m
-  #  memory: 128Mi
+  #  cpu: 0.7
+  #  memory: 1700Mi
 
 ## Ref: https://docs.xebialabs.com/v.9.7/deploy/how-to/configure-the-xl-deploy-sql-repository/#location-of-the-repository
 ## Ref: https://docs.xebialabs.com/v.9.7/deploy/docker/docker-environment-variables/
@@ -103,8 +107,8 @@ UseExistingMQ:
 
 ## Configure extra options for liveness and readiness probes
 HealthProbes: true
-HealthProbesLivenessTimeout: 60
-HealthProbesReadinessTimeout: 60
+HealthProbesLivenessTimeout: 90
+HealthProbesReadinessTimeout: 90
 HealthProbeFailureThreshold: 12
 HealthPeriodScans: 10
 
