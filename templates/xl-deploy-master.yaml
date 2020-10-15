@@ -71,7 +71,7 @@ spec:
               containerPort: 8180
           volumeMounts:
             - name: export-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/work
+              mountPath: /opt/xebialabs/xl-deploy-server/export
           {{- if .Values.HealthProbes }}
           livenessProbe:
             httpGet:
@@ -144,9 +144,16 @@ spec:
           resources:
 {{ toYaml .Values.resources | indent 12 }}
       volumes:
+        {{- if .Values.Persistence.Enabled }}
         - name: export-dir
           persistentVolumeClaim:
             claimName: {{ template "xl-deploy.fullname" . }}
+        {{- else }}
+        - name: export-dir
+          hostPath:
+            path: /opt/xebialabs/xl-deploy-server/export
+            type: DirectoryOrCreate
+        {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}

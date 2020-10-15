@@ -121,7 +121,7 @@ tolerations: []
 affinity: {}
 
 ## XL Deploy data Persistent Volume for 'XL Deploy export'
-## If set to "-" or StorageClass: "", pods will not be scheduled
+## If "Persistence.Enabled" set to "false", it will use hostPath.
 Persistence:
   Enabled: true
   ## Choose storage class provided by your cloud provider, example "ssd" on GKE, AWS and OpenStack

@@ -139,9 +139,16 @@ spec:
           resources:
 {{ toYaml .Values.resources | indent 12 }}
       volumes:
+        {{- if .Values.Persistence.Enabled }}
         - name: work-dir
           persistentVolumeClaim:
             claimName: {{ template "xl-deploy.fullname" . }}
+        {{- else }}
+        - name: work-dir
+          hostPath:
+            path: /opt/xebialabs/xl-deploy-server/work
+            type: DirectoryOrCreate
+        {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
