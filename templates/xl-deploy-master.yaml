@@ -1,5 +1,5 @@
-{{$XLD_DB_USER := .Values.UseExistingDB.XL_DB_USERNAME | default "xld"}}
-{{$XLD_DB_PASS := .Values.UseExistingDB.XL_DB_PASSWORD | default "xld"}}
+{{$XLD_DB_USER := .Values.UseExistingDB.XL_DB_USERNAME}}
+{{$XLD_DB_PASS := .Values.UseExistingDB.XL_DB_PASSWORD}}
 
 apiVersion: apps/v1
 kind: StatefulSet
@@ -96,16 +96,21 @@ spec:
                   key: deploy-password
             - name: XL_CLUSTER_MODE
               value: default
+            {{- if not .Values.UseExistingDB.Enabled }}
             - name: XL_DB_URL
-              {{- if not .Values.UseExistingDB.Enabled }}
               value: jdbc:postgresql://{{ template "xl-deploy.fullname" . }}-postgresql:5432/xld-db
-              {{- else }}
+            - name: XL_DB_USERNAME
+              value: xld
+            - name: XL_DB_PASSWORD
+              value: "xld"
+            {{- else }}
+            - name: XL_DB_URL
               value: {{.Values.UseExistingDB.XL_DB_URL}}
-              {{- end }}
             - name: XL_DB_USERNAME
               value: {{$XLD_DB_USER}}
             - name: XL_DB_PASSWORD
               value: "{{$XLD_DB_PASS}}"
+            {{- end }}
             - name: XL_LICENSE
               value: "{{ .Values.xldLicense }}"
             - name: XL_METRICS_ENABLED
@@ -116,15 +121,18 @@ spec:
               value: "false"
             - name: HOSTNAME_SUFFIX
               value: ".{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local"
-            {{- if index .Values "activemq-artemis" "install" }}
+            {{- if index .Values "rabbitmq-ha" "install" }}
             - name: XLD_TASK_QUEUE_USERNAME
-              value: {{ index .Values "activemq-artemis" "artemisUser" }}
+              value: {{ index .Values "rabbitmq-ha" "rabbitmqUsername" }}
             - name: XLD_TASK_QUEUE_PASSWORD
-              value: {{ index .Values "activemq-artemis" "artemisPassword" | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-rabbitmq-ha
+                  key: rabbitmq-password
             - name: XLD_TASK_QUEUE_URL
-              value: "tcp://{{ index .Values "activemq-artemis" "fullnameOverride" }}.{{ .Release.Namespace }}.svc.cluster.local:61616"
+              value: "amqp://{{ .Release.Name }}-rabbitmq-ha.{{ .Release.Namespace }}.svc.cluster.local:5672/%2F"
             - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
-              value: org.apache.activemq.ActiveMQConnectionFactory
+              value: "com.rabbitmq.jms.admin.RMQConnectionFactory"
             {{- else }}
             {{- if .Values.UseExistingMQ.Enabled }}
             - name: XLD_TASK_QUEUE_USERNAME
