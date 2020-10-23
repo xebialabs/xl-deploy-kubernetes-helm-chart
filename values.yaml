@@ -96,7 +96,8 @@ rabbitmq-ha:
     rabbitmq_federation,
     rabbitmq_federation_management,
     rabbitmq_jms_topic_exchange,
-  replicaCount: 2
+    rabbitmq_management,
+  replicaCount: 3
   rbac:
     create: true
   service:
@@ -112,6 +113,23 @@ rabbitmq-ha:
   #  limits:
   #    memory: "550Mi"
   #    cpu: "200m"
+  definitions:
+    policies: |-
+      {
+        "name": "ha-all",
+        "pattern": ".*",
+        "vhost": "/",
+        "definition": {
+          "ha-mode": "all",
+          "ha-sync-mode": "automatic",
+          "ha-sync-batch-size": 1
+        }
+      }
+    globalParameters: |-
+      {
+          "name": "cluster_name",
+          "value": ""
+      }
   prometheus:
     operator:
       enabled: false
