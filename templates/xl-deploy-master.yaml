@@ -1,6 +1,3 @@
-{{$XLD_DB_USER := .Values.UseExistingDB.XL_DB_USERNAME}}
-{{$XLD_DB_PASS := .Values.UseExistingDB.XL_DB_PASSWORD}}
-
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -26,9 +23,6 @@ spec:
         component: {{ template "xl-deploy.name" . }}-master
         release: {{ .Release.Name }}
     spec:
-      {{- if eq .Values.K8sSetup.Platform "Openshift"}}
-      serviceAccountName: {{ template "xl-deploy.name" . }}-sa
-      {{- end }}
       initContainers:
         - name: fix-the-volume-permission
           image: xebialabs/tiny-tools
@@ -41,7 +35,7 @@ spec:
           volumeMounts:
             - name: export-dir
               mountPath: /opt/xebialabs/xl-deploy-server/export
-        {{- if not .Values.UseExistingDB.Enabled }}
+        {{- if .Values.postgresql.install }}
         - name: wait-for-postgresql
           image: xebialabs/tiny-tools
           command:
@@ -53,7 +47,7 @@ spec:
               done;
           env:
             - name: POSTGRES_SVC
-              value: {{ template "xl-deploy.fullname" . }}-postgresql
+              value: {{ .Release.Name }}-postgresql
             - name: POSTGRES_PORT
               value: "5432"
         {{- end }}
@@ -96,20 +90,22 @@ spec:
                   key: deploy-password
             - name: XL_CLUSTER_MODE
               value: default
-            {{- if not .Values.UseExistingDB.Enabled }}
+            {{- if .Values.postgresql.install }}
             - name: XL_DB_URL
-              value: jdbc:postgresql://{{ template "xl-deploy.fullname" . }}-postgresql:5432/xld-db
+              value: jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/xld-db
             - name: XL_DB_USERNAME
               value: xld
             - name: XL_DB_PASSWORD
               value: "xld"
             {{- else }}
+            {{- if .Values.UseExistingDB.Enabled }}
             - name: XL_DB_URL
-              value: {{.Values.UseExistingDB.XL_DB_URL}}
+              value: {{.Values.UseExistingDB.XL_DB_URL | quote}}
             - name: XL_DB_USERNAME
-              value: {{$XLD_DB_USER}}
+              value: {{.Values.UseExistingDB.XL_DB_USERNAME}}
             - name: XL_DB_PASSWORD
-              value: "{{$XLD_DB_PASS}}"
+              value: {{.Values.UseExistingDB.XL_DB_PASSWORD | quote}}
+            {{- end }}
             {{- end }}
             - name: XL_LICENSE
               value: "{{ .Values.xldLicense }}"
