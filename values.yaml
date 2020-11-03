@@ -51,14 +51,16 @@ ingress:
 #      hosts:
 #        - example.com
 
+## Ref: https://docs.xebialabs.com/v.9.8/deploy/docker/docker-environment-variables/#get-started
 AdminPassword:
   # Provide the admin password to be used
 
 xldLicense: 
-# Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 ) and put the output here
+# Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 -w 0 ) and put the output here
 
 RepositoryKeystore:
-# Convert keystore.jks files content to base64 ( cat keystore.jks | base64 ) and put the output here
+# https://docs.xebialabs.com/v.9.8/deploy/how-to/update-the-xl-deploy-digital-certificate/#get-started
+# Convert keystore.jks files content to base64 ( cat keystore.jks | base64 -w 0 ) and put the output here
 
 KeystorePassphrase:
 # Passphrase for keystore.jks file
@@ -81,11 +83,6 @@ postgresql:
   install: true
   postgresqlUsername: postgres
   postgresqlPassword: ""
-  replication:
-    enabled: true
-    user: repl_user
-    password: repl_password
-    slaveReplicas: 1
   postgresqlExtendedConf:
     listenAddresses: "'*'"
     maxConnections: "500"
@@ -94,7 +91,7 @@ postgresql:
     port: 5432
   persistence:
     enabled: true
-    size: 10Gi
+    size: 50Gi
     existingClaim:
   resources: {}
   #  requests:
@@ -137,7 +134,7 @@ rabbitmq-ha:
     type: ClusterIP
   persistentVolume:
     enabled: true
-    size: 1Gi
+    size: 20Gi
     annotations: {}
     resources: {}
   #  requests:
