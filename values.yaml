@@ -6,6 +6,7 @@
 K8sSetup:
   Platform: PlainK8s
 
+# No. of XL-Deploy master and worker pods to run.
 XldMasterCount: 3
 XldWorkerCount: 3
 
