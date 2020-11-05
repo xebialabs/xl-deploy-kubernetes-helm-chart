@@ -27,6 +27,7 @@ ImagePullPolicy: "Always"
 haproxy-ingress:
   install: true
   controller:
+    kind: DaemonSet
     service:
       type: NodePort
 
@@ -201,4 +202,5 @@ Persistence:
   StorageClass: "-"
   Annotations: {}
   AccessMode: ReadWriteOnce
-  Size: 5Gi
+  XldExportPvcSize: 10Gi
+  XldWorkPvcSize: 5Gi

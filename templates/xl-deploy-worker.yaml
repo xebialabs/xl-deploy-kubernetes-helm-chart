@@ -142,17 +142,13 @@ spec:
             - "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
           resources:
 {{ toYaml .Values.resources | indent 12 }}
+      {{- if not .Values.Persistence.Enabled }}
       volumes:
-        {{- if .Values.Persistence.Enabled }}
-        - name: work-dir
-          persistentVolumeClaim:
-            claimName: {{ template "xl-deploy.fullname" . }}
-        {{- else }}
         - name: work-dir
           hostPath:
             path: /opt/xebialabs/xl-deploy-server/work
             type: DirectoryOrCreate
-        {{- end }}
+      {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
@@ -165,3 +161,20 @@ spec:
       tolerations:
 {{ toYaml . | indent 8 }}
     {{- end }}
+  {{- if .Values.Persistence.Enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: work-dir
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.Persistence.StorageClass }}
+      {{- if (eq "-" .Values.Persistence.StorageClass) }}
+        storageClassName: ""
+      {{- else }}
+        storageClassName: "{{ .Values.Persistence.StorageClass }}"
+      {{- end }}
+      {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.Persistence.XldWorkPvcSize | quote }}
+  {{- end }}
