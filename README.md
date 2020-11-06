@@ -23,11 +23,11 @@ This chart will deploy following components:
 - Repository Keystorefile in base64 encoded format
 
 ## Tested Configuration
-**Supported Platforms:** - OnPremise Kubernetes, AWS Elastic Kubernetes Service (EKS)
-**Storage:** - Network File System (NFS), AWS Elastic File System (EFS)
-**Messaging Queue:** - Rabbit MQ 
-**Database:** - Postgresql 
-**LoadBalancers:** - HAProxy Ingress Controller
+- **Supported Platforms:** - OnPremise Kubernetes, AWS Elastic Kubernetes Service (EKS)
+- **Storage:** - Network File System (NFS), AWS Elastic File System (EFS)
+- **Messaging Queue:** - Rabbit MQ 
+- **Database:** - Postgresql 
+- **LoadBalancers:** - HAProxy Ingress Controller
 
 
 ## Installing StorageClass Helm Chart
