@@ -222,7 +222,7 @@ If you want to use an existing RabbitMQ,  these steps need to be followed:
 - `UseExistingMQ.XLD_TASK_QUEUE_USERNAME`: Username for xl-deploy task queue
 - `UseExistingMQ.XLD_TASK_QUEUE_PASSWORD`: Password for xl-deploy task queue
 - `UseExistingMQ.XLD_TASK_QUEUE_URL`: Task Queue URL for xl-deploy
-- `UseExistingMQ.XLD_TASK_QUEUE_DRIVER_CLASS_NAME`: amqp://<rabbitmq-service-name>.<namsepace>.svc.cluster.local:5672
+- `UseExistingMQ.XLD_TASK_QUEUE_DRIVER_CLASS_NAME`: Driver class name for  xl-deploy task queue
 **Example:**
 ```bash
 # Passing a custom RabbitMQ to XL-Deploy
@@ -233,7 +233,7 @@ UseExistingMQ:
   XLD_TASK_QUEUE_USERNAME: guest
   XLD_TASK_QUEUE_PASSWORD: guest
   XLD_TASK_QUEUE_URL: amqp://myrelease-rabbitmq-ha.default.svc.cluster.local:5672/%2F
-  XLD_TASK_QUEUE_DRIVER_CLASS_NAME: amqp://myrelease-rabbitmq-ha.default.svc.cluster.local:5672
+  XLD_TASK_QUEUE_DRIVER_CLASS_NAME: com.rabbitmq.jms.admin.RMQConnectionFactory
 ```
 > **Note**: User might have rabbitmq instance running outside the cluster. Configure parameters accordingly.
 ### Existing Ingress Controller
