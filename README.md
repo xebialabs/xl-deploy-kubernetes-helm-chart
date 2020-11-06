@@ -223,6 +223,7 @@ If you want to use an existing RabbitMQ,  these steps need to be followed:
 - `UseExistingMQ.XLD_TASK_QUEUE_PASSWORD`: Password for xl-deploy task queue
 - `UseExistingMQ.XLD_TASK_QUEUE_URL`: Task Queue URL for xl-deploy
 - `UseExistingMQ.XLD_TASK_QUEUE_DRIVER_CLASS_NAME`: Driver class name for  xl-deploy task queue
+
 **Example:**
 ```bash
 # Passing a custom RabbitMQ to XL-Deploy
