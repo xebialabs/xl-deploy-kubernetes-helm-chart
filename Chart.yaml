@@ -1,7 +1,7 @@
 apiVersion: v2
 appVersion: v9.7
 description: A Helm chart for XL Deploy
-name: xl-deploy
+name: xl-deploy-helmcharts
 version: 1.0.1
 
 dependencies:
