@@ -198,7 +198,7 @@ Configure values.yaml file accordingly.
 If you want to use an existing database,  these steps need to be followed:
 - Change `postgresql.install` to false
 - `UseExistingDB.Enabled`: true
-- `UseExistingDB.XL_DB_URL`: jdbc:postgresql://<postgres-service-name>.<namsepace>.svc.cluster.local:5432/<xld-database-name>
+- `UseExistingDB.XL_DB_URL`: `jdbc:postgresql://<postgres-service-name>.<namsepace>.svc.cluster.local:5432/<xld-database-name>`
 - `UseExistingDB.XL_DB_USERNAME`: Database User for xl-deploy
 - `UseExistingDB.XL_DB_PASSWORD`: Database Password for xl-deploy
 
@@ -209,7 +209,7 @@ UseExistingDB:
   Enabled: true
   # If you want to use existing database, change the value to "true".
   # Uncomment the following lines and provide the values.
-  XL_DB_URL: jdbc:postgresql://myrelease-postgresql.default.svc.cluster.local:5432/xld-db
+  XL_DB_URL: jdbc:postgresql://xld-production-postgresql.default.svc.cluster.local:5432/xld-db
   XL_DB_USERNAME: postgres
   XL_DB_PASSWORD: postgres
 ```  
@@ -221,7 +221,7 @@ If you want to use an existing RabbitMQ,  these steps need to be followed:
 - `UseExistingMQ.Enabled`: true
 - `UseExistingMQ.XLD_TASK_QUEUE_USERNAME`: Username for xl-deploy task queue
 - `UseExistingMQ.XLD_TASK_QUEUE_PASSWORD`: Password for xl-deploy task queue
-- `UseExistingMQ.XLD_TASK_QUEUE_URL`: Task Queue URL for xl-deploy
+- `UseExistingMQ.XLD_TASK_QUEUE_URL`: `amqp://<rabbitmq-service-name>.<namsepace>.svc.cluster.local:5672`
 - `UseExistingMQ.XLD_TASK_QUEUE_DRIVER_CLASS_NAME`: Driver class name for  xl-deploy task queue
 
 **Example:**
@@ -233,7 +233,7 @@ UseExistingMQ:
   # Set 'UseExistingMQ.Enabled' to 'true'.Uncomment the following lines and provide the values.
   XLD_TASK_QUEUE_USERNAME: guest
   XLD_TASK_QUEUE_PASSWORD: guest
-  XLD_TASK_QUEUE_URL: amqp://myrelease-rabbitmq-ha.default.svc.cluster.local:5672/%2F
+  XLD_TASK_QUEUE_URL: amqp://xld-production-rabbitmq-ha.default.svc.cluster.local:5672/%2F
   XLD_TASK_QUEUE_DRIVER_CLASS_NAME: com.rabbitmq.jms.admin.RMQConnectionFactory
 ```
 > **Note**: User might have rabbitmq instance running outside the cluster. Configure parameters accordingly.
