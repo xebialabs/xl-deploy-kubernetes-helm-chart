@@ -46,7 +46,8 @@ ingress:
     ingress.kubernetes.io/config-backend: |
       option httpchk GET /deployit/ha/health HTTP/1.0
   path: /xl-deploy/
-  tls: false
+  hosts:
+    - example.com
 
 #  tls:
 #    - secretName: example-secretsName
