@@ -7,6 +7,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
+  podManagementPolicy: OrderedReady
   replicas: {{ .Values.XldWorkerCount }}
   updateStrategy:
     type: RollingUpdate
@@ -23,6 +24,9 @@ spec:
         component: {{ template "xl-deploy.name" . }}-worker
         release: {{ .Release.Name }}
     spec:
+      {{- if eq .Values.K8sSetup.Platform "Openshift"}}
+      serviceAccountName: {{ template "xl-deploy.name" . }}-sa
+      {{- end }}
       initContainers:
         - name: fix-the-volume-permission
           image: xebialabs/tiny-tools

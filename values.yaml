@@ -2,9 +2,9 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-## Platform on which to install the chart (PlainK8s/AWSEKS)
+## Platform on which to install the chart (PlainK8s/AWSEKS/Openshift)
 K8sSetup:
-  Platform: PlainK8s
+  Platform: Openshift
 
 # No. of XL-Deploy master and worker pods to run.
 XldMasterCount: 3
@@ -25,7 +25,7 @@ ImagePullPolicy: "Always"
 ## Install haproxy subchart. If you have haproxy already installed, set 'install' to 'false'.
 ## If you have any other ingress controller installed, you can set the 'install' to 'false'.
 haproxy-ingress:
-  install: true
+  install: false
   controller:
     kind: DaemonSet
     service:
@@ -34,7 +34,7 @@ haproxy-ingress:
 ## Ingress Configuration
 ## Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
-  Enabled: true
+  Enabled: false
   annotations:
     # ingress.kubernetes.io/tls-acme: "true"
     ingress.kubernetes.io/ssl-redirect: "false"
@@ -54,7 +54,20 @@ ingress:
 #      hosts:
 #        - example.com
 
-## Ref: https://docs.xebialabs.com/v.9.8/deploy/docker/docker-environment-variables/#get-started
+## This section is meant for Openshift only	
+## When using Openshift, set 'haproxy-ingress.install' to 'false'.	
+## Ref: https://docs.openshift.com/container-platform/4.5/networking/routes/route-configuration.html 	
+route:	
+  Enabled: true	
+  annotations:	
+    haproxy.router.openshift.io/cookie_name: JSESSIONID	
+    haproxy.router.openshift.io/disable_cookies: "false"	
+    haproxy.router.openshift.io/rewrite-target: /	
+  path: /	
+  hosts:	
+    - app.example.com	
+
+# https://docs.xebialabs.com/v.9.8/release/docker/docker-environment-variables/#get-started
 AdminPassword:
   # Provide the admin password to be used
 
@@ -106,13 +119,23 @@ postgresql:
   nodeSelector: {}
   affinity: {}
   tolerations: []
+  volumePermissions:	
+    securityContext:	
+      runAsUser: auto	
+  securityContext:	
+    enabled: false	
+  containerSecurityContext:	
+    enabled: false	
+  shmVolume:	
+    chmod:	
+      enabled: false
 
 ## Ref: https://docs.xebialabs.com/v.9.7/deploy/how-to/configure-the-xl-deploy-sql-repository/#location-of-the-repository
 ## Ref: https://docs.xebialabs.com/v.9.7/deploy/docker/docker-environment-variables/
 UseExistingDB:
   Enabled: false
-  # If you want to use an existing database, set 'postgresql.install' to 'false' and 'UseExistingDB.Enabled' to 'true'.
-  # Uncomment the following lines and provide the values.
+  # If you want to use an existing database, change 'postgresql.install' to 'false'.	
+  # Set 'UseExistingDB.Enabled' to 'true'.Uncomment the following lines and provide the values.	
   # XL_DB_URL:
   # XL_DB_USERNAME:
   # XL_DB_PASSWORD:
@@ -182,8 +205,8 @@ UseExistingMQ:
 
 ## Configure extra options for liveness and readiness probes
 HealthProbes: true
-HealthProbesLivenessTimeout: 90
-HealthProbesReadinessTimeout: 90
+HealthProbesLivenessTimeout: 120
+HealthProbesReadinessTimeout: 120
 HealthProbeFailureThreshold: 12
 HealthPeriodScans: 10
 
