@@ -17,7 +17,7 @@ spec:
     - {{ .Values.Persistence.AccessMode | quote }}
   resources:
     requests:
-      storage: {{ .Values.Persistence.Size | quote }}
+      storage: {{ .Values.Persistence.XldExportPvcSize | quote }}
 {{- if .Values.Persistence.StorageClass }}
 {{- if (eq "-" .Values.Persistence.StorageClass) }}
   storageClassName: ""

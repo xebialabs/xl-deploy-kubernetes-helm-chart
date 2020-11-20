@@ -1,54 +1,267 @@
-# xl-deploy-kubernetes-helm-chart
-Kubernetes Helm chart for XL Deploy
+# Digital.ai Deploy HA on Kubernetes Helm Chart
+This repository contains a Helm Chart for Xebialabs Deploy product. The Helm Chart automates and simplifies deploying XL-Deploy clusters on Kubernetes and other Kubernetes-enabled Platforms by providing the essential features you need to keep your clusters up and running. 
+
+## Prerequisites Details
+* Kubernetes v1.17+
+* A running Kubernetes cluster
+	- Dynamic storage provisioning enabled
+	- StorageClass for persistent storage. The [Installing StorageClass Helm Chart](#installing-storageclass-helm-chart) section provides steps to install storage class on OnPremise Kubernetes cluster and AWS Elastic Kubernetes Service(EKS) cluster.
+	- StorageClass which is expected to be used with XL-Deploy should be set as default StorageClass
+- [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and setup to use the cluster
+- [Helm](https://helm.sh/docs/intro/install/) 3 installed
+- License File for XL-Deploy in base64 encoded format
+- Repository Keystorefile in base64 encoded format
+
+## Chart Details
+This chart will deploy following components:
+* PostgreSQL single instance / pod (**NOTE:** For production grade installations it is recommended to use an external PostgreSQL). Alternatively users may want to  install postgres-ha on kubernetes. For more information, refer [Crunchy PostgreSQL Operator](https://github.com/CrunchyData/postgres-operator/tree/master/installers/helm)
+* RabbitMQ in highly available configuration
+* HAProxy ingress controller
+* XL-Deploy Multiple Master and Worker
+> **Note**: Satellites are expected to be deployed outside the kubernetes cluster.
+
+## Requirements
 
 
-# Overview
+## Tested Configuration
+- **Supported Platforms:** - OnPremise Kubernetes (v1.18+), AWS Elastic Kubernetes Service (EKS v1.17+)
+- **Storage:** - Network File System (NFS v1.2.11), AWS Elastic File System (EFS v0.13.2)
+- **Messaging Queue:** - Rabbit MQ (v1.47.0)
+- **Database:** - Postgresql (v 9.8.5)
+- **LoadBalancers:** - HAProxy Ingress Controller (v0.9.1)
 
-This repository contains a Helm Chart for Xebialabs Deploy (XL Deploy) product.  This is meant to help you deploy to your kubernetes cluster more quickly and efficiently.
 
-
-# Usage
-
-In short, the repository contains the files for your *helm* operations.
-
-1. Get the chart by cloning this repository:
-
+## Installing StorageClass Helm Chart
+##### NFS Client Provisioner for OnPremise Kubernetes cluster
+* For deploying helm chart, `nfs server` and `nfs mount path` is required.
+* Before installing NFS Provisioner helm chart, you need to add the stable helm repository to your helm client as shown below:
+```bash
+helm repo add stable https://charts.helm.sh/stable
 ```
-git clone git@github.com:xebialabs/xl-deploy-kubernetes-helm-chart.git
+* To install the chart with the release name `nfs-provisioner`:
+```bash
+helm install nfs-provisioner --set nfs.server=x.x.x.x --set nfs.path=/exported/path stable/nfs-client-provisioner
+```
+* The `nfs-provisioner` storage class must be marked with the default annotation so that PersistentVolumeClaim objects (without a StorageClass specified) will trigger dynamic provisioning.
+```bash
+kubectl patch storageclass nfs-provisioner -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+```
+* After deploying the nfs helm chart, execute the below command to get StorageClass name which can be used in values.yaml file for parameter `Persistence.StorageClass`
+```bash
+kubectl get storageclass
+```
+For more information on nfs-client-provisioner, refer [stable/nfs-client-provisioner](https://github.com/helm/charts/tree/master/stable/nfs-client-provisioner)
+##### Elastic File System for AWS Elastic Kubernetes Service(EKS) cluster 
+Before deploying EFS helm chart, there are some steps which needs to be performed.
+* Create your EFS file system. Refer [Create Your Amazon EFS File System](https://docs.aws.amazon.com/efs/latest/ug/gs-step-two-create-efs-resources.html) for creating file system.
+* Create mount target and mount the file system on EC2 instances within the cluster. Refer [Creating mount targets](https://docs.aws.amazon.com/efs/latest/ug/accessing-fs.html) for creating mount target.
+* Before installing EFS Provisioner helm chart, you need to add the stable helm repository to your helm client as shown below:
+```bash
+helm repo add stable https://charts.helm.sh/stable
+```
+* Provide the `efsFileSystemId` and `awsRegion` which is obtained by following above first step and install the chart with the release name `aws-efs`:
+```bash
+helm install aws-efs stable/efs-provisioner --set efsProvisioner.efsFileSystemId=fs-12345678 --set efsProvisioner.awsRegion=us-east-2
+```
+* The `aws-efs` storage class must be marked with the default annotation so that PersistentVolumeClaim objects (without a StorageClass specified) will trigger dynamic provisioning.
+```bash
+kubectl patch storageclass aws-efs -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+```
+* There has to be only one storage class with default setting, so remove other storage classes with default settings.
+```bash
+kubectl patch storageclass gp2 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+```
+* After deploying the efs helm chart, execute the below command to get StorageClass name which can be used in values.yaml file for parameter `Persistence.StorageClass`
+```bash
+kubectl get storageclass
+```
+For more information on efs-provisioner, refer [stable/efs-provisioner](https://github.com/helm/charts/tree/master/stable/efs-provisioner)
+
+## Installing the Digital.ai Deploy Helm Chart
+Get the chart by cloning this repository:
+```bash
+git clone https://github.com/xebialabs/xl-deploy-kubernetes-helm-chart.git
+```
+The [Parameters](#parameters) section lists the parameters that can be configured before installation starts.
+Before installing helm charts, you need to update the dependencies of a chart:
+```bash
+helm dependency update xl-deploy-kubernetes-helm-chart
+```
+To install the chart with the release name `xld-production`:
+```bash
+helm install xld-production xl-deploy-kubernetes-helm-chart
 ```
 
-2. Install the chart onto your cluster with the name "xld"
+
+## Access Digital.ai Deploy Dashboard
+NodePort service is exposed externally on the available k8s worker nodes and can be seen by running below command
+```bash
+kubectl get service
 ```
-helm install -n xld xl-deploy-kubernetes-helm-chart
-```
+For OnPremise Cluster, You can access xl-deploy UI from an outside cluster with below link
 
-3. Get the pod for your newly released software:
+ [http://ingress-loadbalancer-DNS:NodePort/xl-deploy/](http://NodeIP:NodePort/xl-deploy/) 
 
-```
-kubectl get pods
-```
+Similarly for EKS, access xl-deploy UI using below link 
 
-Remember the name of pod and use it in the next command.
+ [http://ingress-loadbalancer-DNS/xl-deploy/](http://ingress-loadbalancer-DNS:NodePort/xl-deploy/)
 
-4. (optional) Given the pod name, watch the logs in your terminal:
-
-```
-kubectl logs -f xld-xl-deploy-fancypodname
-```
-
-Watch for the  generated admin password at the top of the logs
-Wait until the logs indicates PreArchiveService has started.
-
-5. Setup ports for your team's access
-
-```
-kubectl port-forward svc/xld-xl-deploy 4516:80
+The path should be unique across the kubernetes cluster.(Ex "/xl-deploy/") 
+## Uninstalling the Digital.ai Deploy Helm Chart
+To uninstall/delete the `xld-production` deployment:
+```bash
+helm delete xld-production
 ```
 
-+ Go to a browser and navigate to http://localhost:4516
-+ Paste the license key that Fang sent into the textbox and click the “Install license” button
-+ Click the “Get started” button.
-+ Log in with the username admin and the password that you captured from the logs earlier on.
- 
 
+## Parameters
+For deployment on Production environment, all parameters need to be configured as per users requirement and k8s setup which is under use. However, for deployment on test environment, most of the default values will be sufficient. The following two parameters are required to be configured and rest of parameters may remain as default
+- *xldLicense*: License for XL-Deploy in base64 format
+- *Persistence.StorageClass*: Storage Class to be defined, Network File System (NFS) for OnPremise and Elastic File System (EFS) for AWS Elastic Kubernetes Service(EKS)
+- *ingress.hosts*: DNS name for accessing ui of XL-Deploy
+
+
+The following tables lists the configurable parameters of the XL-Deploy chart and their default values.
+Parameter                                          |Description                                                                                                                                                          |Default                                                                                                                                                                                                                                                                                                                                                                        
+---------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+K8sSetup.Platform                                  |Platform on which to install the chart. Allowed values are PlainK8s and AWSEKS                                                                                                                               |PlainK8s                                                                                                                                                                                                                                                                                                                                                                       
+XldMasterCount                                     |Number of master replicas                                                                                                                                             |3                                                                                                                                                                                                                                                                                                                                                                              
+XldWorkerCount                                     |Number of worker replicas                                                                                                                                             |3                                                                                                                                                                                                                                                                                                                                                                              
+ImageRepository                                    |Image name                                                                                                                                                           |xebialabs/xl-deploy                                                                                                                                                                                                                                                                                                                                                            
+ImageTag                                           |Image tag                                                                                                                                                            |9.7                                                                                                                                                                                                                                                                                                                                                                            
+ImagePullPolicy                                    |Image pull policy, Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'                                                                               |Always                                                                                                                                                                                                                                                                                                                                                                         
+ImagePullSecret                                    |Specify docker-registry secret names. Secrets must be manually created in the namespace                                                                              |nil                                                                                                                                                                                                                                                                                                                                                                            
+haproxy-ingress.install                            |Install haproxy subchart. If you have haproxy already installed, set 'install' to 'false'                                                                            |true                                                                                                                                                                                                                                                                                                                                                                           
+haproxy-ingress.controller.kind                          |Type of deployment, DaemonSet or Deployment                                                                            |DaemonSet                                                                                                                                                                                                                                                                                                                                                                           
+haproxy-ingress.controller.service.type            |Kubernetes Service type for haproxy. It can be changed to LoadBalancer or NodePort                                                                                   |NodePort                                                                                                                                                                                                                                                                                                                                                                       
+ingress.Enabled                                    |Exposes HTTP and HTTPS routes from outside the cluster to services within the cluster                                                                                |true                                                                                                                                                                                                                                                                                                                                                                           
+ingress.annotations                                |Annotations for ingress controller                                                                                                                                   |ingress.kubernetes.io/ssl-redirect: "false"&nbsp; &nbsp; &nbsp; kubernetes.io/ingress.class: haproxy ingress.kubernetes.io/rewrite-target: / ingress.kubernetes.io/affinity: cookie ingress.kubernetes.io/session-cookie-name: JSESSIONID ingress.kubernetes.io/session-cookie-strategy: prefix ingress.kubernetes.io/config-backend: `|`&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;  option httpchk GET /ha/health HTTP/1.0
+ingress.path                                       |You can route an Ingress to different Services based on the path                                                                                                     |/xl-deploy/                                                                                                                                                                                                                                                                                                                                                                    
+ingress.hosts                                     |DNS name for accessing ui of XL-Deploy                                                                                                     |example.com                                                                                                                                                                                                                                                                                                                                                                   
+ingress.tls.secretName                                      |Secret file which holds the tls private key and certificate                      |example-secretsName                                                                                                                                                                                                                                                                                                                                                                          
+ingress.tls.hosts                                      |DNS name for accessing ui of XL-Deploy using tls                      |example.com                                                                                                                                                                                                                                                                                                                                                                          
+AdminPassword                                      |Admin password for xl-deploy                                                                                                                                          |If user does not provide password, random 10 character alphanumeric string will be generated                                                                                                                                                                                                                                                                                                                                        
+xldLicense                                         |Convert xl-deploy.lic files content to base64                                                                    |nil                                                                                                                                                                                                                                                                                                                                                                            
+RepositoryKeystore                                 |Convert keystore.jks files content to base64                                                                      |nil                                                                                                                                                                                                                                                                                                                                                                            
+KeystorePassphrase                                 |Passphrase for keystore.jks file                                                                                                                                     |nil                                                                                                                                                                                                                                                                                                                                                                            
+resources                                          |CPU/Memory resource requests/limits. User can change the parameter accordingly                                                                                                                                  |nil                                                                                                                                                                                                                                                                                                                                                                            
+postgresql.install                                 |Installs postgresql chart with single instance. If you have an existing database deployment, set 'install' to 'false'.                                                                     |true                                                                                                                                                                                                                                                                                                                                                                           
+postgresql.postgresqlUsername                      |PostgreSQL user (creates a non-admin user when postgresqlUsername is not postgres)                                                                                   |postgres                                                                                                                                                                                                                                                                                                                                                                       
+postgresql.postgresqlPassword                      |PostgreSQL user password                                                                                                                                             |random 10 character alphanumeric string                                                                                                                                                                                                                                                                                                                                        
+postgresql.replication.enabled                     |Enable replication                                                                                                                                                   |false                                                                                                                                                                                                                                                                                                                                                                          
+postgresql.postgresqlExtendedConf.listenAddresses  |Specifies the TCP/IP address(es) on which the server is to listen for connections from client applications                                                           | *                                                                                                                                                                                                                                                                                                                                                                            
+postgresql.postgresqlExtendedConf.maxConnections   |Maximum total connections                                                                                                                                            |500                                                                                                                                                                                                                                                                                                                                                                            
+postgresql.initdbScriptsSecret                     |Secret with initdb scripts that contain sensitive information (Note: can be used with initdbScriptsConfigMap or initdbScripts). The value is evaluated as a template.|postgresql-init-sql-xlr                                                                                                                                                                                                                                                                                                                                                        
+postgresql.service.port                            |PostgreSQL port                                                                                                                                                      |5432                                                                                                                                                                                                                                                                                                                                                                           
+postgresql.persistence.enabled                     |Enable persistence using PVC                                                                                                                                         |true                                                                                                                                                                                                                                                                                                                                                                           
+postgresql.persistence.size                        |PVC Storage Request for PostgreSQL volume                                                                                                                            |8Gi                                                                                                                                                                                                                                                                                                                                                                            
+postgresql.persistence.existingClaim               |Provide an existing PersistentVolumeClaim, the value is evaluated as a template.                                                                                     |nil                                                                                                                                                                                                                                                                                                                                                                            
+postgresql.resources                               |CPU/Memory resource requests/limits                                                                                                                                  |Memory: 256Mi, CPU: 250m                                                                                                                                                                                                                                                                                                                                                       
+postgresql.nodeSelector                            |Node labels for pod assignment                                                                                                                                       |{}                                                                                                                                                                                                                                                                                                                                                                             
+postgresql.affinity                                |Affinity labels for pod assignment                                                                                                                                   |{}                                                                                                                                                                                                                                                                                                                                                                             
+postgresql.tolerations                             |Toleration labels for pod assignment                                                                                                                                 |\[\]                                                                                                                                                                                                                                                                                                                                                                           
+UseExistingDB.Enabled                              |If you want to use an existing database, change 'postgresql.install' to 'false'.                                                                                     |false                                                                                                                                                                                                                                                                                                                                                                          
+UseExistingDB.XL\_DB\_URL                          |Database URL for xl-deploy                                                                                                                                            |nil                                                                                                                                                                                                                                                                                                                                                                            
+UseExistingDB.XL\_DB\_USERNAME                     |Database User for xl-deploy                                                                                                                                           |nil                                                                                                                                                                                                                                                                                                                                                                            
+UseExistingDB.XL\_DB\_PASSWORD                     |Database Password for xl-deploy                                                                                                                                       |nil                                                                                                                                                                                                                                                                                                                                                                            
+rabbitmq-ha.install                                |Install rabbitmq chart. If you have an existing message queue deployment, set 'install' to 'false'.                                                                  |true                                                                                                                                                                                                                                                                                                                                                                           
+rabbitmq-ha.rabbitmqUsername                       |RabbitMQ application username                                                                                                                                        |guest                                                                                                                                                                                                                                                                                                                                                                          
+rabbitmq-ha.rabbitmqPassword                       |RabbitMQ application password                                                                                                                                        |random 24 character long alphanumeric string                                                                                                                                                                                                                                                                                                                                   
+rabbitmq-ha.rabbitmqErlangCookie                     |Erlang cookie                                                                                                                                        |random 32 character long alphanumeric string                                                                                                                                                                                                                                                                                                                                   
+rabbitmq-ha.rabbitmqMemoryHighWatermark                     |Memory high watermark                                                                                                                                        |256MB                                                                                                                                                                                                                                                                                                                                   
+rabbitmq-ha.rabbitmqNodePort                     |Node port                                                                                                                                        |5672                                                                                                                                                                                                                                                                                                                                   
+rabbitmq-ha.extraPlugins                           |Additional plugins to add to the default configmap                                                                                                                   | rabbitmq_shovel, rabbitmq_shovel_management, rabbitmq_federation, rabbitmq_federation_management, rabbitmq_jms_topic_exchange, rabbitmq_management,                                                                                                                                                                                                   
+rabbitmq-ha.replicaCount                           |Number of replica                                                                                                                                                    |3                                                                                                                                                                                                                                                                                                                                                                              
+rabbitmq-ha.rbac.create                            |If true, create & use RBAC resources                                                                                                                                 |true                                                                                                                                                                                                                                                                                                                                                                           
+rabbitmq-ha.service.type                           |Type of service to create                                                                                                                                            |ClusterIP                                                                                                                                                                                                                                                                                                                                                                      
+rabbitmq-ha.persistentVolume.enabled               |If true, persistent volume claims are created                                                                                                                        |false                                                                                                                                                                                                                                                                                                                                                                          
+rabbitmq-ha.persistentVolume.size                  |Persistent volume size                                                                                                                                               |8Gi                                                                                                                                                                                                                                                                                                                                                                            
+rabbitmq-ha.persistentVolume.annotations           |Persistent volume annotations                                                                                                                                        |{}                                                                                                                                                                                                                                                                                                                                                                             
+rabbitmq-ha.persistentVolume.resources             |CPU/Memory resource requests/limits                                                                                                                                  |{}                                                                                                                                                                                                                                                                                                                                                                             
+rabbitmq-ha.definitions.policies                   |HA policies to add to definitions.json                                                                                                                               | `{"name": "ha-all","pattern": ".*","vhost": "/","definition": {"ha-mode": "all","ha-sync-mode": "automatic", "ha-sync-batch-size": 1 } }`                                                                                                                                                                                                      
+rabbitmq-ha.definitions.globalParameters           |Pre-configured global parameters                                                                                                                                     |`{"name": "cluster_name", "value": "" }`                                                                                                                                                                                                                                                                                                                                
+rabbitmq-ha.prometheus.operator.enabled            |Enabling Prometheus Operator                                                                                                                                         |false                                                                                                                                                                                                                                                                                                                                                                          
+UseExistingMQ.Enabled                              |If you want to use an existing Message Queue, change 'rabbitmq-ha.install' to 'false'                                                                                |false                                                                                                                                                                                                                                                                                                                                                                          
+UseExistingMQ.XLD\_TASK\_QUEUE\_USERNAME           |Username for xl-deploy task queue                                                                                                                                     |nil                                                                                                                                                                                                                                                                                                                                                                            
+UseExistingMQ.XLD\_TASK\_QUEUE\_PASSWORD           |Password for xl-deploy task queue                                                                                                                                     |nil                                                                                                                                                                                                                                                                                                                                                                            
+UseExistingMQ.XLD\_TASK\_QUEUE\_URL                |URL for xl-deploy task queue                                                                                                                                          |nil                                                                                                                                                                                                                                                                                                                                                                            
+UseExistingMQ.XLD\_TASK\_QUEUE\_DRIVER\_CLASS\_NAME|Driver Class Name for xl-deploy task queue                                                                                                                            |nil                                                                                                                                                                                                                                                                                                                                                                            
+HealthProbes                                       |Would you like a HealthProbes to be enabled                                                                                                                          |true                                                                                                                                                                                                                                                                                                                                                                           
+HealthProbesLivenessTimeout                        |Delay before liveness probe is initiated                                                                                                                             |90                                                                                                                                                                                                                                                                                                                                                                             
+HealthProbesReadinessTimeout                       |Delay before readiness probe is initiated                                                                                                                            |90                                                                                                                                                                                                                                                                                                                                                                             
+HealthProbeFailureThreshold                        |Minimum consecutive failures for the probe to be considered failed after having succeeded                                                                            |12                                                                                                                                                                                                                                                                                                                                                                             
+HealthPeriodScans                                  |How often to perform the probe                                                                                                                                       |10                                                                                                                                                                                                                                                                                                                                                                             
+nodeSelector                                       |Node labels for pod assignment                                                                                                                                       |{}                                                                                                                                                                                                                                                                                                                                                                             
+tolerations                                        |Toleration labels for pod assignment                                                                                                                                 |\[\]                                                                                                                                                                                                                                                                                                                                                                           
+affinity                                           |Affinity labels for pod assignment                                                                                                                                   |{}                                                                                                                                                                                                                                                                                                                                                                             
+Persistence.Enabled                                |Enable persistence using PVC                                                                                                                                         |true                                                                                                                                                                                                                                                                                                                                                                           
+Persistence.StorageClass                           |PVC Storage Class for volume                                                                                                                                         |nil                                                                                                                                                                                                                                                                                                                                                                            
+Persistence.Annotations                            |Annotations for the PVC                                                                                                                                              |{}                                                                                                                                                                                                                                                                                                                                                                             
+Persistence.AccessMode                             |PVC Access Mode for volume                                                                                                                                           |ReadWriteOnce                                                                                                                                                                                                                                                                                                                                                                  
+Persistence.XldExportPvcSize                                   |XLD Master PVC Storage Request for volume. For production grade setup, size must be changed                                                                                     |10Gi                                                                                                                                                                                                                                                                                                                                                                            
+Persistence.XldWorkPvcSize                                   |XLD Worker PVC Storage Request for volume. For production grade setup, size must be changed                                                                                     |5Gi                                                                                                                                                                                                                                                                                                                                                                            
+
+## Upgrading the Digital.ai Deploy Helm Chart
+To upgrade the version `ImageTag` parameter need to be updated to the desired version. To see the list of available ImageTag for XL-Deploy, refer the following links [Deploy_tags](https://hub.docker.com/r/xebialabs/xl-deploy/tags). For upgrade, Rolling Update strategy is used.
+To upgrade the chart with the release name `xld-production`:
+```bash
+helm upgrade xld-production xl-deploy-kubernetes-helm-chart/
+```
+> **Note**:
+	Currently upgrading custom plugins and database drivers is not supported. In order to upgrade custom plugins and database drivers, users need to build custom docker image of xl-deploy containing required files.See the [adding custom plugins](https://docs.xebialabs.com/v.9.7/deploy/how-to/customize-xl-up/#adding-custom-plugins) section in the Xebialabs official documentation.
+	
+### Existing or External Databases
+There is an option to use external PostgreSQL database for your XL-Deploy.
+Configure values.yaml file accordingly.
+If you want to use an existing database,  these steps need to be followed:
+- Change `postgresql.install` to false
+- `UseExistingDB.Enabled`: true
+- `UseExistingDB.XL_DB_URL`: `jdbc:postgresql://<postgres-service-name>.<namsepace>.svc.cluster.local:5432/<xld-database-name>`
+- `UseExistingDB.XL_DB_USERNAME`: Database User for xl-deploy
+- `UseExistingDB.XL_DB_PASSWORD`: Database Password for xl-deploy
+
+**Example:**
+```bash
+#Passing a custom PostgreSQL to XL-Deploy
+UseExistingDB:
+  Enabled: true
+  # If you want to use existing database, change the value to "true".
+  # Uncomment the following lines and provide the values.
+  XL_DB_URL: jdbc:postgresql://xld-production-postgresql.default.svc.cluster.local:5432/xld-db
+  XL_DB_USERNAME: postgres
+  XL_DB_PASSWORD: postgres
+```  
+> **Note**: User might have database instance running outside the cluster. Configure parameters accordingly.
+### Existing or External Messaging Queue
+There is an option to use external RabbitMQ for your XL-Deploy.
+If you want to use an existing RabbitMQ,  these steps need to be followed:
+- Change `rabbitmq-ha.install` to false
+- `UseExistingMQ.Enabled`: true
+- `UseExistingMQ.XLD_TASK_QUEUE_USERNAME`: Username for xl-deploy task queue
+- `UseExistingMQ.XLD_TASK_QUEUE_PASSWORD`: Password for xl-deploy task queue
+- `UseExistingMQ.XLD_TASK_QUEUE_URL`: `amqp://<rabbitmq-service-name>.<namsepace>.svc.cluster.local:5672`
+- `UseExistingMQ.XLD_TASK_QUEUE_DRIVER_CLASS_NAME`: Driver class name for  xl-deploy task queue
+
+**Example:**
+```bash
+# Passing a custom RabbitMQ to XL-Deploy
+UseExistingMQ:
+  Enabled: true
+  # If you want to use an existing Message Queue, change 'rabbitmq-ha.install' to 'false'.
+  # Set 'UseExistingMQ.Enabled' to 'true'.Uncomment the following lines and provide the values.
+  XLD_TASK_QUEUE_USERNAME: guest
+  XLD_TASK_QUEUE_PASSWORD: guest
+  XLD_TASK_QUEUE_URL: amqp://xld-production-rabbitmq-ha.default.svc.cluster.local:5672/%2F
+  XLD_TASK_QUEUE_DRIVER_CLASS_NAME: com.rabbitmq.jms.admin.RMQConnectionFactory
+```
+> **Note**: User might have rabbitmq instance running outside the cluster. Configure parameters accordingly.
+### Existing Ingress Controller
+There is an option to use external ingress controller for XL-Deploy.
+If you want to use an existing ingress controller,  change `haproxy.install` to false.
+
+## Useful links
+- [`xebialabs/xl-deploy:<tagname>`](https://hub.docker.com/r/xebialabs/xl-deploy) – Docker Hub repository for xl-deploy
+- [`stable/rabbitmq-ha`](https://github.com/helm/charts/tree/master/stable/rabbitmq-ha) -  Github repository for RabbitMQ Helm Chart
+- [`bitnami/postgresql`](https://github.com/bitnami/charts/tree/master/bitnami/postgresql) -  Github repository for Postgresql Helm Chart
+- [`haproxy-ingress/haproxy-ingress`](https://github.com/haproxy-ingress/charts) -  Github repository for HAProxy Ingress Controller Helm Chart
 

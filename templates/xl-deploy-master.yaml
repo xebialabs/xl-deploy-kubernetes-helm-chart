@@ -1,0 +1,172 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "xl-deploy.fullname" . }}-master
+  labels:
+    chart: {{ template "xl-deploy.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.XldMasterCount }}
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: {{ template "xl-deploy.name" . }}
+      component: {{ template "xl-deploy.name" . }}-master
+      release: {{ .Release.Name }}
+  serviceName: {{ template "xl-deploy.fullname" . }}-master
+  template:
+    metadata:
+      labels:
+        app: {{ template "xl-deploy.name" . }}
+        component: {{ template "xl-deploy.name" . }}-master
+        release: {{ .Release.Name }}
+    spec:
+      initContainers:
+        - name: fix-the-volume-permission
+          image: xebialabs/tiny-tools
+          command:
+            - sh
+            - -c
+            - chown -R 10001 /opt/xebialabs/xl-deploy-server/export
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: export-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/export
+        {{- if .Values.postgresql.install }}
+        - name: wait-for-postgresql
+          image: xebialabs/tiny-tools
+          command:
+            - sh
+            - -c
+            - >
+              until nc -z -w 2 $POSTGRES_SVC $POSTGRES_PORT && echo database ok; do
+              sleep 2;
+              done;
+          env:
+            - name: POSTGRES_SVC
+              value: {{ .Release.Name }}-postgresql
+            - name: POSTGRES_PORT
+              value: "5432"
+        {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.ImageRepository }}:{{ .Values.ImageTag }}"
+          imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
+          ports:
+            - name: http
+              containerPort: 4516
+              protocol: TCP
+            - name: jmx-exporter
+              containerPort: 9100
+            - name: akka
+              containerPort: 8180
+          volumeMounts:
+            - name: export-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/export
+          {{- if .Values.HealthProbes }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: {{ .Values.HealthProbesLivenessTimeout }}
+            periodSeconds: {{ .Values.HealthPeriodScans }}
+            failureThreshold: {{ .Values.HealthProbeFailureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: {{ .Values.HealthProbesReadinessTimeout }}
+            periodSeconds: {{ .Values.HealthPeriodScans }}
+            failureThreshold: {{ .Values.HealthProbeFailureThreshold }}
+          {{- end }}
+          env:
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: deploy-password
+            - name: XL_CLUSTER_MODE
+              value: default
+            {{- if .Values.postgresql.install }}
+            - name: XL_DB_URL
+              value: jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/xld-db
+            - name: XL_DB_USERNAME
+              value: xld
+            - name: XL_DB_PASSWORD
+              value: "xld"
+            {{- else }}
+            {{- if .Values.UseExistingDB.Enabled }}
+            - name: XL_DB_URL
+              value: {{.Values.UseExistingDB.XL_DB_URL | quote}}
+            - name: XL_DB_USERNAME
+              value: {{.Values.UseExistingDB.XL_DB_USERNAME}}
+            - name: XL_DB_PASSWORD
+              value: {{.Values.UseExistingDB.XL_DB_PASSWORD | quote}}
+            {{- end }}
+            {{- end }}
+            - name: XL_LICENSE
+              value: "{{ .Values.xldLicense }}"
+            - name: XL_METRICS_ENABLED
+              value: "false"
+            - name: FORCE_UPGRADE
+              value: "true"
+            - name: XLD_IN_PROCESS
+              value: "false"
+            - name: HOSTNAME_SUFFIX
+              value: ".{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local"
+            {{- if index .Values "rabbitmq-ha" "install" }}
+            - name: XLD_TASK_QUEUE_USERNAME
+              value: {{ index .Values "rabbitmq-ha" "rabbitmqUsername" }}
+            - name: XLD_TASK_QUEUE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-rabbitmq-ha
+                  key: rabbitmq-password
+            - name: XLD_TASK_QUEUE_URL
+              value: "amqp://{{ .Release.Name }}-rabbitmq-ha.{{ .Release.Namespace }}.svc.cluster.local:5672/%2F"
+            - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
+              value: "com.rabbitmq.jms.admin.RMQConnectionFactory"
+            {{- else }}
+            {{- if .Values.UseExistingMQ.Enabled }}
+            - name: XLD_TASK_QUEUE_USERNAME
+              value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_USERNAME }}
+            - name: XLD_TASK_QUEUE_PASSWORD
+              value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_PASSWORD | quote }}
+            - name: XLD_TASK_QUEUE_URL
+              value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_URL | quote }}
+            - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
+              value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_DRIVER_CLASS_NAME }}
+            {{- end }}
+            {{- end }}
+            - name: REPOSITORY_KEYSTORE
+              value: {{ .Values.RepositoryKeystore }}
+            - name: REPOSITORY_KEYSTORE_PASSPHRASE
+              value: {{ .Values.KeystorePassphrase }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      volumes:
+        {{- if .Values.Persistence.Enabled }}
+        - name: export-dir
+          persistentVolumeClaim:
+            claimName: {{ template "xl-deploy.fullname" . }}
+        {{- else }}
+        - name: export-dir
+          hostPath:
+            path: /opt/xebialabs/xl-deploy-server/export
+            type: DirectoryOrCreate
+        {{- end }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
