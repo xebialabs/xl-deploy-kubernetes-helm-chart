@@ -73,7 +73,7 @@ kubectl get storageclass
 ```
 For more information on efs-provisioner, refer [stable/efs-provisioner](https://github.com/helm/charts/tree/master/stable/efs-provisioner)
 
-## Installing the XL-Deploy Helm Chart
+## Installing the Digital.ai Deploy Helm Chart
 Get the chart by cloning this repository:
 ```bash
 git clone https://github.com/xebialabs/xl-deploy-kubernetes-helm-chart.git
@@ -89,7 +89,7 @@ helm install xld-production xl-deploy-kubernetes-helm-chart
 ```
 
 
-## Access XL-Deploy Dashboard
+## Access Digital.ai Deploy Dashboard
 NodePort service is exposed externally on the available k8s worker nodes and can be seen by running below command
 ```bash
 kubectl get service
@@ -103,7 +103,7 @@ Similarly for EKS, access xl-deploy UI using below link
  [http://ingress-loadbalancer-DNS/xl-deploy/](http://ingress-loadbalancer-DNS:NodePort/xl-deploy/)
 
 The path should be unique across the kubernetes cluster.(Ex "/xl-deploy/") 
-## Uninstalling the XL-Deploy Helm Chart
+## Uninstalling the Digital.ai Deploy Helm Chart
 To uninstall/delete the `xld-production` deployment:
 ```bash
 helm delete xld-production
@@ -197,7 +197,7 @@ Persistence.AccessMode                             |PVC Access Mode for volume  
 Persistence.XldExportPvcSize                                   |XLD Master PVC Storage Request for volume. For production grade setup, size must be changed                                                                                     |10Gi                                                                                                                                                                                                                                                                                                                                                                            
 Persistence.XldWorkPvcSize                                   |XLD Worker PVC Storage Request for volume. For production grade setup, size must be changed                                                                                     |5Gi                                                                                                                                                                                                                                                                                                                                                                            
 
-## Upgrading the XL-Deploy Helm Chart
+## Upgrading the Digital.ai Deploy Helm Chart
 To upgrade the version `ImageTag` parameter need to be updated to the desired version. To see the list of available ImageTag for XL-Deploy, refer the following links [Deploy_tags](https://hub.docker.com/r/xebialabs/xl-deploy/tags). For upgrade, Rolling Update strategy is used.
 To upgrade the chart with the release name `xld-production`:
 ```bash
