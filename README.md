@@ -1,4 +1,4 @@
-# Helm Charts for Digital.ai Deploy on Kubernetes
+# Helm Charts for Digital.ai Deploy on Kubernetes (BETA) 
 This repository contains Helm Charts for Digital.ai (formerly Xebialabs) Deploy product. The Helm Chart automates and simplifies deploying Digital.ai Deploy clusters on Kubernetes and other Kubernetes-enabled Platforms by providing the essential features you need to keep your clusters up and running. 
 
 ## Prerequisites Details
@@ -16,10 +16,10 @@ This repository contains Helm Charts for Digital.ai (formerly Xebialabs) Deploy 
 This chart will deploy following components:
 * PostgreSQL single instance / pod 
 
-(**NOTE:** For production grade installations it is recommended to use an external PostgreSQL). Alternatively users may want to  install postgres-ha on kubernetes. For more information, refer [Crunchy PostgreSQL Operator](https://github.com/CrunchyData/postgres-operator/tree/master/installers/helm)
+(**NOTE:** For production grade installations it is recommended to use an external PostgreSQL). Alternatively users may want to install Postgres HA on Kubernetes. For more information, refer [Crunchy PostgreSQL Operator](https://www.crunchydata.com/products/crunchy-postgresql-for-kubernetes/)
 * RabbitMQ in highly available configuration
 * HAProxy ingress controller
-* Digital.ai Deploy Multiple Master and Worker
+* Digital.ai Deploy multiple masters and workers
 > **Note**: Satellites are expected to be deployed outside the Kubernetes cluster.
 ## Tested Configuration
 - **Supported Platforms:** - OnPremise Kubernetes, AWS Elastic Kubernetes Service (EKS)
@@ -52,7 +52,7 @@ For more information on nfs-client-provisioner, refer [stable/nfs-client-provisi
 ### Elastic File System for AWS Elastic Kubernetes Service(EKS) cluster 
 Before deploying EFS helm chart, there are some steps which need to be performed.
 * Create your EFS file system. Refer [Create Your Amazon EFS File System](https://docs.aws.amazon.com/efs/latest/ug/gs-step-two-create-efs-resources.html) for creating file system.
-* Create mount target. Refer [Creating mount targets](https://docs.aws.amazon.com/efs/latest/ug/accessing-fs.html) for creating mount target.
+* Create a mount target. Refer [Creating mount targets](https://docs.aws.amazon.com/efs/latest/ug/accessing-fs.html) for creating mount target.
 * Before installing EFS Provisioner helm chart, you need to add the stable helm repository to your helm client as shown below:
 ```bash
 helm repo add stable https://charts.helm.sh/stable
@@ -92,11 +92,13 @@ helm install xld-production xl-deploy-kubernetes-helm-chart
 
 
 ## Access Digital.ai Deploy Dashboard
-By default, NodePort service is exposed externally on the available k8s worker nodes and can be seen by running below command
+By default, the NodePort service is exposed externally on the available k8s worker nodes and can be seen by running below command
 ```bash
 kubectl get service
 ```
- For OnPremise Cluster, You can access Digital.ai Deploy UI from an outside cluster with below link
+For production grade setups, we recommend using LoadBalancer as service type.
+
+ For OnPremise Cluster, you can access Digital.ai Deploy UI from an outside cluster with below link 
 
  [http://ingress-loadbalancer-DNS:NodePort/xl-deploy/](http://NodeIP:NodePort/xl-deploy/) 
 
@@ -119,7 +121,7 @@ For deployment on Production environment, all parameters need to be configured a
 - *ingress.hosts*: DNS name for accessing UI of Digital.ai Deploy
 
 
-The following tables lists the configurable parameters of the Digital.ai Deploy chart and their default values.
+The following table lists the configurable parameters of the Digital.ai Deploy chart and their default values.
 Parameter                                          |Description                                                                                                                                                          |Default                                                                                                                                                                                                                                                                                                                                                                        
 ---------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 K8sSetup.Platform                                  |Platform on which to install the chart. Allowed values are PlainK8s and AWSEKS                                                                                                                               |PlainK8s                                                                                                                                                                                                                                                                                                                                                                       
@@ -231,8 +233,7 @@ UseExistingDB:
 ```  
 > **Note**: User might have database instance running outside the cluster. Configure parameters accordingly.
 ### Existing or External Messaging Queue
-There is an option to use external RabbitMQ for your Digital.ai Deploy.
-If you want to use an existing RabbitMQ,  these steps need to be followed:
+If you plan to use an existing messaging queue, follow these steps to configure values.yaml
 - Change `rabbitmq-ha.install` to false
 - `UseExistingMQ.Enabled`: true
 - `UseExistingMQ.XLD_TASK_QUEUE_USERNAME`: Username for xl-deploy task queue
