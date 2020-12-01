@@ -12,8 +12,8 @@ spec:
   type: ClusterIP
   ports:
     - name: xld-http
-      port: 80
-      targetPort: http
+      port: 4516
+      targetPort: 4516
       protocol: TCP
   selector:
     app: {{ template "xl-deploy.name" . }}
