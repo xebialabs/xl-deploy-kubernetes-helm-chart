@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "xl-deploy.fullname" . }}
+  name: {{ template "xl-deploy.fullname" . }}-lb
   labels:
     app: {{ template "xl-deploy.name" . }}
     component: {{ template "xl-deploy.name" . }}-master
@@ -12,8 +12,8 @@ spec:
   type: ClusterIP
   ports:
     - name: xld-http
-      port: 80
-      targetPort: http
+      port: 4516
+      targetPort: 4516
       protocol: TCP
   selector:
     app: {{ template "xl-deploy.name" . }}

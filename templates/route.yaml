@@ -19,7 +19,7 @@ spec:
   host: {{ . }}
   to:
     kind: Service
-    name: {{ $fullName }}
+    name: {{ $fullName }}-lb
   port:
     targetPort: xld-http
 {{- if $.Values.route.tls }}
