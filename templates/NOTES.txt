@@ -1,11 +1,7 @@
 ## To get the application URL, run:
-{{- if eq .Values.K8sSetup.Platform "Openshift"}}
+{{- if .Values.route.Enabled }}
 {{- range .Values.route.hosts }}
-http://{{ . }}{{ $.Values.route.path }}
-{{- end }}
-{{- else }}
-{{- range .Values.ingress.hosts }}
-http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}{{ $.Values.ingress.path }}
+http{{ if $.Values.route.tls }}s{{ end }}://{{ . }}{{ $.Values.route.path }}
 {{- end }}
 {{- end }}
 

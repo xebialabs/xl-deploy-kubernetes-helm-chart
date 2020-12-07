@@ -1,4 +1,3 @@
-{{- if eq .Values.K8sSetup.Platform "Openshift"}}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -34,6 +33,7 @@ users:
 - system:serviceaccount:{{ .Release.Namespace }}:{{ template "xl-deploy.name" . }}-sa
 volumes:
 - '*'
+{{- if index .Values "rabbitmq-ha" "install" }}
 ---
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
