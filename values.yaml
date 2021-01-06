@@ -180,7 +180,7 @@ rabbitmq:
   extraConfiguration: |
     load_definitions = /app/load_definition.json 
   volumePermissions:
-    enabled: false
+    enabled: true
 
 # Ref: https://docs.xebialabs.com/v.9.7/deploy/how-to/configure-task-queueing/#how-it-works
 UseExistingMQ:
