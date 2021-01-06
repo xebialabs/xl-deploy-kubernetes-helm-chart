@@ -125,6 +125,7 @@ rabbitmq:
   auth:
     username: guest
     password: guest
+    erlangCookie: DEPLOYRABBITMQCLUSTER
   extraPlugins: 'rabbitmq_jms_topic_exchange'
   extraSecrets:
   extraSecrets:
@@ -178,7 +179,7 @@ rabbitmq:
   extraConfiguration: |
     load_definitions = /app/load_definition.json 
   volumePermissions:
-    enabled: false  
+    enabled: true  
 
 # Ref: https://docs.xebialabs.com/v.9.7/deploy/how-to/configure-task-queueing/#how-it-works
 UseExistingMQ:
