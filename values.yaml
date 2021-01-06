@@ -119,62 +119,73 @@ UseExistingDB:
   # XL_DB_PASSWORD:
 
 ## Install rabbitmq chart. If you have an existing message queue deployment, set 'install' to 'false'.
-## ref: https://github.com/helm/charts/blob/master/stable/rabbitmq-ha/README.md
-rabbitmq-ha:
+## ref: https://github.com/bitnami/charts/blob/master/bitnami/rabbitmq/README.md
+rabbitmq:
   install: true
-  rabbitmqUsername: guest
-  rabbitmqPassword: ""
-  rabbitmqErlangCookie: DEPLOYRABBITMQCLUSTER
-  rabbitmqMemoryHighWatermark: 500MB
-  rabbitmqNodePort: 5672
-  extraPlugins: |
-    rabbitmq_shovel,
-    rabbitmq_shovel_management,
-    rabbitmq_federation,
-    rabbitmq_federation_management,
-    rabbitmq_jms_topic_exchange,
-    rabbitmq_management,
   replicaCount: 3
-  rbac:
-    create: true
-  service:
-    type: ClusterIP
-  persistentVolume:
-    enabled: true
-    size: 20Gi
-    annotations: {}
-    resources: {}
-  #  requests:
-  #    memory: "250Mi"
-  #    cpu: "100m"
-  #  limits:
-  #    memory: "550Mi"
-  #    cpu: "200m"
-  definitions:
-    policies: |-
-      {
-        "name": "ha-all",
-        "pattern": ".*",
-        "vhost": "/",
-        "definition": {
-          "ha-mode": "all",
-          "ha-sync-mode": "automatic",
-          "ha-sync-batch-size": 1
+  auth:
+    username: guest
+    password: guest
+    erlangCookie: DEPLOYRABBITMQCLUSTER
+  extraPlugins: 'rabbitmq_jms_topic_exchange'
+  extraSecrets:
+  extraSecrets:
+    load-definition:
+      load_definition.json: |
+        {
+        "users": [
+          {
+              "name": "{{ .Values.auth.username }}",
+              "password": "{{ .Values.auth.password }}",
+              "tags": "administrator"
+          }
+          ],
+        "vhosts": [
+          {
+            "name": "/"
+          }
+          ],
+          "permissions": [
+          {
+            "user": "{{ .Values.auth.username }}",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+          }
+          ],
+        "global_parameters": [
+          {
+            "name": "cluster_name",
+            "value": ""
+          }
+          ],
+         "policies": [
+            {
+              "name": "ha-all",
+              "apply-to": "all",
+              "pattern": ".*",
+              "vhost": "/",
+              "definition": {
+                "ha-mode": "all",
+                "ha-sync-mode": "automatic",
+                "ha-sync-batch-size": 1
+              }
+            }
+          ]
         }
-      }
-    globalParameters: |-
-      {
-          "name": "cluster_name",
-          "value": ""
-      }
-  prometheus:
-    operator:
-      enabled: false
+  loadDefinition:
+    enabled: true
+    existingSecret: load-definition
+  extraConfiguration: |
+    load_definitions = /app/load_definition.json 
+  volumePermissions:
+    enabled: false
 
 # Ref: https://docs.xebialabs.com/v.9.7/deploy/how-to/configure-task-queueing/#how-it-works
 UseExistingMQ:
   Enabled: false
-  # If you want to use a existing Message Queue, change the "rabbitmq-ha.install to false"
+  # If you want to use a existing Message Queue, change the "rabbitmq.install to false"
   # Set 'UseExistingMQ.Enabled' to 'true'.Uncomment the following lines and provide the values.
   # XLD_TASK_QUEUE_USERNAME:
   # XLD_TASK_QUEUE_PASSWORD:
