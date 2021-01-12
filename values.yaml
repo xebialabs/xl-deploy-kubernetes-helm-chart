@@ -178,7 +178,12 @@ rabbitmq:
     enabled: true
     existingSecret: load-definition
   extraConfiguration: |
-    load_definitions = /app/load_definition.json 
+    load_definitions = /app/load_definition.json
+  persistence:
+    enabled: true
+    size: 8Gi
+  service:
+    type: ClusterIP     
   volumePermissions:
     enabled: true
 
