@@ -181,6 +181,7 @@ rabbitmq:
     load_definitions = /app/load_definition.json
   persistence:
     enabled: true
+    storageClass: "-"
     size: 8Gi
   service:
     type: ClusterIP     
