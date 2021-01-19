@@ -223,3 +223,7 @@ Persistence:
   AccessMode: ReadWriteOnce
   XldExportPvcSize: 10Gi
   XldWorkPvcSize: 5Gi
+
+# Set "satellite.Enabled" value to "true" to use the "XL Satellite" feature
+satellite:
+  Enabled: false

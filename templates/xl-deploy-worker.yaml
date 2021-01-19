@@ -136,6 +136,10 @@ spec:
               value: {{ .Values.RepositoryKeystore }}
             - name: REPOSITORY_KEYSTORE_PASSPHRASE
               value: {{ .Values.KeystorePassphrase }}
+            {{- if .Values.satellite.Enabled }}
+            - name: ENABLE_SATELLITE
+              value: {{ .Values.satellite.Enabled | quote }}
+            {{- end }}
           args:
             - "worker"
             - "-master"
