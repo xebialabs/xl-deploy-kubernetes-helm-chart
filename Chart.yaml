@@ -2,7 +2,7 @@ apiVersion: v2
 appVersion: v9.7
 description: A Helm chart for XL Deploy
 name: xl-deploy-helmcharts
-version: 1.0.3
+version: 1.0.4-GA
 
 dependencies:
 - name: haproxy-ingress
