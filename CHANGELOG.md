@@ -1,6 +1,9 @@
 # Helm Charts for Digital.ai Deploy Changelog
 All changes to this chart will be documented in this file
 
+## [1.1.1]
+* Used secrets for username/password for both existing MQ/DB, license and keystore files
+
 ## [1.1.0]
 * Add Bitnami RabbitMQ chart
 * Remove deprecated RabbitMQ-HA chart
