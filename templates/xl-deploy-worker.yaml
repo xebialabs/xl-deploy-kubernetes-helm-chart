@@ -115,9 +115,9 @@ spec:
               value: "false"
             - name: HOSTNAME_SUFFIX
               value: ".{{ template "xl-deploy.name" . }}"
-            {{- if index .Values "rabbitmq" "install" }}
+            {{- if .Values.rabbitmq.install }}
             - name: XLD_TASK_QUEUE_USERNAME
-              value: {{ index .Values "rabbitmq" "rabbitmqUsername" }}
+              value: {{ .Values.rabbitmq.auth.username }}
             - name: XLD_TASK_QUEUE_PASSWORD
               valueFrom:
                 secretKeyRef:
