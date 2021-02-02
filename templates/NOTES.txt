@@ -1,6 +1,8 @@
 ## To get the application URL, run:
-{{- range .Values.ingress.hosts }}
-http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}{{ $.Values.ingress.path }}
+{{- if .Values.route.Enabled }}
+{{- range .Values.route.hosts }}
+http{{ if $.Values.route.tls }}s{{ end }}://{{ . }}{{ $.Values.route.path }}
+{{- end }}
 {{- end }}
 
 ## To get the admin password for xl-deploy, run:
