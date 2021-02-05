@@ -93,13 +93,22 @@ spec:
             - name: XL_DB_URL
               value: {{.Values.UseExistingDB.XL_DB_URL | quote}}
             - name: XL_DB_USERNAME
-              value: {{.Values.UseExistingDB.XL_DB_USERNAME}}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: databaseUsername
             - name: XL_DB_PASSWORD
-              value: {{.Values.UseExistingDB.XL_DB_PASSWORD | quote}}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: databasePassword
             {{- end }}
             {{- end }}
             - name: XL_LICENSE
-              value: "{{ .Values.xldLicense }}"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: xld-License
             - name: XL_METRICS_ENABLED
               value: "false"
             - name: FORCE_UPGRADE
@@ -108,24 +117,30 @@ spec:
               value: "false"
             - name: HOSTNAME_SUFFIX
               value: ".{{ template "xl-deploy.name" . }}"
-            {{- if index .Values "rabbitmq-ha" "install" }}
+            {{- if .Values.rabbitmq.install }}
             - name: XLD_TASK_QUEUE_USERNAME
-              value: {{ index .Values "rabbitmq-ha" "rabbitmqUsername" }}
+              value: {{ .Values.rabbitmq.auth.username }}
             - name: XLD_TASK_QUEUE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-rabbitmq-ha
+                  name: {{ .Release.Name }}-rabbitmq
                   key: rabbitmq-password
             - name: XLD_TASK_QUEUE_URL
-              value: "amqp://{{ .Release.Name }}-rabbitmq-ha.{{ .Release.Namespace }}.svc.cluster.local:5672/%2F"
+              value: "amqp://{{ .Release.Name }}-rabbitmq.{{ .Release.Namespace }}.svc.cluster.local:5672/%2F"
             - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
               value: "com.rabbitmq.jms.admin.RMQConnectionFactory"
             {{- else }}
             {{- if .Values.UseExistingMQ.Enabled }}
             - name: XLD_TASK_QUEUE_USERNAME
-              value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_USERNAME }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: rabbitmqUsername
             - name: XLD_TASK_QUEUE_PASSWORD
-              value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_PASSWORD | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: rabbitmqPassword
             - name: XLD_TASK_QUEUE_URL
               value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_URL | quote }}
             - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
@@ -133,9 +148,19 @@ spec:
             {{- end }}
             {{- end }}
             - name: REPOSITORY_KEYSTORE
-              value: {{ .Values.RepositoryKeystore }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: repositoryKeystore
             - name: REPOSITORY_KEYSTORE_PASSPHRASE
-              value: {{ .Values.KeystorePassphrase }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: keystorePassphrase
+            {{- if .Values.satellite.Enabled }}
+            - name: ENABLE_SATELLITE
+              value: {{ .Values.satellite.Enabled | quote }}
+            {{- end }}
           args:
             - "worker"
             - "-master"
