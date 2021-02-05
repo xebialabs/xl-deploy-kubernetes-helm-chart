@@ -2,9 +2,9 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-## Platform on which to install the chart (PlainK8s/AWSEKS)
+## Platform on which to install the chart (PlainK8s/AWSEKS/AzureAKS)
 K8sSetup:
-  Platform: PlainK8s
+  Platform: AzureAKS
 
 # No. of XL-Deploy master and worker pods to run.
 XldMasterCount: 3
@@ -29,7 +29,7 @@ haproxy-ingress:
   controller:
     kind: DaemonSet
     service:
-      type: NodePort
+      type: LoadBalancer
 
 ## Ingress Configuration
 ## Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
@@ -94,6 +94,7 @@ postgresql:
     port: 5432
   persistence:
     enabled: true
+    storageClass: "-"
     size: 50Gi
     existingClaim:
   resources: {}
