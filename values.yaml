@@ -135,8 +135,8 @@ rabbitmq:
   extraPlugins: 'rabbitmq_jms_topic_exchange'
   extraSecrets:
   extraSecrets:
-    load-definition:
-      load_definition.json: |
+    xld-load-definition:
+      xld-load_definition.json: |
         {
         "users": [
           {
@@ -181,9 +181,9 @@ rabbitmq:
         }
   loadDefinition:
     enabled: true
-    existingSecret: load-definition
+    existingSecret: xld-load-definition
   extraConfiguration: |
-    load_definitions = /app/load_definition.json 
+    load_definitions = /app/xld-load_definition.json 
   persistence:
     enabled: true
     storageClass: "-"
