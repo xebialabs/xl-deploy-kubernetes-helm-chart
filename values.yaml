@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-## Platform on which to install the chart (PlainK8s/AWSEKS)
+## Platform on which to install the chart (PlainK8s/AWSEKS/AzureAKS)
 K8sSetup:
   Platform: PlainK8s
 
@@ -94,6 +94,7 @@ postgresql:
     port: 5432
   persistence:
     enabled: true
+    storageClass: "-"
     size: 50Gi
     existingClaim:
   resources: {}
