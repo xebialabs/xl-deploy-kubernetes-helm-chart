@@ -9,14 +9,11 @@ XldWorkerCount: 3
 ## XL-Deploy image version
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
 ImageRepository: "xebialabs/xl-deploy"
-ImageTag: "9.7"
+ImageTag: "10.0"
 
 ## Specify a imagePullPolicy
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
 ImagePullPolicy: "Always"
-
-## Secrets must be manually created in the namespace.
-# ImagePullSecret: xlDeploy
 
 ## Ref: https://docs.openshift.com/container-platform/4.5/networking/routes/route-configuration.html
 route:	
@@ -85,6 +82,7 @@ postgresql:
     port: 5432
   persistence:
     enabled: true
+    storageClass: "-"
     size: 50Gi
     existingClaim:
   resources: {}
@@ -130,8 +128,8 @@ rabbitmq:
   extraPlugins: 'rabbitmq_jms_topic_exchange'
   extraSecrets:
   extraSecrets:
-    load-definition:
-      load_definition.json: |
+    xld-load-definition:
+      xld-load_definition.json: |
         {
         "users": [
           {
@@ -176,9 +174,9 @@ rabbitmq:
         }
   loadDefinition:
     enabled: true
-    existingSecret: load-definition
+    existingSecret: xld-load-definition
   extraConfiguration: |
-    load_definitions = /app/load_definition.json
+    load_definitions = /app/xld-load_definition.json
   persistence:
     enabled: true
     storageClass: "-"
