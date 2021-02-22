@@ -5,8 +5,9 @@ pipeline{
     parameters {
         choice(name: 'PRODUCT', choices: ['XL Release', 'XL Deploy'], description: 'Select the product to package')
         choice(name: 'PLATFORM', choices: ['Onprem','EKS','Openshift_AWS','Openshift_Onprem'], description: 'Pick the platform to deploy the helm chart')
-        choice(name: 'BRANCH', choices: ['master','1.0','Openshift-Master','Openshift-1.0','ENG-3449'], description: 'Select the branch to build')
+        choice(name: 'BRANCH', choices: ['master','1.0','Openshift-Master','Openshift-1.0'], description: 'Select the branch to build')
         choice(name: 'PUSH_TO_NEXUS', choices: ['YES', 'NO'], description: 'Do you want to push the zip file to nexus?')
+        choice(name: 'PUSH_TO_XEBIALABS_DIST', choices: ['YES', 'NO'], description: 'Do you want to push the zip file to xebialabs distribution?')
         choice(name: 'INSTALL_CHART', choices: ['YES', 'NO'], description: 'Do you want to install the helm chart?')
     }
     options {
@@ -128,9 +129,27 @@ pipeline{
             }
         }
         stage('Push to Xebialabs dist') {
+            when {
+                anyOf {
+                    expression { params.PUSH_TO_XEBIALABS_DIST == 'YES' && params.PRODUCT == 'XL Release' }
+                    expression { params.PUSH_TO_XEBIALABS_DIST == 'YES' && params.PRODUCT == 'XL Deploy' }
+                }
+            }
             steps {
                 script {
-                    echo "Synching the build with xebialabs"
+                    if ( params.PRODUCT == 'XL Release' ) {
+                        try {
+                            echo "Pushing ${params.PRODUCT} build to xebialabs distribution"
+                        }catch(error) {
+                            throw error
+                        }
+                    }else {
+                        try {
+                            echo "Pushing ${params.PRODUCT} build to xebialabs distribution"
+                        }catch(error) {
+                            throw error
+                        }
+                    }
                 }
             }
         }
@@ -154,7 +173,12 @@ pipeline{
                                                 sh '''
                                                     oc login --token=$OPENSHIFT_TOKEN_AWS --server=$OPENSHIFT_AWS_SERVER_URL --insecure-skip-tls-verify
                                                     oc project xlpipeline
-                                                    helm install --generate-name *.tgz --set route.hosts[0]=$HOST_NAME_AWS_OPENSHIFT_RELEASE --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=aws-efs --set rabbitmq.persistence.storageClass=gp2 --set Persistence.StorageClass=aws-efs
+                                                    echo "Deleting previous deployment if any on xlpipeline namespace"
+                                                    helm uninstall xlrelease-oc > /dev/null
+                                                    sleep 8
+                                                    oc delete pvc --all > /dev/null
+                                                    sleep 8
+                                                    helm install xlrelease-oc *.tgz --set route.hosts[0]=$HOST_NAME_AWS_OPENSHIFT_RELEASE --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=aws-efs --set rabbitmq.persistence.storageClass=gp2 --set Persistence.StorageClass=aws-efs
                                                 '''
                                             }
                                         }
@@ -171,7 +195,12 @@ pipeline{
                                                 sh '''
                                                    oc login --token=$OPENSHIFT_TOKEN_AWS --server=$OPENSHIFT_AWS_SERVER_URL --insecure-skip-tls-verify
                                                    oc project xlpipeline
-                                                   helm install --generate-name *.tgz --set route.hosts[0]=$HOST_NAME_AWS_OPENSHIFT_DEPLOY --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=aws-efs --set rabbitmq.persistence.storageClass=gp2 --set Persistence.StorageClass=aws-efs
+                                                   echo "Deleting previous deployment if any on xlpipeline namespace"
+                                                   helm uninstall xldeploy-oc > /dev/null
+                                                   sleep 8
+                                                   oc delete pvc --all > /dev/null
+                                                   sleep 8
+                                                   helm install xldeploy-oc *.tgz --set route.hosts[0]=$HOST_NAME_AWS_OPENSHIFT_DEPLOY --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=aws-efs --set rabbitmq.persistence.storageClass=gp2 --set Persistence.StorageClass=aws-efs
                                                 '''
                                             }
                                         }
