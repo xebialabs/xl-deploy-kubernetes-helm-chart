@@ -13,7 +13,7 @@ XldWorkerCount: 3
 ## XL-Deploy image version
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
 ImageRepository: "xebialabs/xl-deploy"
-ImageTag: "9.7"
+ImageTag: "10.0"
 
 ## Specify a imagePullPolicy
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
@@ -135,7 +135,6 @@ rabbitmq:
     erlangCookie: DEPLOYRABBITMQCLUSTER
   extraPlugins: 'rabbitmq_jms_topic_exchange'
   extraSecrets:
-  extraSecrets:
     xld-load-definition:
       xld-load_definition.json: |
         {
@@ -206,8 +205,8 @@ UseExistingMQ:
 
 ## Configure extra options for liveness and readiness probes
 HealthProbes: true
-HealthProbesLivenessTimeout: 90
-HealthProbesReadinessTimeout: 90
+HealthProbesLivenessTimeout: 60
+HealthProbesReadinessTimeout: 60
 HealthProbeFailureThreshold: 12
 HealthPeriodScans: 10
 
