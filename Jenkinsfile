@@ -173,11 +173,6 @@ pipeline{
                                                 sh '''
                                                     oc login --token=$OPENSHIFT_TOKEN_AWS --server=$OPENSHIFT_AWS_SERVER_URL --insecure-skip-tls-verify
                                                     oc project xlpipeline
-                                                    echo "Deleting previous deployment if any on xlpipeline namespace"
-                                                    helm uninstall xlrelease-oc > /dev/null
-                                                    sleep 8
-                                                    oc delete pvc --all > /dev/null
-                                                    sleep 8
                                                     helm install xlrelease-oc *.tgz --set route.hosts[0]=$HOST_NAME_AWS_OPENSHIFT_RELEASE --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=aws-efs --set rabbitmq.persistence.storageClass=gp2 --set Persistence.StorageClass=aws-efs
                                                 '''
                                             }
@@ -195,11 +190,6 @@ pipeline{
                                                 sh '''
                                                    oc login --token=$OPENSHIFT_TOKEN_AWS --server=$OPENSHIFT_AWS_SERVER_URL --insecure-skip-tls-verify
                                                    oc project xlpipeline
-                                                   echo "Deleting previous deployment if any on xlpipeline namespace"
-                                                   helm uninstall xldeploy-oc > /dev/null
-                                                   sleep 8
-                                                   oc delete pvc --all > /dev/null
-                                                   sleep 8
                                                    helm install xldeploy-oc *.tgz --set route.hosts[0]=$HOST_NAME_AWS_OPENSHIFT_DEPLOY --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=aws-efs --set rabbitmq.persistence.storageClass=gp2 --set Persistence.StorageClass=aws-efs
                                                 '''
                                             }
