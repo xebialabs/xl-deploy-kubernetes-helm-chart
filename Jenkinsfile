@@ -5,7 +5,7 @@ pipeline{
     parameters {
         choice(name: 'PRODUCT', choices: ['XL Release', 'XL Deploy'], description: 'Select the product to package')
         choice(name: 'PLATFORM', choices: ['Onprem','EKS','Openshift_AWS','Openshift_Onprem'], description: 'Pick the platform to deploy the helm chart')
-        choice(name: 'BRANCH', choices: ['master','1.0','Openshift-Master','Openshift-1.0'], description: 'Select the branch to build')
+        choice(name: 'BRANCH', choices: ['master','10.0','Openshift-Master','Openshift-10.0'], description: 'Select the branch to build')
         choice(name: 'PUSH_TO_NEXUS', choices: ['YES', 'NO'], description: 'Do you want to push the zip file to nexus?')
         choice(name: 'PUSH_TO_XEBIALABS_DIST', choices: ['YES', 'NO'], description: 'Do you want to push the zip file to xebialabs distribution?')
         choice(name: 'INSTALL_CHART', choices: ['YES', 'NO'], description: 'Do you want to install the helm chart?')
@@ -16,9 +16,7 @@ pipeline{
     environment {
         BRANCH_NAME = "${params.BRANCH}"
         NEXUS_PASSWORD = credentials('nexus-ci')
-        OPENSHIFT_AWS_CRED = credentials('openshift-aws')
         OPENSHIFT_TOKEN_AWS = credentials('openshift-token-aws')
-        OPENSHIFT_ONPREM_CRED = credentials('openshift-onprem')
         OPENSHIFT_TOKEN_ONPREM = credentials('openshift-token-onprem')
         XLD_LICENSE = credentials('xld-lic')
         XLR_LICENSE = credentials('xlr-lic')
