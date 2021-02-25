@@ -1,3 +1,16 @@
+def createNamespace (namespace) {
+    echo "Creating namespace ${namespace} if needed"
+    sh "[ ! -z \"\$(kubectl get ns ${namespace} -o name 2>/dev/null)\" ] || kubectl create ns ${namespace}"
+}
+
+def helmDelete (namespace, releasename) {
+    echo "Deleting ${releasename} in ${namespace} if deployed"
+    script {
+        sh "[ -z \"\$(helm ls --short 2>/dev/null)\" ] || helm delete \"\$(helm ls --short)\""
+
+    }
+}
+
 pipeline{
     agent {
         label 'helm-chart'
@@ -22,6 +35,8 @@ pipeline{
         XLR_LICENSE = credentials('xlr-lic')
         REPOSITORY_KEYSTORE = credentials('repository-keystore')
         KEYSTORE_PASSPHRASE = credentials('keystore-passphrase')
+        PARAMETERS_FILE = "${JENKINS_HOME}/.env/parameters.groovy"
+        namespace = "xlpipeline"
     }
     stages {
         stage('Git checkout') {
@@ -115,7 +130,6 @@ pipeline{
             }
             steps {
                 script {
-                    load "${JENKINS_HOME}/.env/parameters.groovy"
                     if ( params.PRODUCT == 'XL Release' ) {
                         try {
                             echo "Pushing ${params.PRODUCT} build to xebialabs distribution"
@@ -143,7 +157,6 @@ pipeline{
                     }
                     steps {
                         script {
-                            load "${JENKINS_HOME}/.env/parameters.groovy"
                             if ( params.PRODUCT == 'XL Release' ) {
                                 try {
                                     withCredentials([file(credentialsId: 'xl-release-license', variable: 'xl-release-license')]) {
@@ -151,8 +164,13 @@ pipeline{
                                             withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                 echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
                                                 sh "oc login --token=$OPENSHIFT_TOKEN_AWS --server=$OPENSHIFT_AWS_SERVER_URL --insecure-skip-tls-verify"
-                                                sh "oc project xlpipeline"
-                                                sh "helm install xlrelease-oc *.tgz --set route.hosts[0]=$HOST_NAME_AWS_OPENSHIFT_RELEASE --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=aws-efs --set rabbitmq.persistence.storageClass=gp2 --set Persistence.StorageClass=aws-efs"
+                                                releasename = "release-oc-${BRANCH_NAME}-${BUILD_ID}"
+                                                createNamespace (namespace)
+                                                sh "sleep 3"
+                                                sh  "oc project ${namespace}"
+                                                helmDelete (namespace, releasename)
+                                                sh "sleep 5"
+                                                sh "helm install ${releasename} *.tgz --set route.hosts[0]=$HOST_NAME_AWS_OPENSHIFT_RELEASE --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=aws-efs --set rabbitmq.persistence.storageClass=gp2 --set Persistence.StorageClass=aws-efs"
                                             }
                                         }
                                     }
@@ -166,8 +184,13 @@ pipeline{
                                             withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                 echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
                                                 sh "oc login --token=$OPENSHIFT_TOKEN_AWS --server=$OPENSHIFT_AWS_SERVER_URL --insecure-skip-tls-verify"
-                                                sh "oc project xlpipeline"
-                                                sh "helm install xldeploy-oc *.tgz --set route.hosts[0]=$HOST_NAME_AWS_OPENSHIFT_DEPLOY --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=aws-efs --set rabbitmq.persistence.storageClass=gp2 --set Persistence.StorageClass=aws-efs"
+                                                releasename = "deploy-oc-${BRANCH_NAME}-${BUILD_ID}"
+                                                createNamespace (namespace)
+                                                sh "sleep 3"
+                                                sh  "oc project ${namespace}"
+                                                helmDelete (namespace, releasename)
+                                                sh "sleep 5"
+                                                sh "helm install ${releasename} *.tgz --set route.hosts[0]=$HOST_NAME_AWS_OPENSHIFT_DEPLOY --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=aws-efs --set rabbitmq.persistence.storageClass=gp2 --set Persistence.StorageClass=aws-efs"
                                             }
                                         }
                                     }
@@ -187,7 +210,6 @@ pipeline{
                     }
                     steps {
                         script {
-                            load "${JENKINS_HOME}/.env/parameters.groovy"
                             if ( params.PRODUCT == 'XL Release' ) {
                                 try {
                                     withCredentials([file(credentialsId: 'xl-release-license', variable: 'xl-release-license')]) {
@@ -195,8 +217,13 @@ pipeline{
                                             withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                 echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
                                                 sh  "oc login --token=$OPENSHIFT_TOKEN_ONPREM --server=$OPENSHIFT_ONPREM_SERVER_URL --insecure-skip-tls-verify"
-                                                sh  "oc project xlpipeline"
-                                                sh  "helm install --generate-name *.tgz --set route.hosts[0]=$HOST_NAME_ONPREM_OPENSHIFT_RELEASE --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
+                                                releasename = "release-oc-${BRANCH_NAME}-${BUILD_ID}"
+                                                createNamespace (namespace)
+                                                sh "sleep 3"
+                                                sh  "oc project ${namespace}"
+                                                helmDelete (namespace, releasename)
+                                                sh "sleep 5"
+                                                sh  "helm install ${releasename} *.tgz --set route.hosts[0]=$HOST_NAME_ONPREM_OPENSHIFT_RELEASE --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
                                             }
                                         }
                                     }
@@ -210,8 +237,13 @@ pipeline{
                                             withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                 echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
                                                 sh  "oc login --token=$OPENSHIFT_TOKEN_ONPREM --server=$OPENSHIFT_ONPREM_SERVER_URL --insecure-skip-tls-verify"
-                                                sh  "oc project xlpipeline"
-                                                sh  "helm install --generate-name *.tgz --set route.hosts[0]=$HOST_NAME_ONPREM_OPENSHIFT_DEPLOY --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
+                                                releasename = "deploy-oc-${BRANCH_NAME}-${BUILD_ID}"
+                                                createNamespace (namespace)
+                                                sh "sleep 3"
+                                                sh  "oc project ${namespace}"
+                                                helmDelete (namespace, releasename)
+                                                sh "sleep 5"
+                                                sh  "helm install ${releasename} *.tgz --set route.hosts[0]=$HOST_NAME_ONPREM_OPENSHIFT_DEPLOY --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
                                             }
                                         }
                                     }
@@ -231,7 +263,6 @@ pipeline{
                     }
                     steps {
                         script {
-                            load "${JENKINS_HOME}/.env/parameters.groovy"
                             withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS_CREDENTIALS', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                                 withKubeConfig(caCertificate: '', clusterName: 'xlpipeline-cluster', contextName: 'iTest@xlpipeline-cluster.eu-west-1.eksctl.io', credentialsId: 'AWS_EKS_CONFIG', namespace: 'xlpipeline', serverUrl: 'https://36233C5EEAE9B53A8DFF31C554DBD35F.gr7.eu-west-1.eks.amazonaws.com') {
                                     if ( params.PRODUCT == 'XL Release' ) {
@@ -240,8 +271,13 @@ pipeline{
                                             withCredentials([file(credentialsId: 'xl-release-license', variable: 'xl-release-license')]) {
                                                 withCredentials([string(credentialsId: 'repository-keystore', variable: 'repository-keystore')]) {
                                                     withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
-                                                            sh  "kubectl config set-context --current --namespace xlpipeline"
-                                                            sh  "helm install --generate-name *.tgz --set ingress.hosts[0]=$HOST_NAME_AWS_EKS --set haproxy-ingress.controller.service.type=LoadBalancer --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set Persistence.StorageClass=aws-efs"
+                                                            releasename = "release-eks-${BRANCH_NAME}-${BUILD_ID}"
+                                                            createNamespace (namespace)
+                                                            sh "sleep 3"
+                                                            sh  "kubectl config set-context --current --namespace ${namespace}"
+                                                            helmDelete (namespace, releasename)
+                                                            sh "sleep 5"
+                                                            sh  "helm install ${releasename} *.tgz --set ingress.hosts[0]=$HOST_NAME_AWS_EKS --set haproxy-ingress.controller.service.type=LoadBalancer --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set Persistence.StorageClass=aws-efs"
                                                             sh  "kubectl get svc"
                                                     }
                                                 }
@@ -255,8 +291,13 @@ pipeline{
                                                 withCredentials([string(credentialsId: 'repository-keystore', variable: 'repository-keystore')]) {
                                                     withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                         echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
-                                                        sh  "kubectl config set-context --current --namespace xlpipeline"
-                                                        sh  "helm install --generate-name *.tgz --set ingress.hosts[0]=$HOST_NAME_AWS_EKS --set haproxy-ingress.controller.service.type=LoadBalancer --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set Persistence.StorageClass=aws-efs"
+                                                        releasename = "deploy-eks-${BRANCH_NAME}-${BUILD_ID}"
+                                                        createNamespace (namespace)
+                                                        sh "sleep 3"
+                                                        sh  "kubectl config set-context --current --namespace ${namespace}"
+                                                        helmDelete (namespace, releasename)
+                                                        sh "sleep 5"
+                                                        sh  "helm install ${releasename} *.tgz --set ingress.hosts[0]=$HOST_NAME_AWS_EKS --set haproxy-ingress.controller.service.type=LoadBalancer --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set Persistence.StorageClass=aws-efs"
                                                         sh  "kubectl get svc"
                                                     }
                                                 }
@@ -279,7 +320,6 @@ pipeline{
                     }
                     steps {
                         script {
-                            load "${JENKINS_HOME}/.env/parameters.groovy"
                             withCredentials([usernamePassword(credentialsId: 'kube-love', passwordVariable: 'password', usernameVariable: 'username')]) {
                                 withKubeConfig(caCertificate: '', clusterName: 'kubernetes', contextName: 'kubernetes-admin@kubernetes', credentialsId: 'kube-love-config', namespace: 'xlpipeline', serverUrl: 'https://172.16.16.21:6443') {
                                     if ( params.PRODUCT == 'XL Release' ) {
@@ -288,8 +328,13 @@ pipeline{
                                                 withCredentials([string(credentialsId: 'repository-keystore', variable: 'repository-keystore')]) {
                                                      withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                              echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
-                                                             sh "kubectl config set-context --current --namespace xlpipeline"
-                                                             sh "helm install --generate-name *.tgz --set ingress.hosts[0]=${HOST_NAME_ONPREM_K8S} --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
+                                                             releasename = "xlrelease-onprem-${BRANCH_NAME}-${BUILD_ID}"
+                                                             createNamespace (namespace)
+                                                             sh "sleep 3"
+                                                             sh "kubectl config set-context --current --namespace ${namespace}"
+                                                             helmDelete (namespace, releasename)
+                                                             sh "sleep 5"
+                                                             sh "helm install ${releasename} *.tgz --set ingress.hosts[0]=${HOST_NAME_ONPREM_K8S} --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
                                                              sh "kubectl get svc"
                                                     }
                                                 }
@@ -303,8 +348,13 @@ pipeline{
                                                 withCredentials([string(credentialsId: 'repository-keystore', variable: 'repository-keystore')]) {
                                                     withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                         echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
-                                                        sh "kubectl config set-context --current --namespace xlpipeline"
-                                                        sh "helm install --generate-name *.tgz --set ingress.hosts[0]=${HOST_NAME_ONPREM_K8S} --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
+                                                        releasename = "xldeploy-onprem-${BRANCH_NAME}-${BUILD_ID}"
+                                                        createNamespace (namespace)
+                                                        sh "sleep 3"
+                                                        sh "kubectl config set-context --current --namespace ${namespace}"
+                                                        helmDelete (namespace, releasename)
+                                                        sh "sleep 5"
+                                                        sh "helm install ${releasename} *.tgz --set ingress.hosts[0]=${HOST_NAME_ONPREM_K8S} --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
                                                         sh "kubectl get svc"
                                                     }
                                                 }
@@ -322,3 +372,4 @@ pipeline{
         }
     }
 }
+
