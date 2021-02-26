@@ -18,7 +18,7 @@ pipeline{
     parameters {
         choice(name: 'PRODUCT', choices: ['XL Release', 'XL Deploy'], description: 'Select the product to package')
         choice(name: 'PLATFORM', choices: ['Onprem','EKS','Openshift_AWS','Openshift_Onprem'], description: 'Pick the platform to deploy the helm chart')
-        choice(name: 'BRANCH', choices: ['master','10.0','Openshift-Master','Openshift-10.0'], description: 'Select the branch to build')
+        choice(name: 'BRANCH', choices: ['master','10.0','oc-master','oc-10.0'], description: 'Select the branch to build')
         choice(name: 'PUSH_TO_NEXUS', choices: ['YES', 'NO'], description: 'Do you want to push the zip file to nexus?')
         choice(name: 'PUSH_TO_XEBIALABS_DIST', choices: ['YES', 'NO'], description: 'Do you want to push the zip file to xebialabs distribution?')
         choice(name: 'INSTALL_CHART', choices: ['YES', 'NO'], description: 'Do you want to install the helm chart?')
