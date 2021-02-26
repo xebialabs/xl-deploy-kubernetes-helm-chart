@@ -164,7 +164,7 @@ pipeline{
                                             withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                 echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
                                                 sh "oc login --token=$OPENSHIFT_TOKEN_AWS --server=$OPENSHIFT_AWS_SERVER_URL --insecure-skip-tls-verify"
-                                                releasename = "release-oc-${BRANCH_NAME}-${BUILD_ID}"
+                                                releasename = "release-${BRANCH_NAME}-${BUILD_ID}"
                                                 createNamespace (namespace)
                                                 sh "sleep 3"
                                                 sh  "oc project ${namespace}"
@@ -184,7 +184,7 @@ pipeline{
                                             withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                 echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
                                                 sh "oc login --token=$OPENSHIFT_TOKEN_AWS --server=$OPENSHIFT_AWS_SERVER_URL --insecure-skip-tls-verify"
-                                                releasename = "deploy-oc-${BRANCH_NAME}-${BUILD_ID}"
+                                                releasename = "deploy-${BRANCH_NAME}-${BUILD_ID}"
                                                 createNamespace (namespace)
                                                 sh "sleep 3"
                                                 sh  "oc project ${namespace}"
@@ -217,7 +217,7 @@ pipeline{
                                             withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                 echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
                                                 sh  "oc login --token=$OPENSHIFT_TOKEN_ONPREM --server=$OPENSHIFT_ONPREM_SERVER_URL --insecure-skip-tls-verify"
-                                                releasename = "release-oc-${BRANCH_NAME}-${BUILD_ID}"
+                                                releasename = "release-${BRANCH_NAME}-${BUILD_ID}"
                                                 createNamespace (namespace)
                                                 sh "sleep 3"
                                                 sh  "oc project ${namespace}"
@@ -237,7 +237,7 @@ pipeline{
                                             withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                 echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
                                                 sh  "oc login --token=$OPENSHIFT_TOKEN_ONPREM --server=$OPENSHIFT_ONPREM_SERVER_URL --insecure-skip-tls-verify"
-                                                releasename = "deploy-oc-${BRANCH_NAME}-${BUILD_ID}"
+                                                releasename = "deploy-${BRANCH_NAME}-${BUILD_ID}"
                                                 createNamespace (namespace)
                                                 sh "sleep 3"
                                                 sh  "oc project ${namespace}"
