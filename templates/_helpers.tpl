@@ -30,3 +30,13 @@ Create chart name and version as used by the chart label.
 {{- define "xl-deploy.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+{{/*
+Remove Nginx regex from NOTES.txt.
+*/}}
+{{- define "path.fullname" -}}
+{{- if index .Values "nginx-ingress-controller" "install" -}}
+{{- $name := ( split "(" .Values.ingress.path)._0 -}}
+{{- printf "%s" $name -}}/
+{{- end -}}
+{{- end -}}
