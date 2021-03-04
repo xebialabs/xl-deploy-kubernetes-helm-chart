@@ -34,8 +34,6 @@ spec:
             - sh
             - -c
             - chown -R 10001 /opt/xebialabs/xl-deploy-server/work
-          securityContext:
-            privileged: true
           volumeMounts:
             - name: work-dir
               mountPath: /opt/xebialabs/xl-deploy-server/work

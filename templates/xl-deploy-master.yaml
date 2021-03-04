@@ -34,8 +34,6 @@ spec:
             - sh
             - -c
             - chown -R 10001 /opt/xebialabs/xl-deploy-server/export
-          securityContext:
-            privileged: true
           volumeMounts:
             - name: export-dir
               mountPath: /opt/xebialabs/xl-deploy-server/export
