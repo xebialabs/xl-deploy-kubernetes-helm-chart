@@ -4,41 +4,10 @@ metadata:
   name: {{ template "xl-deploy.name" . }}-sa
   namespace: {{ .Release.Namespace }}
 ---
-allowHostNetwork: false
-allowHostPID: false
-allowHostDirVolumePlugin: false
-allowHostIPC: false
-allowHostPorts: false
-allowPrivilegeEscalation: true
-allowPrivilegedContainer: true
-allowedCapabilities: []
-apiVersion: security.openshift.io/v1
-defaultAddCapabilities: []
-fsGroup:
-  type: RunAsAny
-groups: []
-kind: SecurityContextConstraints
-metadata:
-  name: {{ .Release.Name }}-privileged
-priority: 0
-readOnlyRootFilesystem: false
-requiredDropCapabilities: []
-runAsUser:
-  type: RunAsAny
-seLinuxContext:
-  type: MustRunAs
-supplementalGroups:
-  type: RunAsAny
-users:
-- system:serviceaccount:{{ .Release.Namespace }}:{{ template "xl-deploy.name" . }}-sa
-volumes:
-- '*'
-{{- if .Values.rabbitmq.install }}
----
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
-  name: {{ .Release.Name }}-rabbitmq
+  name: {{ .Release.Name }}-xl-deploy
 allowHostDirVolumePlugin: false
 allowHostIPC: false
 allowHostNetwork: false
@@ -62,7 +31,10 @@ seLinuxContext:
 supplementalGroups:
   type: RunAsAny
 users:
+- system:serviceaccount:{{ .Release.Namespace }}:{{ template "xl-deploy.name" . }}-sa
+{{- if .Values.rabbitmq.install }}
 - system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-rabbitmq
+{{- end }}
 volumes:
 - configMap
 - downwardAPI
@@ -70,4 +42,5 @@ volumes:
 - persistentVolumeClaim
 - projected
 - secret
-{{- end }}
+- hostPath
+- nfs
