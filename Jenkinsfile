@@ -1,5 +1,3 @@
-
-
 def createNamespace (namespace) {
     echo "Creating namespace ${namespace} if needed"
     sh "[ ! -z \"\$(kubectl get ns ${namespace} -o name 2>/dev/null)\" ] || kubectl create ns ${namespace}"
