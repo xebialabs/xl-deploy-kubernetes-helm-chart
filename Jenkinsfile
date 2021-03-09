@@ -135,9 +135,9 @@ pipeline{
                         try {
                             echo "Pushing ${params.PRODUCT} build to xebialabs distribution"
                             sh '''
-                            #  ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-release-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/release/kubernetes-generic
-                            #  sleep 3
-                            #  ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-release-oc-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/release/openshift
+                               ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-release-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/release/kubernetes-generic
+                               sleep 3
+                               ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-release-oc-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/release/openshift
                             '''
                         }catch(error) {
                             throw error
@@ -146,10 +146,9 @@ pipeline{
                         try {
                             echo "Pushing ${params.PRODUCT} build to xebialabs distribution"
                             sh '''
-                            # ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-deploy-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/deploy/kubernetes-generic
-                            #  sleep 3
-                            #  ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-deploy-oc-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/deploy/openshift
-
+                               ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-deploy-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/deploy/kubernetes-generic
+                               sleep 3
+                               ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-deploy-oc-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/deploy/openshift
                             '''
                         }catch(error) {
                             throw error
