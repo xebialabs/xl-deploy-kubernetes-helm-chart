@@ -1,3 +1,5 @@
+
+
 def createNamespace (namespace) {
     echo "Creating namespace ${namespace} if needed"
     sh "[ ! -z \"\$(kubectl get ns ${namespace} -o name 2>/dev/null)\" ] || kubectl create ns ${namespace}"
@@ -7,7 +9,6 @@ def helmDelete (namespace, releasename) {
     echo "Deleting ${releasename} in ${namespace} if deployed"
     script {
         sh "[ -z \"\$(helm ls --short 2>/dev/null)\" ] || helm delete \"\$(helm ls --short)\""
-
     }
 }
 
@@ -19,9 +20,10 @@ pipeline{
         choice(name: 'PRODUCT', choices: ['XL Release', 'XL Deploy'], description: 'Select the product to package')
         choice(name: 'PLATFORM', choices: ['Onprem','EKS','Openshift_AWS','Openshift_Onprem'], description: 'Pick the platform to deploy the helm chart')
         choice(name: 'BRANCH', choices: ['master','10.0','oc-master','oc-10.0'], description: 'Select the branch to build')
-        choice(name: 'PUSH_TO_NEXUS', choices: ['YES', 'NO'], description: 'Do you want to push the zip file to nexus?')
-        choice(name: 'PUSH_TO_XEBIALABS_DIST', choices: ['YES', 'NO'], description: 'Do you want to push the zip file to xebialabs distribution?')
-        choice(name: 'INSTALL_CHART', choices: ['YES', 'NO'], description: 'Do you want to install the helm chart?')
+        choice(name: 'INGRESS', choices: ['haproxy','nginx','route'], description: 'Select the ingress controller to deploy')
+        choice(name: 'PUSH_TO_NEXUS', choices: ['NO', 'YES'], description: 'Do you want to push the zip file to nexus?')
+        choice(name: 'PUSH_TO_XEBIALABS_DIST', choices: ['NO', 'YES'], description: 'Do you want to push the zip file to xebialabs distribution?')
+        choice(name: 'INSTALL_CHART', choices: ['NO', 'YES'], description: 'Do you want to install the helm chart?')
     }
     options {
         timeout(time: 1, unit: 'HOURS')
@@ -29,6 +31,7 @@ pipeline{
     environment {
         BRANCH_NAME = "${params.BRANCH}"
         NEXUS_PASSWORD = credentials('nexus-ci')
+        XEBIA_DIST_PASSWORD = credentials('16717ee9-bee2-4eb4-ab9e-022ff33a75ef')
         OPENSHIFT_TOKEN_AWS = credentials('openshift-token-aws')
         OPENSHIFT_TOKEN_ONPREM = credentials('openshift-token-onprem')
         XLD_LICENSE = credentials('xld-lic')
@@ -133,12 +136,23 @@ pipeline{
                     if ( params.PRODUCT == 'XL Release' ) {
                         try {
                             echo "Pushing ${params.PRODUCT} build to xebialabs distribution"
+                            sh '''
+                            #  ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-release-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/release/kubernetes-generic
+                            #  sleep 3
+                            #  ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-release-oc-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/release/openshift
+                            '''
                         }catch(error) {
                             throw error
                         }
                     }else {
                         try {
                             echo "Pushing ${params.PRODUCT} build to xebialabs distribution"
+                            sh '''
+                            # ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-deploy-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/deploy/kubernetes-generic
+                            #  sleep 3
+                            #  ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-deploy-oc-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/deploy/openshift
+
+                            '''
                         }catch(error) {
                             throw error
                         }
@@ -151,8 +165,8 @@ pipeline{
                 stage('Deploy to Openshift AWS') {
                     when {
                         anyOf {
-                            expression { params.INSTALL_CHART == 'YES' && params.PRODUCT == 'XL Release' && params.PLATFORM == 'Openshift_AWS' }
-                            expression { params.INSTALL_CHART == 'YES' && params.PRODUCT == 'XL Deploy' && params.PLATFORM == 'Openshift_AWS' }
+                            expression { params.INSTALL_CHART == 'YES' && params.PRODUCT == 'XL Release' && params.PLATFORM == 'Openshift_AWS' && params.INGRESS == 'route' }
+                            expression { params.INSTALL_CHART == 'YES' && params.PRODUCT == 'XL Deploy' && params.PLATFORM == 'Openshift_AWS' && params.INGRESS == 'route' }
                         }
                     }
                     steps {
@@ -204,8 +218,8 @@ pipeline{
                 stage('Deploy to Openshift Onprem') {
                     when {
                         anyOf {
-                            expression { params.INSTALL_CHART == 'YES' && params.PRODUCT == 'XL Release' && params.PLATFORM == 'Openshift_Onprem' }
-                            expression { params.INSTALL_CHART == 'YES' && params.PRODUCT == 'XL Deploy' && params.PLATFORM == 'Openshift_Onprem' }
+                            expression { params.INSTALL_CHART == 'YES' && params.PRODUCT == 'XL Release' && params.PLATFORM == 'Openshift_Onprem' && params.INGRESS == 'route' }
+                            expression { params.INSTALL_CHART == 'YES' && params.PRODUCT == 'XL Deploy' && params.PLATFORM == 'Openshift_Onprem' && params.INGRESS == 'route' }
                         }
                     }
                     steps {
@@ -326,16 +340,31 @@ pipeline{
                                         try {
                                             withCredentials([file(credentialsId: 'xl-release-license', variable: 'xl-release-license')]) {
                                                 withCredentials([string(credentialsId: 'repository-keystore', variable: 'repository-keystore')]) {
-                                                     withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
-                                                             echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
-                                                             releasename = "xlrelease-onprem-${BRANCH_NAME}-${BUILD_ID}"
-                                                             createNamespace (namespace)
-                                                             sh "sleep 3"
-                                                             sh "kubectl config set-context --current --namespace ${namespace}"
-                                                             helmDelete (namespace, releasename)
-                                                             sh "sleep 5"
-                                                             sh "helm install ${releasename} *.tgz --set ingress.hosts[0]=${HOST_NAME_ONPREM_K8S} --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
-                                                             sh "kubectl get svc"
+                                                    withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
+                                                        echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
+                                                        releasename = "xlrelease-onprem-${BRANCH_NAME}-${BUILD_ID}"
+                                                        createNamespace (namespace)
+                                                        sh "sleep 3"
+                                                        sh "kubectl config set-context --current --namespace ${namespace}"
+                                                        helmDelete (namespace, releasename)
+                                                        sh "sleep 5"
+                                                        if ( params.INGRESS == 'haproxy') {
+                                                            try {
+                                                                sh "mv ${WORKSPACE_K8S}/xl-release-kubernetes-helm-chart/values-haproxy.yaml ${WORKSPACE_K8S}/xl-release-kubernetes-helm-chart/values.yaml"
+                                                                sh "helm install ${releasename} xl-release-kubernetes-helm-chart --set ingress.hosts[0]=${HOST_NAME_ONPREM_K8S} --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
+                                                                sh "kubectl get svc"
+                                                            }catch(error) {
+                                                                throw error
+                                                            }
+                                                        }else {
+                                                            try {
+                                                                sh "mv ${WORKSPACE_K8S}/xl-release-kubernetes-helm-chart/values-nginx.yaml ${WORKSPACE_K8S}/xl-release-kubernetes-helm-chart/values.yaml"
+                                                                sh "helm install ${releasename} xl-release-kubernetes-helm-chart --set ingress.hosts[0]=${HOST_NAME_ONPREM_K8S} --set xlrLicense=${XLR_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
+                                                                sh "kubectl get svc"
+                                                            }catch(error) {
+                                                                throw error
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -354,8 +383,23 @@ pipeline{
                                                         sh "kubectl config set-context --current --namespace ${namespace}"
                                                         helmDelete (namespace, releasename)
                                                         sh "sleep 5"
-                                                        sh "helm install ${releasename} *.tgz --set ingress.hosts[0]=${HOST_NAME_ONPREM_K8S} --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
-                                                        sh "kubectl get svc"
+                                                        if (params.INGRESS == 'haproxy') {
+                                                            try {
+                                                                sh "mv ${WORKSPACE_K8S}/xl-deploy-kubernetes-helm-chart/values-haproxy.yaml ${WORKSPACE_K8S}/xl-deploy-kubernetes-helm-chart/values.yaml"
+                                                                sh "helm install ${releasename} xl-deploy-kubernetes-helm-chart --set ingress.hosts[0]=${HOST_NAME_ONPREM_K8S} --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client"
+                                                                sh "kubectl get svc"
+                                                            }catch(error) {
+                                                                throw error
+                                                            }
+                                                        }else {
+                                                            try {
+                                                                sh "mv ${WORKSPACE_K8S}/xl-deploy-kubernetes-helm-chart/values-nginx.yaml ${WORKSPACE_K8S}/xl-deploy-kubernetes-helm-chart/values.yaml"
+                                                                sh "helm install ${releasename} xl-deploy-kubernetes-helm-chart --set ingress.hosts[0]=${HOST_NAME_ONPREM_K8S} --set xldLicense=${XLD_LICENSE} --set RepositoryKeystore=${REPOSITORY_KEYSTORE} --set KeystorePassphrase=${KEYSTORE_PASSPHRASE} --set postgresql.persistence.storageClass=nfs-client --set rabbitmq.persistence.storageClass=nfs-client --set Persistence.StorageClass=nfs-client -f values-nginx.yaml"
+                                                                sh "kubectl get svc"
+                                                            }catch(error){
+                                                                throw error
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -372,4 +416,3 @@ pipeline{
         }
     }
 }
-
