@@ -134,22 +134,22 @@ pipeline{
                     if ( params.PRODUCT == 'XL Release' ) {
                         try {
                             echo "Pushing ${params.PRODUCT} build to xebialabs distribution"
-                            sh '''
-                               ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-release-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/release/kubernetes-generic
-                               sleep 3
-                               ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-release-oc-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/release/openshift
-                            '''
+                            if ( params.PLATFORM == Onprem || params.PLATFORM == EKS ) {
+                               sh "ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-release-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/release/kubernetes-generic"
+                            }else {
+                               sh "ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-release-oc-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/release/openshift"
+                            }
                         }catch(error) {
                             throw error
                         }
                     }else {
                         try {
                             echo "Pushing ${params.PRODUCT} build to xebialabs distribution"
-                            sh '''
-                               ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-deploy-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/deploy/kubernetes-generic
-                               sleep 3
-                               ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-deploy-oc-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/deploy/openshift
-                            '''
+                            if ( params.PLATFORM == Onprem || params.PLATFORM == EKS ) {
+                               sh "ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-deploy-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/deploy/kubernetes-generic"
+                            }else {
+                               sh "ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/xl-deploy-oc-helmcharts-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/deploy/openshift"
+                            }
                         }catch(error) {
                             throw error
                         }
@@ -175,7 +175,7 @@ pipeline{
                                             withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                 echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
                                                 sh "oc login --token=$OPENSHIFT_TOKEN_AWS --server=$OPENSHIFT_AWS_SERVER_URL --insecure-skip-tls-verify"
-                                                releasename = "release-${BRANCH_NAME}-${BUILD_ID}"
+                                                releasename = "oc-aws-release"
                                                 createNamespace (namespace)
                                                 sh "sleep 3"
                                                 sh  "oc project ${namespace}"
@@ -195,7 +195,7 @@ pipeline{
                                             withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                 echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
                                                 sh "oc login --token=$OPENSHIFT_TOKEN_AWS --server=$OPENSHIFT_AWS_SERVER_URL --insecure-skip-tls-verify"
-                                                releasename = "deploy-${BRANCH_NAME}-${BUILD_ID}"
+                                                releasename = "oc-aws-deploy"
                                                 createNamespace (namespace)
                                                 sh "sleep 3"
                                                 sh  "oc project ${namespace}"
@@ -228,7 +228,7 @@ pipeline{
                                             withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                 echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
                                                 sh  "oc login --token=$OPENSHIFT_TOKEN_ONPREM --server=$OPENSHIFT_ONPREM_SERVER_URL --insecure-skip-tls-verify"
-                                                releasename = "release-${BRANCH_NAME}-${BUILD_ID}"
+                                                releasename = "oc-release"
                                                 createNamespace (namespace)
                                                 sh "sleep 3"
                                                 sh  "oc project ${namespace}"
@@ -248,7 +248,7 @@ pipeline{
                                             withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                 echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
                                                 sh  "oc login --token=$OPENSHIFT_TOKEN_ONPREM --server=$OPENSHIFT_ONPREM_SERVER_URL --insecure-skip-tls-verify"
-                                                releasename = "deploy-${BRANCH_NAME}-${BUILD_ID}"
+                                                releasename = "oc-deploy"
                                                 createNamespace (namespace)
                                                 sh "sleep 3"
                                                 sh  "oc project ${namespace}"
@@ -282,7 +282,7 @@ pipeline{
                                             withCredentials([file(credentialsId: 'xl-release-license', variable: 'xl-release-license')]) {
                                                 withCredentials([string(credentialsId: 'repository-keystore', variable: 'repository-keystore')]) {
                                                     withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
-                                                            releasename = "release-eks-${BRANCH_NAME}-${BUILD_ID}"
+                                                            releasename = "eks-release"
                                                             createNamespace (namespace)
                                                             sh "sleep 3"
                                                             sh  "kubectl config set-context --current --namespace ${namespace}"
@@ -302,7 +302,7 @@ pipeline{
                                                 withCredentials([string(credentialsId: 'repository-keystore', variable: 'repository-keystore')]) {
                                                     withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                         echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
-                                                        releasename = "deploy-eks-${BRANCH_NAME}-${BUILD_ID}"
+                                                        releasename = "eks-deploy"
                                                         createNamespace (namespace)
                                                         sh "sleep 3"
                                                         sh  "kubectl config set-context --current --namespace ${namespace}"
@@ -339,7 +339,7 @@ pipeline{
                                                 withCredentials([string(credentialsId: 'repository-keystore', variable: 'repository-keystore')]) {
                                                     withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                         echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
-                                                        releasename = "xlrelease-onprem-${BRANCH_NAME}-${BUILD_ID}"
+                                                        releasename = "onprem-release"
                                                         createNamespace (namespace)
                                                         sh "sleep 3"
                                                         sh "kubectl config set-context --current --namespace ${namespace}"
@@ -374,7 +374,7 @@ pipeline{
                                                 withCredentials([string(credentialsId: 'repository-keystore', variable: 'repository-keystore')]) {
                                                     withCredentials([string(credentialsId: 'keystore-passphrase', variable: 'keystore-passphrase')]) {
                                                         echo "Installing ${params.PRODUCT} on ${params.PLATFORM} platform"
-                                                        releasename = "xldeploy-onprem-${BRANCH_NAME}-${BUILD_ID}"
+                                                        releasename = "onprem-deploy"
                                                         createNamespace (namespace)
                                                         sh "sleep 3"
                                                         sh "kubectl config set-context --current --namespace ${namespace}"
