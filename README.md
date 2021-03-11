@@ -11,6 +11,7 @@ This repository contains Helm Charts for Digital.ai (formerly Xebialabs) Deploy 
 - [Helm](https://helm.sh/docs/intro/install/) 3 installed
 - License File for Digital.ai Deploy in base64 encoded format
 - Repository Keystorefile in base64 encoded format
+- The passphrase for the RepositoryKeystore
 
 ## Chart Details
 This chart will deploy following components:
@@ -42,7 +43,7 @@ helm install nfs-provisioner --set nfs.server=x.x.x.x --set nfs.path=/exported/p
 ```
 * The `nfs-provisioner` storage class must be marked with the default annotation so that PersistentVolumeClaim objects (without a StorageClass specified) will trigger dynamic provisioning.
 ```bash
-kubectl patch storageclass nfs-provisioner -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+kubectl patch storageclass nfs-client -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 ```
 * After deploying the nfs helm chart, execute the below command to get StorageClass name which can be used in values.yaml file for parameter `Persistence.StorageClass`
 ```bash
