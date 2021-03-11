@@ -113,7 +113,7 @@ To uninstall/delete the `xld-production` deployment:
 ```bash
 helm delete xld-production
 ```
-
+> **Note**: Shutting down worker from XLD GUI is not supported because of replicaset functionality of Kubernetes.
 
 ## Parameters
 For deployment on Production environment, all parameters need to be configured as per users requirement and k8s setup which is under use. However, for deployment on test environment, most of the default values will suffice. The following parameters are required to be configured and rest of the parameters may remain as default
