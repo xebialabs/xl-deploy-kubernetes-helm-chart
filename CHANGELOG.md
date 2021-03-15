@@ -1,6 +1,9 @@
 # Helm Charts for Digital.ai Deploy Changelog
 All changes to this chart will be documented in this file
 
+## [10.1.1]
+* Update README.md
+
 ## [10.1]
 * Bump image tag to 10.0
 * Change chart and app version to 10.1
