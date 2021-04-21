@@ -1,7 +1,7 @@
 apiVersion: v2
 appVersion: v10.1
 description: A Helm chart for XL Deploy
-name: xl-deploy-helmcharts
+name: digitalai-deploy
 version: 10.1
 
 dependencies:

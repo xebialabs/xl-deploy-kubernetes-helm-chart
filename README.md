@@ -1,4 +1,4 @@
-# Helm Charts for Digital.ai Deploy on Kubernetes (BETA) 
+# Helm Charts for Digital.ai Deploy on Kubernetes
 This repository contains Helm Charts for Digital.ai (formerly Xebialabs) Deploy product. The Helm Chart automates and simplifies deploying Digital.ai Deploy clusters on Kubernetes and other Kubernetes-enabled Platforms by providing the essential features you need to keep your clusters up and running. 
 
 ## Prerequisites Details
