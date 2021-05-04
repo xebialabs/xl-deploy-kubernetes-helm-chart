@@ -66,6 +66,13 @@ spec:
             - name: work-dir
               mountPath: /opt/xebialabs/xl-deploy-server/work
           {{- if .Values.HealthProbes }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: {{ .Values.HealthProbesLivenessTimeout }}
+            periodSeconds: {{ .Values.HealthPeriodScans }}
+            failureThreshold: {{ .Values.HealthProbeFailureThreshold }}
           readinessProbe:
             tcpSocket:
               port: 8180
