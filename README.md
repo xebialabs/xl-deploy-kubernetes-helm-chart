@@ -1,4 +1,4 @@
-# Helm Charts for Digital.ai Deploy on Openshift (BETA) 
+# Helm Charts for Digital.ai Deploy on Openshift 
 This repository contains Helm Charts for Digital.ai (formerly Xebialabs) Deploy product. The Helm Chart automates and simplifies deploying Digital.ai Deploy clusters on Kubernetes and other Kubernetes-enabled Platforms such as Openshift by providing the essential features you need to keep your clusters up and running. 
 
 ## Prerequisites Details
