@@ -39,22 +39,20 @@ spec:
           volumeMounts:
             - name: work-dir
               mountPath: /opt/xebialabs/xl-deploy-server/work
-        {{- if .Values.postgresql.install }}
-        - name: wait-for-postgresql
+        - name: wait-for-master
           image: xebialabs/tiny-tools
           command:
             - sh
             - -c
             - >
-              until nc -z -w 2 $POSTGRES_SVC $POSTGRES_PORT && echo database ok; do
+              until nc -z -w 2 $MASTER_SVC $MASTER_PORT && echo connection ok; do
               sleep 2;
               done;
           env:
-            - name: POSTGRES_SVC
-              value: {{ .Release.Name }}-postgresql
-            - name: POSTGRES_PORT
-              value: "5432"
-        {{- end }}
+            - name: MASTER_SVC
+              value: {{ template "xl-deploy.fullname" . }}-lb
+            - name: MASTER_PORT
+              value: "4516"
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.ImageRepository }}:{{ .Values.ImageTag }}"
