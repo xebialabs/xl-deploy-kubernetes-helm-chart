@@ -23,6 +23,10 @@ spec:
         component: {{ template "xl-deploy.name" . }}-master
         release: {{ .Release.Name }}
     spec:
+      {{- if .Values.ImagePullSecret }}
+      imagePullSecrets:
+      - name: {{ .Values.ImagePullSecret }}
+      {{- end }}
       initContainers:
         - name: fix-the-volume-permission
           image: xebialabs/tiny-tools
