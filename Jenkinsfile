@@ -134,7 +134,7 @@ pipeline{
                     if ( params.PRODUCT == 'XL Release' ) {
                         try {
                             echo "Pushing ${params.PRODUCT} build to xebialabs distribution"
-                            if ( params.PLATFORM == Onprem || params.PLATFORM == EKS ) {
+                            if ( params.PLATFORM == 'Onprem' || params.PLATFORM == 'EKS' ) {
                                sh "ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/digitalai-release-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/release/kubernetes-generic"
                             }else {
                                sh "ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/digitalai-release-ocp-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/release/openshift"
@@ -145,7 +145,7 @@ pipeline{
                     }else {
                         try {
                             echo "Pushing ${params.PRODUCT} build to xebialabs distribution"
-                            if ( params.PLATFORM == Onprem || params.PLATFORM == EKS ) {
+                            if ( params.PLATFORM == 'Onprem' || params.PLATFORM == 'EKS' ) {
                                sh "ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/digitalai-deploy-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/deploy/kubernetes-generic"
                             }else {
                                sh "ssh xebialabs@nexus1.xebialabs.cyso.net rsync --update -raz -i --exclude '*-tests.jar*' --exclude .htaccess --exclude '*.xml' /opt/sonatype-work/nexus/storage/helm/digitalai-deploy-ocp-* xldown@dist.xebialabs.com:/var/www/dist.xebialabs.com/customer/helmcharts/deploy/openshift"
