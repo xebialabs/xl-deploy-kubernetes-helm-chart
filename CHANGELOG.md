@@ -8,6 +8,7 @@ All changes to this chart will be documented in this file
 * Add nginx ingress
 * Update README.md
 * Add support for GoogleGKE
+* Bump image to 10.1
 
 ## [1.1.3]
 * Use image pull secrets
