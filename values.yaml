@@ -94,6 +94,7 @@ postgresql:
     port: 5432
   persistence:
     enabled: true
+    storageClass: "_"
     size: 50Gi
     existingClaim:
   resources: {}
@@ -134,12 +135,21 @@ rabbitmq-ha:
     rabbitmq_jms_topic_exchange,
     rabbitmq_management,
   replicaCount: 3
+  image:
+    repository: rabbitmq
+    tag: 3.8.7-alpine
+    pullPolicy: IfNotPresent
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    # pullSecrets:
+    #   - myRegistrKeySecretName
   rbac:
     create: true
   service:
     type: ClusterIP
   persistentVolume:
     enabled: true
+    storageClass: "_"
     size: 20Gi
     annotations: {}
     resources: {}
