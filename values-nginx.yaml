@@ -55,7 +55,7 @@ nginx-ingress-controller:
     timeoutSeconds: 3
     periodSeconds: 5
     failureThreshold: 3
-    successThreshold: 1      
+    successThreshold: 1  
   service:
     type: NodePort
 
