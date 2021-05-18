@@ -30,7 +30,18 @@ nginx-ingress-controller:
   image:
     # pullSecrets:
     #   - myRegistryKeySecretName
-  replicaCount: 1  
+  replicaCount: 1
+  resources:
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    limits: {}
+    #   cpu: 100m
+    #   memory: 128Mi
+    requests: {}
+    #   cpu: 100m
+    #   memory: 128Mi    
   service:
     type: NodePort
 
@@ -39,6 +50,7 @@ haproxy-ingress:
 
 ## Ingress Configuration
 ## Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
+## Ref: https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#general-customization
 ingress:
   Enabled: true
   annotations:
@@ -48,6 +60,9 @@ ingress:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/affinity: cookie
     nginx.ingress.kubernetes.io/session-cookie-name: SESSION_XLD
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
   path: /xl-deploy(/|$)(.*)
   hosts:
     - example.com
