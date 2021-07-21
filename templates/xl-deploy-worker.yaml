@@ -33,12 +33,12 @@ spec:
           command:
             - sh
             - -c
-            - chown -R 10001 /opt/xebialabs/xl-deploy-server/work
+            - chown -R 10001 /opt/xebialabs/xl-deploy-server
           securityContext:
             privileged: true
           volumeMounts:
             - name: work-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/work
+              mountPath: /opt/xebialabs/xl-deploy-server
         - name: wait-for-master
           image: xebialabs/tiny-tools
           command:
@@ -65,6 +65,19 @@ spec:
           volumeMounts:
             - name: work-dir
               mountPath: /opt/xebialabs/xl-deploy-server/work
+              subPath: work
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/conf
+              subPath: conf
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/centralConfiguration
+              subPath: centralConfiguration
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/ext
+              subPath: ext
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix
+              subPath: hotfix
           {{- if .Values.HealthProbes }}
           livenessProbe:
             tcpSocket:
@@ -175,12 +188,18 @@ spec:
             - "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
           resources:
 {{ toYaml .Values.resources | indent 12 }}
-      {{- if not .Values.Persistence.Enabled }}
       volumes:
+        {{- if .Values.Persistence.Enabled }}
+        - name: data-dir
+          persistentVolumeClaim:
+            claimName: {{ template "xl-deploy.fullname" . }}-worker-data
+        {{- else }}
         - name: work-dir
           hostPath:
-            path: /opt/xebialabs/xl-deploy-server/work
+            path: /opt/xebialabs/xl-deploy-server
             type: DirectoryOrCreate
+        - name: data-dir
+          emptyDir: {}
       {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -209,5 +228,5 @@ spec:
       {{- end }}
         resources:
           requests:
-            storage: {{ .Values.Persistence.XldWorkPvcSize | quote }}
+            storage: {{ .Values.Persistence.XldWorkDirPvcSize | quote }}
   {{- end }}

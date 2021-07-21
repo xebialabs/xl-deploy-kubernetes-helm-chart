@@ -33,12 +33,12 @@ spec:
           command:
             - sh
             - -c
-            - chown -R 10001 /opt/xebialabs/xl-deploy-server/export
+            - chown -R 10001 /opt/xebialabs/xl-deploy-server
           securityContext:
             privileged: true
           volumeMounts:
-            - name: export-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/export
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server
         {{- if .Values.postgresql.install }}
         - name: wait-for-postgresql
           image: xebialabs/tiny-tools
@@ -68,8 +68,21 @@ spec:
             - name: akka
               containerPort: 8180
           volumeMounts:
-            - name: export-dir
+            - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/export
+              subPath: export
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/conf
+              subPath: conf
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/centralConfiguration
+              subPath: centralConfiguration
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/ext
+              subPath: ext
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix
+              subPath: hotfix
           {{- if .Values.HealthProbes }}
           livenessProbe:
             httpGet:
@@ -178,13 +191,13 @@ spec:
 {{ toYaml .Values.resources | indent 12 }}
       volumes:
         {{- if .Values.Persistence.Enabled }}
-        - name: export-dir
+        - name: data-dir
           persistentVolumeClaim:
             claimName: {{ template "xl-deploy.fullname" . }}
         {{- else }}
-        - name: export-dir
+        - name: data-dir
           hostPath:
-            path: /opt/xebialabs/xl-deploy-server/export
+            path: /opt/xebialabs/xl-deploy-server
             type: DirectoryOrCreate
         {{- end }}
     {{- with .Values.nodeSelector }}
