@@ -76,8 +76,14 @@ spec:
               mountPath: /opt/xebialabs/xl-deploy-server/ext
               subPath: ext
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/hotfix
-              subPath: hotfix
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/lib
+              subPath: lib
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/plugins
+              subPath: plugins
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/satellite-lib
+              subPath: satellite-lib
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/log
               subPath: log
