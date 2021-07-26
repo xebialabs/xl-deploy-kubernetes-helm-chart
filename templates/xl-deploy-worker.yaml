@@ -194,9 +194,7 @@ spec:
       {{- if not .Values.Persistence.Enabled }}
       volumes:
         - name: data-dir
-          hostPath:
-            path: /opt/xebialabs/xl-deploy-server
-            type: DirectoryOrCreate
+          emptyDir: {}
       {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
