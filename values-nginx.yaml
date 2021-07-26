@@ -245,8 +245,7 @@ Persistence:
   Annotations: {}
   AccessMode: ReadWriteOnce
   XldMasterPvcSize: 10Gi
-  XldWorkDirPvcSize: 5Gi
-  XldWorkerPvcSize: 5Gi
+  XldWorkerPvcSize: 10Gi
 
 # Set "satellite.Enabled" value to "true" to use the "XL Satellite" feature
 satellite:

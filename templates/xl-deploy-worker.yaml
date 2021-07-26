@@ -33,12 +33,12 @@ spec:
           command:
             - sh
             - -c
-            - chown -R 10001 /opt/xebialabs/xl-deploy-server
+            - chown -R 10001 /opt/xebialabs/xl-deploy-server/
           securityContext:
             privileged: true
           volumeMounts:
-            - name: work-dir
-              mountPath: /opt/xebialabs/xl-deploy-server
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/
         - name: wait-for-master
           image: xebialabs/tiny-tools
           command:
@@ -63,7 +63,7 @@ spec:
             - name: akka
               containerPort: 8180
           volumeMounts:
-            - name: work-dir
+            - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/work
               subPath: work
             - name: data-dir
@@ -78,6 +78,9 @@ spec:
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/hotfix
               subPath: hotfix
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/log
+              subPath: log
           {{- if .Values.HealthProbes }}
           livenessProbe:
             tcpSocket:
@@ -188,18 +191,12 @@ spec:
             - "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
           resources:
 {{ toYaml .Values.resources | indent 12 }}
+      {{- if not .Values.Persistence.Enabled }}
       volumes:
-        {{- if .Values.Persistence.Enabled }}
         - name: data-dir
-          persistentVolumeClaim:
-            claimName: {{ template "xl-deploy.fullname" . }}-worker-data
-        {{- else }}
-        - name: work-dir
           hostPath:
             path: /opt/xebialabs/xl-deploy-server
             type: DirectoryOrCreate
-        - name: data-dir
-          emptyDir: {}
       {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -216,7 +213,7 @@ spec:
   {{- if .Values.Persistence.Enabled }}
   volumeClaimTemplates:
     - metadata:
-        name: work-dir
+        name: data-dir
       spec:
         accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.Persistence.StorageClass }}
@@ -228,5 +225,5 @@ spec:
       {{- end }}
         resources:
           requests:
-            storage: {{ .Values.Persistence.XldWorkDirPvcSize | quote }}
+            storage: {{ .Values.Persistence.XldWorkerPvcSize | quote }}
   {{- end }}

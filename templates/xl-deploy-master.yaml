@@ -33,12 +33,12 @@ spec:
           command:
             - sh
             - -c
-            - chown -R 10001 /opt/xebialabs/xl-deploy-server
+            - chown -R 10001 /opt/xebialabs/xl-deploy-server/
           securityContext:
             privileged: true
           volumeMounts:
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server
+              mountPath: /opt/xebialabs/xl-deploy-server/
         {{- if .Values.postgresql.install }}
         - name: wait-for-postgresql
           image: xebialabs/tiny-tools
@@ -69,8 +69,8 @@ spec:
               containerPort: 8180
           volumeMounts:
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/export
-              subPath: export
+              mountPath: /opt/xebialabs/xl-deploy-server/work
+              subPath: work
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/conf
               subPath: conf
@@ -83,6 +83,9 @@ spec:
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/hotfix
               subPath: hotfix
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/log
+              subPath: log
           {{- if .Values.HealthProbes }}
           livenessProbe:
             httpGet:
@@ -189,17 +192,13 @@ spec:
             {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
+      {{- if not .Values.Persistence.Enabled }}
       volumes:
-        {{- if .Values.Persistence.Enabled }}
-        - name: data-dir
-          persistentVolumeClaim:
-            claimName: {{ template "xl-deploy.fullname" . }}
-        {{- else }}
         - name: data-dir
           hostPath:
             path: /opt/xebialabs/xl-deploy-server
             type: DirectoryOrCreate
-        {{- end }}
+      {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
@@ -212,3 +211,20 @@ spec:
       tolerations:
 {{ toYaml . | indent 8 }}
     {{- end }}
+  {{- if .Values.Persistence.Enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data-dir
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.Persistence.StorageClass }}
+      {{- if (eq "-" .Values.Persistence.StorageClass) }}
+        storageClassName: ""
+      {{- else }}
+        storageClassName: "{{ .Values.Persistence.StorageClass }}"
+      {{- end }}
+      {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.Persistence.XldMasterPvcSize | quote }}
+  {{- end }}
