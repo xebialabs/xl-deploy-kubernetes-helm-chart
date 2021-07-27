@@ -13,7 +13,7 @@ XldWorkerCount: 3
 ## XL-Deploy image version
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
 ImageRepository: "xebialabs/xl-deploy"
-ImageTag: "10.1"
+ImageTag: "10.2"
 
 ## Specify a imagePullPolicy
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
@@ -229,8 +229,8 @@ Persistence:
   StorageClass: "-"
   Annotations: {}
   AccessMode: ReadWriteOnce
-  XldExportPvcSize: 10Gi
-  XldWorkPvcSize: 5Gi
+  XldMasterPvcSize: 10Gi
+  XldWorkerPvcSize: 10Gi
 
 # Set "satellite.Enabled" value to "true" to use the "XL Satellite" feature
 satellite:

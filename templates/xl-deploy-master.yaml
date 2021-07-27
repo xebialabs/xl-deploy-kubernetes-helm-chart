@@ -33,12 +33,12 @@ spec:
           command:
             - sh
             - -c
-            - chown -R 10001 /opt/xebialabs/xl-deploy-server/export
+            - chown -R 10001 /opt/xebialabs/xl-deploy-server/
           securityContext:
             privileged: true
           volumeMounts:
-            - name: export-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/export
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/
         {{- if .Values.postgresql.install }}
         - name: wait-for-postgresql
           image: xebialabs/tiny-tools
@@ -68,8 +68,30 @@ spec:
             - name: akka
               containerPort: 8180
           volumeMounts:
-            - name: export-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/export
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/work
+              subPath: work
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/conf
+              subPath: conf
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/centralConfiguration
+              subPath: centralConfiguration
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/ext
+              subPath: ext
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/lib
+              subPath: lib
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/plugins
+              subPath: plugins
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/satellite-lib
+              subPath: satellite-lib
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/log
+              subPath: log
           {{- if .Values.HealthProbes }}
           livenessProbe:
             httpGet:
@@ -176,17 +198,11 @@ spec:
             {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
+      {{- if not .Values.Persistence.Enabled }}
       volumes:
-        {{- if .Values.Persistence.Enabled }}
-        - name: export-dir
-          persistentVolumeClaim:
-            claimName: {{ template "xl-deploy.fullname" . }}
-        {{- else }}
-        - name: export-dir
-          hostPath:
-            path: /opt/xebialabs/xl-deploy-server/export
-            type: DirectoryOrCreate
-        {{- end }}
+        - name: data-dir
+          emptyDir: {}
+      {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
@@ -199,3 +215,20 @@ spec:
       tolerations:
 {{ toYaml . | indent 8 }}
     {{- end }}
+  {{- if .Values.Persistence.Enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data-dir
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.Persistence.StorageClass }}
+      {{- if (eq "-" .Values.Persistence.StorageClass) }}
+        storageClassName: ""
+      {{- else }}
+        storageClassName: "{{ .Values.Persistence.StorageClass }}"
+      {{- end }}
+      {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.Persistence.XldMasterPvcSize | quote }}
+  {{- end }}
