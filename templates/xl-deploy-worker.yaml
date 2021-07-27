@@ -31,12 +31,12 @@ spec:
           command:
             - sh
             - -c
-            - chown -R 10001 /opt/xebialabs/xl-deploy-server/work
+            - chown -R 10001 /opt/xebialabs/xl-deploy-server/
           securityContext:
             privileged: true
           volumeMounts:
-            - name: work-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/work
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/
         - name: wait-for-master
           image: xebialabs/tiny-tools
           command:
@@ -61,8 +61,30 @@ spec:
             - name: akka
               containerPort: 8180
           volumeMounts:
-            - name: work-dir
+            - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/work
+              subPath: work
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/conf
+              subPath: conf
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/centalConfiguration
+              subPath: centralConfiguration
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/ext
+              subPath: ext
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/log
+              subPath: log
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/lib
+              subPath: lib
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/plugins
+              subPath: plugins
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/satellite-lib
+              subPath: satellite-lib
           {{- if .Values.HealthProbes }}
           livenessProbe:
             tcpSocket:
@@ -175,10 +197,8 @@ spec:
 {{ toYaml .Values.resources | indent 12 }}
       {{- if not .Values.Persistence.Enabled }}
       volumes:
-        - name: work-dir
-          hostPath:
-            path: /opt/xebialabs/xl-deploy-server/work
-            type: DirectoryOrCreate
+        - name: data-dir
+          emptyDir: {}
       {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -195,7 +215,7 @@ spec:
   {{- if .Values.Persistence.Enabled }}
   volumeClaimTemplates:
     - metadata:
-        name: work-dir
+        name: data-dir
       spec:
         accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.Persistence.StorageClass }}
@@ -207,5 +227,5 @@ spec:
       {{- end }}
         resources:
           requests:
-            storage: {{ .Values.Persistence.XldWorkPvcSize | quote }}
+            storage: {{ .Values.Persistence.XldWorkerPvcSize | quote }}
   {{- end }}
