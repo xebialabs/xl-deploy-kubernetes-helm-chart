@@ -1,0 +1,46 @@
+{{- if .Values.oidc.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: xl-deploy-server
+  labels:
+    app: {{ template "xl-deploy.name" . }}
+    chart: {{ template "xl-deploy.chart" . }}
+    release: {{ .Release.Name }}
+data:
+  deploy-server.yaml.template: |
+    deploy.server:
+      hostname: ${HOSTNAME}${HOSTNAME_SUFFIX}
+      license:
+        daysBeforeWarning: 10
+      security:
+        auth:
+          provider: "oidc"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: xl-deploy-keycloak
+  labels:
+    app: {{ template "xl-deploy.name" . }}
+    chart: {{ template "xl-deploy.chart" . }}
+    release: {{ .Release.Name }}
+data:
+  deploy-oidc.yaml: |
+    deploy.security:
+      auth:
+        providers:
+          oidc:
+            loginMethodDescription: "Login using Keycloak"
+            clientId: {{ .Values.oidc.clientId | quote }}
+            clientSecret: {{ .Values.oidc.clientSecret | quote }}
+            issuer: {{ .Values.oidc.issuer | quote }}
+            keyRetrievalUri: {{ .Values.oidc.keyRetrievalUri | quote }}
+            accessTokenUri: {{ .Values.oidc.accessTokenUri | quote }}
+            userAuthorizationUri: {{ .Values.oidc.userAuthorizationUri | quote }}
+            logoutUri: {{ .Values.oidc.logoutUri | quote }}
+            redirectUri: {{ .Values.oidc.redirectUri | quote }}
+            postLogoutRedirectUri: {{ .Values.oidc.postLogoutRedirectUri | quote }}
+            rolesClaimName: {{ .Values.oidc.rolesClaimName | quote }}
+            userNameClaimName: {{ .Values.oidc.userNameClaimName | quote }}
+{{- end }}

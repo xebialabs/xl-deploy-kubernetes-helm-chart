@@ -250,3 +250,18 @@ Persistence:
 # Set "satellite.Enabled" value to "true" to use the "XL Satellite" feature
 satellite:
   Enabled: false
+
+# OIDC Settings
+oidc:
+  enabled: false
+  clientId:
+  clientSecret:
+  issuer:
+  keyRetrievalUri:
+  accessTokenUri:
+  userAuthorizationUri:
+  logoutUri:
+  redirectUri:
+  postLogoutRedirectUri:
+  rolesClaimName:
+  userNameClaimName:
