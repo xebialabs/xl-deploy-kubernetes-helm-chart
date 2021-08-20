@@ -63,6 +63,11 @@ spec:
             - name: akka
               containerPort: 8180
           volumeMounts:
+            {{- if .Values.oidc.enabled }}
+            - name: deploy-server
+              mountPath: /opt/xebialabs/xl-deploy-server/central-conf/deploy-server.yaml.template
+              subPath: deploy-server.yaml.template
+            {{- end }}
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/work
               subPath: work
@@ -197,10 +202,17 @@ spec:
             - "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
           resources:
 {{ toYaml .Values.resources | indent 12 }}
-      {{- if not .Values.Persistence.Enabled }}
+      {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) }}
       volumes:
+        {{- if not .Values.Persistence.Enabled }}
         - name: data-dir
           emptyDir: {}
+        {{- end }}
+        {{- if .Values.oidc.enabled }}
+        - name: deploy-server
+          configMap:
+            name: xl-deploy-server
+        {{- end }}
       {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
