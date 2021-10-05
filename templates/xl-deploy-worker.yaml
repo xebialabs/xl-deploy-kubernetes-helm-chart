@@ -23,6 +23,8 @@ spec:
         component: {{ template "xl-deploy.name" . }}-worker
         release: {{ .Release.Name }}
     spec:
+      securityContext:
+        fsGroup: 10001
       {{- if .Values.ImagePullSecret }}
       imagePullSecrets:
       - name: {{ .Values.ImagePullSecret }}

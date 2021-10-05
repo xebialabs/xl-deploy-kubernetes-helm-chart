@@ -23,22 +23,13 @@ spec:
         component: {{ template "xl-deploy.name" . }}-master
         release: {{ .Release.Name }}
     spec:
+      securityContext:
+        fsGroup: 10001
       {{- if .Values.ImagePullSecret }}
       imagePullSecrets:
       - name: {{ .Values.ImagePullSecret }}
       {{- end }}
       initContainers:
-        - name: fix-the-volume-permission
-          image: xebialabs/tiny-tools
-          command:
-            - sh
-            - -c
-            - chown -R 10001 /opt/xebialabs/xl-deploy-server/
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/
         {{- if .Values.postgresql.install }}
         - name: wait-for-postgresql
           image: xebialabs/tiny-tools
