@@ -30,17 +30,6 @@ spec:
       - name: {{ .Values.ImagePullSecret }}
       {{- end }}
       initContainers:
-        - name: fix-the-volume-permission
-          image: xebialabs/tiny-tools
-          command:
-            - sh
-            - -c
-            - chown -R 10001 /opt/xebialabs/xl-deploy-server/
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/
         - name: wait-for-master
           image: xebialabs/tiny-tools
           command:
