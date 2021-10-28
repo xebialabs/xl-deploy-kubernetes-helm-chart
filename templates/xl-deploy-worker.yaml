@@ -46,7 +46,7 @@ spec:
               value: "4516"
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.ImageRepository }}:{{ .Values.ImageTag }}"
+          image: "{{ .Values.WorkerImageRepository }}:{{ .Values.ImageTag }}"
           imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
           ports:
             - name: jmx-exporter
@@ -171,22 +171,25 @@ spec:
               value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_DRIVER_CLASS_NAME }}
             {{- end }}
             {{- end }}
+            {{- if .Values.RepositoryKeystore }}
             - name: REPOSITORY_KEYSTORE
               valueFrom:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: repositoryKeystore
+            {{- end }}
+            {{- if .Values.KeystorePassphrase }}
             - name: REPOSITORY_KEYSTORE_PASSPHRASE
               valueFrom:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: keystorePassphrase
+            {{- end }}
             {{- if .Values.satellite.Enabled }}
             - name: ENABLE_SATELLITE
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
           args:
-            - "worker"
             - "-master"
             - "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180"
             - "-api"
