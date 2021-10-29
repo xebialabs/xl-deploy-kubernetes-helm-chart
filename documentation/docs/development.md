@@ -29,7 +29,7 @@ Persistence:
 ``` 
 
 6. You can also change `XldMasterCount` and `XldWorkerCount` to 1 or 2. Depends on your computer capacity.
-Same for rabbitmq, on dev environment, you can use just 1 replica.
+Same for RabbitMq. On Dev environment, you can just use 1 replica.
 
 Once all of that is done you are ready to run it from the root of the project:
 `helm install xld-production .`
