@@ -38,3 +38,15 @@ Only make sure, that you installed kubernetes (currently it works on 1.17-1.20) 
 When you want to clean it up: `helm delete xld-production` plus you have to remove your `pvc`, like
 `kubectl delete pvc data-xld-production-postgresql-0 data-xld-production-rabbitmq-0`. <br/>
 You might have slightly different names, if so, first list `pvcs` to check what you have with `kubectl get pvc`.
+
+## Troubleshooting
+
+Most of the cases what you have to know to troubleshoot your cluster locally:
+
+1) Check logs of the pod `kubectl logs POD_NAME -f`
+
+2) Check the state of pod/service/etc by `kubectl describe POD_NAME|SERVICE_NAME|ETC`. 
+
+To find all what you have on your system up and running `kubectl get all` 
+![kubectl get all](./pics/k-get-all.png). First thing you need to pay your attention to is the readiness of the Pods.
+For ingress that you have external IP address to be able connect to UI from your browser. 
