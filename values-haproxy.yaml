@@ -15,8 +15,6 @@ XldWorkerCount: 3
 ImageRepository: "xebialabs/xl-deploy"
 ImageTag: "10.2.4"
 
-ImageRepository: "xebialabs/xl-deploy"
-
 ## Specify a imagePullPolicy
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
 ImagePullPolicy: "Always"
