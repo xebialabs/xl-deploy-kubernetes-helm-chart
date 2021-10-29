@@ -162,10 +162,7 @@ spec:
             - name: XLD_TASK_QUEUE_USERNAME
               value: {{ .Values.rabbitmq.auth.username }}
             - name: XLD_TASK_QUEUE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-rabbitmq
-                  key: rabbitmq-password
+              value: {{ .Values.rabbitmq.auth.password }}
             - name: XLD_TASK_QUEUE_URL
               value: "amqp://{{ .Release.Name }}-rabbitmq.{{ .Release.Namespace }}.svc.cluster.local:5672/%2F"
             - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
