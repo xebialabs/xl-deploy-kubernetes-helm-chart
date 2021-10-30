@@ -12,10 +12,10 @@ XldWorkerCount: 3
 
 ## XL-Deploy image version
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
-ImageTag: "10.4.0-1025.113"
+ImageTag: "10.4"
 
-ServerImageRepository: "xl-docker.xebialabs.com/xl-deploy"
-WorkerImageRepository: "xl-docker.xebialabs.com/deploy-task-engine"
+ServerImageRepository: "xebialabs/xl-deploy"
+WorkerImageRepository: "xebialabs/deploy-task-engine"
 
 ## Specify a imagePullPolicy
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
@@ -130,7 +130,7 @@ rabbitmq:
   image:
     registry: docker.io
     repository: bitnami/rabbitmq
-    tag: latest
+    tag: 3.8.11-debian-10-r0
     # pullSecrets:
     #   - myRegistryKeySecretName
   auth:
