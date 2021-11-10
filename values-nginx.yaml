@@ -12,8 +12,10 @@ XldWorkerCount: 3
 
 ## XL-Deploy image version
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
-ImageRepository: "xebialabs/xl-deploy"
-ImageTag: "10.2"
+ImageTag: "10.4"
+
+ServerImageRepository: "xebialabs/xl-deploy"
+WorkerImageRepository: "xebialabs/deploy-task-engine"
 
 ## Specify a imagePullPolicy
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
@@ -41,7 +43,7 @@ nginx-ingress-controller:
     #   memory: 128Mi
     requests: {}
     #   cpu: 100m
-    #   memory: 128Mi    
+    #   memory: 128Mi
   service:
     type: NodePort
 
@@ -76,7 +78,7 @@ ingress:
 AdminPassword:
   # Provide the admin password to be used
 
-xldLicense: 
+xldLicense:
 # Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 -w 0 ) and put the output here
 
 RepositoryKeystore:
@@ -200,15 +202,15 @@ rabbitmq:
     enabled: true
     existingSecret: xld-load-definition
   extraConfiguration: |
-    load_definitions = /app/xld-load_definition.json 
+    load_definitions = /app/xld-load_definition.json
   persistence:
     enabled: true
     storageClass: "-"
     size: 8Gi
   service:
-    type: ClusterIP  
+    type: ClusterIP
   volumePermissions:
-    enabled: true  
+    enabled: true
 
 # https://docs.xebialabs.com/v.10.2/deploy/how-to/configure-task-queueing/
 UseExistingMQ:

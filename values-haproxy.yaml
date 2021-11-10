@@ -12,9 +12,10 @@ XldWorkerCount: 3
 
 ## XL-Deploy image version
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
-ImageTag: "10.2"
+ImageTag: "10.4"
 
-ImageRepository: "xebialabs/xl-deploy"
+ServerImageRepository: "xebialabs/xl-deploy"
+WorkerImageRepository: "xebialabs/deploy-task-engine"
 
 ## Specify a imagePullPolicy
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
