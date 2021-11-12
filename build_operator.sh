@@ -29,4 +29,5 @@ operator-sdk init --domain digital.ai --plugins=helm
 operator-sdk create api --group=xld --version=v1alpha1 --helm-chart=xld.tgz
 export OPERATOR_IMG="docker.io/$containerOrganization/deploy-operator:$1"
 make docker-build docker-push IMG=$OPERATOR_IMG
+cd ..
 rm -rf xld
