@@ -226,7 +226,7 @@ spec:
     - metadata:
         name: data-dir
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes: [ {{.Values.Persistence.AccessMode}} ]
       {{- if .Values.Persistence.StorageClass }}
       {{- if (eq "-" .Values.Persistence.StorageClass) }}
         storageClassName: ""

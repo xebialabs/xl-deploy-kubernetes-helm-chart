@@ -137,7 +137,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
-                  key: databaseUsername 
+                  key: databaseUsername
             - name: XL_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -233,7 +233,7 @@ spec:
     - metadata:
         name: data-dir
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes: [ {{.Values.Persistence.AccessMode}} ]
       {{- if .Values.Persistence.StorageClass }}
       {{- if (eq "-" .Values.Persistence.StorageClass) }}
         storageClassName: ""
