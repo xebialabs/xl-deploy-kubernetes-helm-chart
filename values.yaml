@@ -212,7 +212,7 @@ Persistence:
   ## Choose storage class provided by your cloud provider, example "ssd" on GKE, AWS and OpenStack
   StorageClass: "-"
   Annotations: {}
-  AccessMode: ReadWriteMany
+  AccessMode: ReadWriteOnce
   XldMasterPvcSize: 10Gi
   XldWorkerPvcSize: 10Gi
 
