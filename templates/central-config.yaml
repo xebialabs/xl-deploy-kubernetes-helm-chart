@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "xl-deploy.fullname" . }}-central-config
+  labels:
+    chart: {{ template "xl-deploy.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "xl-deploy.name" . }}
+      component: {{ template "xl-deploy.name" . }}-central-config
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "xl-deploy.name" . }}
+        component: {{ template "xl-deploy.name" . }}-central-config
+        release: {{ .Release.Name }}
+    spec:
+      securityContext:
+        fsGroup: 10001
+      {{- if .Values.centralConfiguration.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.centralConfiguration.image.pullSecret }}
+      {{- end }}
+      containers:
+        - name: central-config
+          image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
+          imagePullPolicy: "{{ .Values.centralConfiguration.image.pullPolicy }}"
+          ports:
+            - name: http
+              containerPort: 8888
+              protocol: TCP
+          volumeMounts:
+            - name: central-configuration-server-data-dir
+              mountPath: /opt/xebialabs/central-configuration-server/centralConfiguration
+              subPath: centralConfiguration
+            - name: central-configuration-server-data-dir
+              mountPath: /opt/xebialabs/central-configuration-server/conf
+              subPath: conf
+      {{- if (eq .Values.centralConfiguration.persistence.enabled false) }}
+      volumes:
+        - name: central-configuration-server-data-dir
+          emptyDir: { }
+      {{- else }}
+      volumes:
+        - name: central-configuration-server-data-dir
+          persistentVolumeClaim:
+            claimName: central-configuration-server-data
+      {{- end }}
+---
+{{- if .Values.centralConfiguration.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: central-configuration-server-data
+spec:
+  accessModes:
+    - ReadWriteMany
+  {{- if .Values.centralConfiguration.persistence.storageClass }}
+  {{- if (eq "-" .Values.centralConfiguration.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: "{{ .Values.centralConfiguration.persistence.storageClass }}"
+  {{- end }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.centralConfiguration.persistence.pvcSize | quote }}
+{{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "xl-deploy.fullname" . }}-central-config
+  labels:
+    app: {{ template "xl-deploy.name" . }}
+    component: {{ template "xl-deploy.name" . }}-central-config
+    chart: {{ template "xl-deploy.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: central-config-http
+      port: 8888
+      protocol: TCP
+  selector:
+    app: {{ template "xl-deploy.name" . }}
+    component: {{ template "xl-deploy.name" . }}-central-config
+    release: {{ .Release.Name }}

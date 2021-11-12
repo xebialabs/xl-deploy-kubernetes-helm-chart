@@ -241,3 +241,16 @@ oidc:
   postLogoutRedirectUri:
   rolesClaimName:
   userNameClaimName:
+
+centralConfiguration:
+  install: true
+  image:
+    repository: xebialabs/central-configuration
+    tag: 10.3
+    pullPolicy: "Always"
+  #    pullSecret:
+  persistence:
+    enabled: false
+    storageClass: "-"
+    annotations: { }
+    pvcSize: 500M
