@@ -18,9 +18,9 @@ rm -f Chart.lock
 cd ..
 helm package xl-deploy-kubernetes-helm-chart
 rm -rf xl-deploy-kubernetes-helm-chart
-mv digitalai-deploy-10.1.tgz xld.tgz
+mv digitalai-deploy-*.tgz xld.tgz
 operator-sdk init --domain digital.ai --plugins=helm
 operator-sdk create api --group=xld --version=v1alpha1 --helm-chart=xld.tgz
 export OPERATOR_IMG="docker.io/xldevdocker/deploy-operator:$1"
 make docker-build docker-push IMG=$OPERATOR_IMG
-
+rm -rf xld
