@@ -49,14 +49,18 @@ spec:
       volumes:
         - name: central-configuration-server-data-dir
           persistentVolumeClaim:
-            claimName: central-configuration-server-data
+            claimName: {{ template "xl-deploy.fullname" . }}-central-config
       {{- end }}
 ---
 {{- if .Values.centralConfiguration.persistence.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: central-configuration-server-data
+  name: {{ template "xl-deploy.fullname" . }}-central-config
+  labels:
+    app: {{ template "xl-deploy.name" . }}
+    component: {{ template "xl-deploy.name" . }}-central-config
+    release: {{ .Release.Name }}
 spec:
   accessModes:
     - ReadWriteMany
