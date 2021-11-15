@@ -244,6 +244,7 @@ oidc:
 
 centralConfiguration:
   install: true
+  replicas: 1
   image:
     repository: xebialabs/central-configuration
     tag: 10.3
