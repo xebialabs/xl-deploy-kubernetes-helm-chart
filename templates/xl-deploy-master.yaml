@@ -46,6 +46,22 @@ spec:
             - name: POSTGRES_PORT
               value: "5432"
         {{- end }}
+        {{- if .Values.centralConfiguration.install }}
+        - name: wait-for-central-configuration
+          image: xebialabs/tiny-tools
+          command:
+            - sh
+            - -c
+            - >
+              until nc -z -w 2 $CENTRAL_CONFIGURATION_SVC $CENTRAL_CONFIGURATION_PORT && echo database ok; do
+              sleep 2;
+              done;
+          env:
+            - name: CENTRAL_CONFIGURATION_SVC
+              value: {{ template "xl-deploy.fullname" . }}-central-config
+            - name: CENTRAL_CONFIGURATION_PORT
+              value: "8888"
+        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.ImageRepository }}:{{ .Values.ImageTag }}"
@@ -196,10 +212,12 @@ spec:
             - name: ENABLE_SATELLITE
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
+            {{- if .Values.centralConfiguration.install }}
             - name: USE_EXTERNAL_CENTRAL_CONFIG
               value: "true"
             - name: CENTRAL_CONFIG_URL
               value: "http://{{ template "xl-deploy.fullname" . }}-central-config.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
+            {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
       {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) }}
