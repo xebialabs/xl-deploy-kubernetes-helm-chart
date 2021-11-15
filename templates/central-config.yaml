@@ -1,4 +1,3 @@
-{{- if .Values.centralConfiguration.install }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -93,4 +92,3 @@ spec:
     app: {{ template "xl-deploy.name" . }}
     component: {{ template "xl-deploy.name" . }}-central-config
     release: {{ .Release.Name }}
-{{- end }}

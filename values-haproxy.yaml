@@ -243,7 +243,6 @@ oidc:
   userNameClaimName:
 
 centralConfiguration:
-  install: true
   replicas: 1
   image:
     repository: xebialabs/central-configuration
