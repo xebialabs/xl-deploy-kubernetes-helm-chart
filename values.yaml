@@ -3,21 +3,21 @@
 # Declare variables to be passed into your templates.
 
 # No. of XL-Deploy master and worker pods to run.
-XldMasterCount: 3
-XldWorkerCount: 3
+xldMasterCount: 3
+xldWorkerCount: 3
 
 ## XL-Deploy image version
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
-ImageRepository: "xebialabs/xl-deploy"
-ImageTag: "10.2.4"
+imageRepository: "xebialabs/xl-deploy"
+imageTag: "10.2.4"
 
 ## Specify a imagePullPolicy
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
-ImagePullPolicy: "Always"
+imagePullPolicy: "Always"
 
 ## Ref: https://docs.openshift.com/container-platform/4.5/networking/routes/route-configuration.html
 route:
-  Enabled: true
+  enabled: true
   annotations:
     haproxy.router.openshift.io/cookie_name: SESSION_XLD
     haproxy.router.openshift.io/disable_cookies: "false"
@@ -43,18 +43,22 @@ route:
 #    insecureEdgeTerminationPolicy: Redirect
 
 # https://docs.xebialabs.com/v.10.2/deploy/docker/docker-environment-variables/
-AdminPassword:
-  # Provide the admin password to be used
+# Provide the admin password to be used
+# It will create a random alphanumeric password, if you leave this field empty.
+adminPassword:
 
-xldLicense:
 # Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 -w 0 ) and put the output here
+# You will get a trail-license, if you leave this field empty
+xldLicense:
 
-RepositoryKeystore:
 # https://docs.xebialabs.com/v.10.2/deploy/how-to/changing-passwords-in-xl-deploy/
 # Convert repository-keystore.jceks files content to base64 ( cat repository-keystore.jceks | base64 -w 0 ) and put the output here
+# If you don't want you provide the repository-keystore explicitly, leave this field empty
+repositoryKeystore:
 
-KeystorePassphrase:
 # Passphrase for repository-keystore.jceks file
+# Depends upon the above field. Leave it empty, if you dont want to provide a repository-keystore file.
+keystorePassphrase:
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -102,13 +106,13 @@ postgresql:
       enabled: false
 
 # https://docs.xebialabs.com/v.10.2/deploy/how-to/configure-the-xl-deploy-sql-repository/
-UseExistingDB:
-  Enabled: false
-  # If you want to use an existing database, change 'postgresql.install' to 'false'.
-  # Set 'UseExistingDB.Enabled' to 'true'.Uncomment the following lines and provide the values.
-  # XL_DB_URL:
-  # XL_DB_USERNAME:
-  # XL_DB_PASSWORD:
+# If you want to use an existing database, change 'postgresql.install' to 'false'.
+# Set 'useExistingDB.enabled' to 'true'and provide the values.
+useExistingDB:
+  enabled: false
+  XL_DB_URL:
+  XL_DB_USERNAME:
+  XL_DB_PASSWORD:
 
 ## Install rabbitmq chart. If you have an existing message queue deployment, set 'install' to 'false'.
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/rabbitmq/README.md
@@ -181,21 +185,21 @@ rabbitmq:
   volumePermissions:
     enabled: true
 
-UseExistingMQ:
-  Enabled: false
-  # If you want to use a existing Message Queue, change the "rabbitmq.install to false"
-  # Set 'UseExistingMQ.Enabled' to 'true'.Uncomment the following lines and provide the values.
-  # XLD_TASK_QUEUE_USERNAME:
-  # XLD_TASK_QUEUE_PASSWORD:
-  # XLD_TASK_QUEUE_URL:
-  # XLD_TASK_QUEUE_DRIVER_CLASS_NAME:
+# If you want to use a existing Message Queue, change the "rabbitmq.install to false"
+# Set 'useExistingMQ.enabled' to 'true' and provide the values.
+useExistingMQ:
+  enabled: false
+  XLD_TASK_QUEUE_USERNAME:
+  XLD_TASK_QUEUE_PASSWORD:
+  XLD_TASK_QUEUE_URL:
+  XLD_TASK_QUEUE_DRIVER_CLASS_NAME:
 
 ## Configure extra options for liveness and readiness probes
-HealthProbes: true
-HealthProbesLivenessTimeout: 60
-HealthProbesReadinessTimeout: 60
-HealthProbeFailureThreshold: 12
-HealthPeriodScans: 10
+healthProbes: true
+healthProbesLivenessTimeout: 60
+healthProbesReadinessTimeout: 60
+healthProbeFailureThreshold: 12
+healthPeriodScans: 10
 
 nodeSelector: {}
 
@@ -205,20 +209,20 @@ tolerations: []
 ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
 affinity: {}
 
-## XL Deploy data Persistent Volume for 'XL Deploy export'
-## If "Persistence.Enabled" set to "false", it will use hostPath.
-Persistence:
-  Enabled: true
-  ## Choose storage class provided by your cloud provider, example "ssd" on GKE, AWS and OpenStack
-  StorageClass: "-"
-  Annotations: {}
-  AccessMode: ReadWriteOnce
-  XldMasterPvcSize: 10Gi
-  XldWorkerPvcSize: 10Gi
+## XL Deploy data Persistent Volume for 'XL Deploy masters and workers'
+## If "Persistence.Enabled" set to "false", it will create an emptyDir volume.
+## Choose storage class provided by your cloud provider, example "ssd" on GKE, AWS and OpenStack
+persistence:
+  enabled: true
+  storageClass: "-"
+  annotations: {}
+  accessMode: ReadWriteOnce
+  xldMasterPvcSize: 10Gi
+  xldWorkerPvcSize: 10Gi
 
 # Set "satellite.Enabled" value to "true" to use the "XL Satellite" feature
 satellite:
-  Enabled: false
+  enabled: false
 
 # OIDC Settings
 oidc:

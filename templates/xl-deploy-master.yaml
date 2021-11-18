@@ -8,7 +8,7 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   podManagementPolicy: OrderedReady
-  replicas: {{ .Values.XldMasterCount }}
+  replicas: {{ .Values.xldMasterCount }}
   updateStrategy:
     type: RollingUpdate
   selector:
@@ -25,19 +25,8 @@ spec:
         release: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ template "xl-deploy.name" . }}-sa
+      {{- if .Values.postgresql.install }}
       initContainers:
-        - name: fix-the-volume-permission
-          image: xebialabs/tiny-tools
-          command:
-            - sh
-            - -c
-            - chown -R 10001 /opt/xebialabs/xl-deploy-server/
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/
-        {{- if .Values.postgresql.install }}
         - name: wait-for-postgresql
           image: xebialabs/tiny-tools
           command:
@@ -55,8 +44,8 @@ spec:
         {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.ImageRepository }}:{{ .Values.ImageTag }}"
-          imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
+          image: "{{ .Values.imageRepository }}:{{ .Values.imageTag }}"
+          imagePullPolicy: "{{ .Values.imagePullPolicy }}"
           ports:
             - name: http
               containerPort: 4516
@@ -98,21 +87,21 @@ spec:
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/hotfix/satellite-lib
               subPath: satellite-lib
-          {{- if .Values.HealthProbes }}
+          {{- if .Values.healthProbes }}
           livenessProbe:
             httpGet:
               path: /
               port: http
-            initialDelaySeconds: {{ .Values.HealthProbesLivenessTimeout }}
-            periodSeconds: {{ .Values.HealthPeriodScans }}
-            failureThreshold: {{ .Values.HealthProbeFailureThreshold }}
+            initialDelaySeconds: {{ .Values.healthProbesLivenessTimeout }}
+            periodSeconds: {{ .Values.healthPeriodScans }}
+            failureThreshold: {{ .Values.healthProbeFailureThreshold }}
           readinessProbe:
             httpGet:
               path: /
               port: http
-            initialDelaySeconds: {{ .Values.HealthProbesReadinessTimeout }}
-            periodSeconds: {{ .Values.HealthPeriodScans }}
-            failureThreshold: {{ .Values.HealthProbeFailureThreshold }}
+            initialDelaySeconds: {{ .Values.healthProbesReadinessTimeout }}
+            periodSeconds: {{ .Values.healthPeriodScans }}
+            failureThreshold: {{ .Values.healthProbeFailureThreshold }}
           {{- end }}
           env:
             - name: ADMIN_PASSWORD
@@ -130,9 +119,9 @@ spec:
             - name: XL_DB_PASSWORD
               value: "xld"
             {{- else }}
-            {{- if .Values.UseExistingDB.Enabled }}
+            {{- if .Values.useExistingDB.enabled }}
             - name: XL_DB_URL
-              value: {{.Values.UseExistingDB.XL_DB_URL | quote}}
+              value: {{.Values.useExistingDB.XL_DB_URL | quote}}
             - name: XL_DB_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -145,11 +134,16 @@ spec:
                   key: databasePassword
             {{- end }}
             {{- end }}
+            {{- if .Values.xldLicense }}
             - name: XL_LICENSE
               valueFrom:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: xld-License
+            {{- else }}
+            - name: ACCEPT_EULA
+              value: "Y"
+            {{- end }}
             - name: XL_METRICS_ENABLED
               value: "false"
             - name: FORCE_UPGRADE
@@ -168,7 +162,7 @@ spec:
             - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
               value: "com.rabbitmq.jms.admin.RMQConnectionFactory"
             {{- else }}
-            {{- if .Values.UseExistingMQ.Enabled }}
+            {{- if .Values.useExistingMQ.enabled }}
             - name: XLD_TASK_QUEUE_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -180,11 +174,12 @@ spec:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: rabbitmqPassword
             - name: XLD_TASK_QUEUE_URL
-              value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_URL | quote }}
+              value: {{ .Values.useExistingMQ.XLD_TASK_QUEUE_URL | quote }}
             - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
-              value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_DRIVER_CLASS_NAME }}
+              value: {{ .Values.useExistingMQ.XLD_TASK_QUEUE_DRIVER_CLASS_NAME }}
             {{- end }}
             {{- end }}
+            {{- if .Values.repositoryKeystore }}
             - name: REPOSITORY_KEYSTORE
               valueFrom:
                 secretKeyRef:
@@ -195,15 +190,16 @@ spec:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: keystorePassphrase
-            {{- if .Values.satellite.Enabled }}
+            {{- end }}
+            {{- if .Values.satellite.enabled }}
             - name: ENABLE_SATELLITE
-              value: {{ .Values.satellite.Enabled | quote }}
+              value: {{ .Values.satellite.enabled | quote }}
             {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
-      {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) }}
+      {{- if or (eq .Values.persistence.enabled false) (eq .Values.oidc.enabled true) }}
       volumes:
-        {{- if not .Values.Persistence.Enabled }}
+        {{- if not .Values.persistence.enabled }}
         - name: data-dir
           emptyDir: {}
         {{- end }}
@@ -228,20 +224,20 @@ spec:
       tolerations:
 {{ toYaml . | indent 8 }}
     {{- end }}
-  {{- if .Values.Persistence.Enabled }}
+  {{- if .Values.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
         name: data-dir
       spec:
-        accessModes: [ {{.Values.Persistence.AccessMode}} ]
-      {{- if .Values.Persistence.StorageClass }}
-      {{- if (eq "-" .Values.Persistence.StorageClass) }}
+        accessModes: [ {{.Values.persistence.accessMode}} ]
+      {{- if .Values.persistence.storageClass }}
+      {{- if (eq "-" .Values.persistence.storageClass) }}
         storageClassName: ""
       {{- else }}
-        storageClassName: "{{ .Values.Persistence.StorageClass }}"
+        storageClassName: "{{ .Values.persistence.storageClass }}"
       {{- end }}
       {{- end }}
         resources:
           requests:
-            storage: {{ .Values.Persistence.XldMasterPvcSize | quote }}
+            storage: {{ .Values.persistence.xldMasterPvcSize | quote }}
   {{- end }}

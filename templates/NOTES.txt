@@ -1,5 +1,5 @@
 ## To get the application URL, run:
-{{- if .Values.route.Enabled }}
+{{- if .Values.route.enabled }}
 {{- range .Values.route.hosts }}
 http{{ if $.Values.route.tls }}s{{ end }}://{{ . }}{{ $.Values.route.path }}
 {{- end }}
