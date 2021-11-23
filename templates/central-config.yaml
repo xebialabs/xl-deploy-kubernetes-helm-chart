@@ -20,12 +20,7 @@ spec:
         component: {{ template "xl-deploy.name" . }}-central-config
         release: {{ .Release.Name }}
     spec:
-      securityContext:
-        fsGroup: 10001
-      {{- if .Values.centralConfiguration.image.pullSecret }}
-      imagePullSecrets:
-        - name: {{ .Values.centralConfiguration.image.pullSecret }}
-      {{- end }}
+      serviceAccountName: {{ template "xl-deploy.name" . }}-sa
       containers:
         - name: central-config
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
