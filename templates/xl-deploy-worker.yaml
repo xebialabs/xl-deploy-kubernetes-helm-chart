@@ -189,7 +189,7 @@ spec:
             - name: USE_EXTERNAL_CENTRAL_CONFIG
               value: "true"
             - name: CENTRAL_CONFIG_URL
-              value: "http://{{ template "xl-deploy.fullname" . }}-central-config.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
+              value: "http://{{ template "xl-deploy.fullname" . }}-central-configuration.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
           args:
             - "worker"
             - "-master"
