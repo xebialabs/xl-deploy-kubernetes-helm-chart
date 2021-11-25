@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "xl-deploy.fullname" . }}-central-config
+  name: {{ template "xl-deploy.fullname" . }}-central-configuration
   labels:
     chart: {{ template "xl-deploy.chart" . }}
     release: {{ .Release.Name }}
@@ -11,18 +11,18 @@ spec:
   selector:
     matchLabels:
       app: {{ template "xl-deploy.name" . }}
-      component: {{ template "xl-deploy.name" . }}-central-config
+      component: {{ template "xl-deploy.name" . }}-central-configuration
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
         app: {{ template "xl-deploy.name" . }}
-        component: {{ template "xl-deploy.name" . }}-central-config
+        component: {{ template "xl-deploy.name" . }}-central-configuration
         release: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ template "xl-deploy.name" . }}-sa
       containers:
-        - name: central-config
+        - name: central-configuration
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
           imagePullPolicy: "{{ .Values.centralConfiguration.image.pullPolicy }}"
           ports:
@@ -107,17 +107,17 @@ spec:
       volumes:
         - name: central-configuration-server-data-dir
           persistentVolumeClaim:
-            claimName: {{ template "xl-deploy.fullname" . }}-central-config
+            claimName: {{ template "xl-deploy.fullname" . }}-central-configuration
       {{- end }}
 ---
 {{- if .Values.centralConfiguration.persistence.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ template "xl-deploy.fullname" . }}-central-config
+  name: {{ template "xl-deploy.fullname" . }}-central-configuration
   labels:
     app: {{ template "xl-deploy.name" . }}
-    component: {{ template "xl-deploy.name" . }}-central-config
+    component: {{ template "xl-deploy.name" . }}-central-configuration
     release: {{ .Release.Name }}
 spec:
   accessModes:
@@ -137,20 +137,20 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "xl-deploy.fullname" . }}-central-config
+  name: {{ template "xl-deploy.fullname" . }}-central-configuration
   labels:
     app: {{ template "xl-deploy.name" . }}
-    component: {{ template "xl-deploy.name" . }}-central-config
+    component: {{ template "xl-deploy.name" . }}-central-configuration
     chart: {{ template "xl-deploy.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
   type: ClusterIP
   ports:
-    - name: central-config-http
+    - name: central-configuration-http
       port: 8888
       protocol: TCP
   selector:
     app: {{ template "xl-deploy.name" . }}
-    component: {{ template "xl-deploy.name" . }}-central-config
+    component: {{ template "xl-deploy.name" . }}-central-configuration
     release: {{ .Release.Name }}
