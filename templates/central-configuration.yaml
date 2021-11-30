@@ -105,7 +105,10 @@ spec:
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
             - name: SPRING_CLOUD_ENCRYPT_KEY
-              value: {{ .Values.SpringCloudEncryptKey }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: springCloudEncryptKey
       {{- if (eq .Values.centralConfiguration.persistence.enabled false) }}
       volumes:
         - name: central-configuration-server-data-dir
