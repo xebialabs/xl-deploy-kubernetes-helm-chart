@@ -186,6 +186,8 @@ spec:
             - name: ENABLE_SATELLITE
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
+            - name: SPRING_CLOUD_ENCRYPT_KEY
+              value: {{ .Values.SpringCloudEncryptKey }}
             - name: USE_EXTERNAL_CENTRAL_CONFIG
               value: "true"
             - name: CENTRAL_CONFIG_URL
