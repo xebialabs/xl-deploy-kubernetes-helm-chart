@@ -210,11 +210,11 @@ spec:
             - name: ENABLE_SATELLITE
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
-            - name: SPRING_CLOUD_ENCRYPT_KEY
+            - name: CENTRAL_CONFIG_ENCRYPT_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
-                  key: springCloudEncryptKey
+                  key: centralConfigEncryptKey
             - name: USE_EXTERNAL_CENTRAL_CONFIG
               value: "true"
             - name: CENTRAL_CONFIG_URL

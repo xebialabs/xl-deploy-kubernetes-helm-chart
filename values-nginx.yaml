@@ -69,9 +69,9 @@ ingress:
 
 # https://docs.xebialabs.com/v.10.2/deploy/docker/docker-environment-variables/
 AdminPassword:
-  # Provide the admin password to be used
+# Provide the admin password to be used
 
-xldLicense: 
+xldLicense:
 # Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 -w 0 ) and put the output here
 
 RepositoryKeystore:
@@ -81,7 +81,7 @@ RepositoryKeystore:
 KeystorePassphrase:
 # Passphrase for repository-keystore.jceks file
 
-SpringCloudEncryptKey: "n8FfQW0m@L,(74b"
+CentralConfigEncryptKey:
 # spring cloud config encryption key
 
 resources: {}
@@ -94,7 +94,7 @@ resources: {}
   #  memory: 3Gi
   # requests:
   #  cpu: 0.7
-  #  memory: 1700Mi
+#  memory: 1700Mi
 
 ## Ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/README.md
 ## Install postgresql chart. If you have an existing database deployment, set 'install' to 'false'.
@@ -189,15 +189,15 @@ rabbitmq:
     enabled: true
     existingSecret: xld-load-definition
   extraConfiguration: |
-    load_definitions = /app/xld-load_definition.json 
+    load_definitions = /app/xld-load_definition.json
   persistence:
     enabled: true
     storageClass: "-"
     size: 8Gi
   service:
-    type: ClusterIP  
+    type: ClusterIP
   volumePermissions:
-    enabled: true  
+    enabled: true
 
 # https://docs.xebialabs.com/v.10.2/deploy/how-to/configure-task-queueing/
 UseExistingMQ:

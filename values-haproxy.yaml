@@ -72,7 +72,7 @@ RepositoryKeystore:
 KeystorePassphrase:
 # Passphrase for repository-keystore.jceks file
 
-SpringCloudEncryptKey: "n8FfQW0m@L,(74b"
+CentralConfigEncryptKey:
 # spring cloud config encryption key
 
 resources: {}
