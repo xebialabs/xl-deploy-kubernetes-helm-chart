@@ -189,6 +189,11 @@ spec:
             - name: ENABLE_SATELLITE
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
+            - name: CENTRAL_CONFIG_ENCRYPT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: centralConfigEncryptKey
             - name: USE_EXTERNAL_CENTRAL_CONFIG
               value: "true"
             - name: CENTRAL_CONFIG_URL
