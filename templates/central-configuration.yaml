@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ template "xl-deploy.fullname" . }}-central-configuration
   labels:
@@ -13,6 +13,7 @@ spec:
       app: {{ template "xl-deploy.name" . }}
       component: {{ template "xl-deploy.name" . }}-central-configuration
       release: {{ .Release.Name }}
+  serviceName: {{ template "xl-deploy.fullname" . }}-central-configuration
   template:
     metadata:
       labels:
@@ -30,10 +31,10 @@ spec:
               containerPort: 8888
               protocol: TCP
           volumeMounts:
-            - name: central-configuration-server-data-dir
+            - name: data-dir
               mountPath: /opt/xebialabs/central-configuration-server/centralConfiguration
               subPath: centralConfiguration
-            - name: central-configuration-server-data-dir
+            - name: data-dir
               mountPath: /opt/xebialabs/central-configuration-server/conf
               subPath: conf
           env:
@@ -106,38 +107,26 @@ spec:
                   key: centralConfigEncryptKey
       {{- if (eq .Values.centralConfiguration.persistence.enabled false) }}
       volumes:
-        - name: central-configuration-server-data-dir
+        - name: data-dir
           emptyDir: { }
-      {{- else }}
-      volumes:
-        - name: central-configuration-server-data-dir
-          persistentVolumeClaim:
-            claimName: {{ template "xl-deploy.fullname" . }}-central-configuration
       {{- end }}
----
-{{- if .Values.centralConfiguration.persistence.enabled }}
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ template "xl-deploy.fullname" . }}-central-configuration
-  labels:
-    app: {{ template "xl-deploy.name" . }}
-    component: {{ template "xl-deploy.name" . }}-central-configuration
-    release: {{ .Release.Name }}
-spec:
-  accessModes:
-    - ReadWriteMany
-  {{- if .Values.centralConfiguration.persistence.storageClass }}
-  {{- if (eq "-" .Values.centralConfiguration.persistence.storageClass) }}
-  storageClassName: ""
-  {{- else }}
-  storageClassName: "{{ .Values.centralConfiguration.persistence.storageClass }}"
+  {{- if .Values.centralConfiguration.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data-dir
+      spec:
+        accessModes: [ "ReadWriteMany" ]
+      {{- if .Values.centralConfiguration.persistence.storageClass }}
+      {{- if (eq "-" .Values.centralConfiguration.persistence.storageClass) }}
+      storageClassName: ""
+      {{- else }}
+      storageClassName: "{{ .Values.centralConfiguration.persistence.storageClass }}"
+      {{- end }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.centralConfiguration.persistence.pvcSize | quote }}
   {{- end }}
-  {{- end }}
-  resources:
-    requests:
-      storage: {{ .Values.centralConfiguration.persistence.pvcSize | quote }}
-{{- end }}
 ---
 apiVersion: v1
 kind: Service
