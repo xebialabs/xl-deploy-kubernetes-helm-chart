@@ -253,7 +253,7 @@ centralConfiguration:
     pullPolicy: "Always"
   #    pullSecret:
   persistence:
-    enabled: false
+    enabled: true
     storageClass: "-"
     annotations: { }
     pvcSize: 500M
