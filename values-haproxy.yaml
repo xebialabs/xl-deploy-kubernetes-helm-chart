@@ -58,7 +58,7 @@ ingress:
 #      hosts:
 #        - example.com
 
-# https://docs.xebialabs.com/v.10.2/deploy/docker/docker-environment-variables/
+# https://docs.digital.ai/bundle/devops-deploy-version-v.10.2/page/deploy/docker/docker-environment-variables.html
 AdminPassword:
   # Provide the admin password to be used
 
@@ -66,7 +66,7 @@ xldLicense:
 # Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 -w 0 ) and put the output here
 
 RepositoryKeystore:
-# https://docs.xebialabs.com/v.10.2/deploy/how-to/changing-passwords-in-xl-deploy/
+# https://docs.digital.ai/bundle/devops-deploy-version-v.10.2/page/deploy/how-to/changing-passwords-in-xl-deploy.html
 # Convert repository-keystore.jceks files content to base64 ( cat repository-keystore.jceks | base64 -w 0 ) and put the output here
 
 KeystorePassphrase:
@@ -107,7 +107,7 @@ postgresql:
       memory: 256Mi
       cpu: 250m
 
-# https://docs.xebialabs.com/v.10.2/deploy/how-to/configure-the-xl-deploy-sql-repository/
+# https://docs.digital.ai/bundle/devops-deploy-version-v.10.2/page/deploy/how-to/configure-the-xl-deploy-sql-repository.html
 UseExistingDB:
   Enabled: false
   # If you want to use an existing database, set 'postgresql.install' to 'false' and 'UseExistingDB.Enabled' to 'true'.
@@ -187,7 +187,7 @@ rabbitmq:
   volumePermissions:
     enabled: true
 
-# https://docs.xebialabs.com/v.10.2/deploy/how-to/configure-task-queueing/
+# https://docs.digital.ai/bundle/devops-deploy-version-v.10.2/page/deploy/how-to/configure-task-queueing.html
 UseExistingMQ:
   Enabled: false
   # If you want to use a existing Message Queue, change the "rabbitmq.install to false"
