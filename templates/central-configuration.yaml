@@ -22,7 +22,7 @@ spec:
         release: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ template "xl-deploy.name" . }}-sa
-      {{- if .Values.CopyCentralConfigurationFromMaster.enabled }}
+      {{- if and (eq .Values.centralConfiguration.migrateFromEmbeded true) (eq .Values.centralConfiguration.persistence.enabled true) (eq .Values.Persistence.Enabled true)}}
       initContainers:
         - name: wait-for-copy-central-config-from-master
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
