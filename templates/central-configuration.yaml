@@ -27,6 +27,22 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.centralConfiguration.image.pullSecret }}
       {{- end }}
+      {{- if .Values.CopyCentralConfigurationFromMaster.enabled }}
+      initContainers:
+        - name: wait-for-copy-central-config-from-master
+          image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
+          imagePullPolicy: "{{ .Values.centralConfiguration.image.pullPolicy }}"
+          command: ["sh", "/opt/xebialabs/central-configuration-server/bin/copy-central-config-from-embedded.sh"]
+          volumeMounts:
+            - mountPath: "/mnt/centralConfiguration-source-dir"
+              name: source-dir
+            - mountPath: "/mnt/centralConfiguration-target-dir"
+              name: data-dir
+      volumes:
+        - name: source-dir
+          persistentVolumeClaim:
+            claimName: data-dir-{{ .Release.Name }}-{{ template "xl-deploy.name" . }}-master-0
+      {{- end }}
       containers:
         - name: central-configuration
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"

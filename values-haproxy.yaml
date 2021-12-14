@@ -257,3 +257,8 @@ centralConfiguration:
     storageClass: "-"
     annotations: { }
     pvcSize: 500M
+
+
+# migrate the embedded central configuration to standalone central configuration server, default set to "false"
+CopyCentralConfigurationFromMaster:
+  enabled: false
