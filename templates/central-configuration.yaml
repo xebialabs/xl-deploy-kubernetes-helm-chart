@@ -27,12 +27,12 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.centralConfiguration.image.pullSecret }}
       {{- end }}
-      {{- if .Values.CopyCentralConfigurationFromMaster.enabled }}
+      {{- if and (eq .Values.centralConfiguration.migrateFromEmbeded true) (eq .Values.centralConfiguration.persistence.enabled true) (eq .Values.Persistence.Enabled true)}}
       initContainers:
-        - name: wait-for-copy-central-config-from-master
+        - name: wait-for-migrate-from-embedded-cc-to-standalone
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
           imagePullPolicy: "{{ .Values.centralConfiguration.image.pullPolicy }}"
-          command: ["sh", "/opt/xebialabs/central-configuration-server/bin/copy-central-config-from-embedded.sh"]
+          command: ["sh", "/opt/xebialabs/central-configuration-server/bin/migrate-from-embedded-cc-to-standalone.sh"]
           volumeMounts:
             - mountPath: "/mnt/centralConfiguration-source-dir"
               name: source-dir
