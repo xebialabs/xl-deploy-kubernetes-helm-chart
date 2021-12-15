@@ -36,7 +36,7 @@ spec:
       volumes:
         - name: source-dir
           persistentVolumeClaim:
-            claimName: data-dir-{{ .Release.Name }}-{{ template "xl-deploy.name" . }}-master-0
+            claimName: data-dir-{{ template "xl-deploy.fullname" . }}-master-0
       {{- end }}
       containers:
         - name: central-configuration
