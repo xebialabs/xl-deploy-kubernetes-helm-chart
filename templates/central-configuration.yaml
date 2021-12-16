@@ -27,7 +27,7 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.centralConfiguration.image.pullSecret }}
       {{- end }}
-      {{- if and (eq .Values.centralConfiguration.migrateFromEmbeded true) (eq .Values.centralConfiguration.persistence.enabled true) (eq .Values.Persistence.Enabled true)}}
+      {{- if and (eq .Values.centralConfiguration.migrateFromEmbedded true) (eq .Values.centralConfiguration.persistence.enabled true) (eq .Values.Persistence.Enabled true)}}
       initContainers:
         - name: wait-for-migrate-from-embedded-cc-to-standalone
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
