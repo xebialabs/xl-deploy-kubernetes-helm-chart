@@ -240,10 +240,10 @@ oidc:
 
 # Central configuration settings
 centralConfiguration:
-  replicas: 1
+  replicas: 3
   image:
     repository: xebialabs/central-configuration
-    tag: 10.3
+    tag: 10.4.0
     pullPolicy: "Always"
   #    pullSecret:
   persistence:
