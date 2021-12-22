@@ -55,7 +55,7 @@ data:
             {{- end }}
             {{- range .Values.ingress.hosts }}
             redirectUri: "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/login/external-login"
-            postLogoutRedirectUri: "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/login/external-login"
+            postLogoutRedirectUri: "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/oauth2/authorization/xl-deploy"
             {{- end }}
             rolesClaimName: "groups"
             userNameClaimName: "preferred_username"
