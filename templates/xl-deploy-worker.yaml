@@ -232,18 +232,18 @@ spec:
     {{- end }}
   {{- if .Values.Persistence.Enabled }}
   volumeClaimTemplates:
-    - metadata:
-        name: data-dir
-      spec:
-        accessModes: [ {{.Values.Persistence.AccessMode}} ]
+  - metadata:
+      name: data-dir
+    spec:
+      accessModes: [ {{.Values.Persistence.AccessMode}} ]
       {{- if .Values.Persistence.StorageClass }}
       {{- if (eq "-" .Values.Persistence.StorageClass) }}
-        storageClassName: ""
+      storageClassName: ""
       {{- else }}
-        storageClassName: "{{ .Values.Persistence.StorageClass }}"
+      storageClassName: "{{ .Values.Persistence.StorageClass }}"
       {{- end }}
       {{- end }}
-        resources:
-          requests:
-            storage: {{ .Values.Persistence.XldWorkerPvcSize | quote }}
+      resources:
+        requests:
+          storage: {{ .Values.Persistence.XldWorkerPvcSize | quote }}
   {{- end }}

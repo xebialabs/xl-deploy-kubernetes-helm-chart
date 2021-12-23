@@ -1,6 +1,6 @@
 #!/bin/bash
 
-containerOrganization="xldevdocker"
+containerOrganization="xebialabsunsupported"
 
 if [[ $# -eq 0 ]] ; then
     printf "\e[31mProvide in a first parameter a version (SemVer compatible) to release !\e[m\n"
@@ -15,9 +15,8 @@ fi
 
 mkdir xld
 cd xld
-git clone -b oc-master git@github.com:xebialabs/xl-deploy-kubernetes-helm-chart.git
+git clone -b ENG-7206-oc git@github.com:xebialabs/xl-deploy-kubernetes-helm-chart.git
 cd xl-deploy-kubernetes-helm-chart
-rm -f values-haproxy.yaml
 helm dependency update .
 rm -f Chart.lock
 cd ..

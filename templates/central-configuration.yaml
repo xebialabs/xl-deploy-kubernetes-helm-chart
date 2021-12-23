@@ -112,10 +112,10 @@ spec:
       {{- end }}
   {{- if .Values.centralConfiguration.persistence.enabled }}
   volumeClaimTemplates:
-    - metadata:
-        name: data-dir
-      spec:
-        accessModes: [ "ReadWriteMany" ]
+  - metadata:
+      name: data-dir
+    spec:
+      accessModes: [ "ReadWriteMany" ]
       {{- if .Values.centralConfiguration.persistence.storageClass }}
       {{- if (eq "-" .Values.centralConfiguration.persistence.storageClass) }}
       storageClassName: ""
