@@ -64,7 +64,7 @@ spec:
               done;
           env:
             - name: CENTRAL_CONFIGURATION_SVC
-              value: {{ template "xl-deploy.fullname" . }}-central-configuration
+              value: {{ template "xl-deploy.fullname" . }}-cc-server
             - name: CENTRAL_CONFIGURATION_PORT
               value: "8888"
       containers:
@@ -221,7 +221,7 @@ spec:
             - name: USE_EXTERNAL_CENTRAL_CONFIG
               value: "true"
             - name: CENTRAL_CONFIG_URL
-              value: "http://{{ template "xl-deploy.fullname" . }}-central-configuration.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
+              value: "http://{{ template "xl-deploy.fullname" . }}-cc-server.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
           resources:
 {{ toYaml .Values.resources | indent 12 }}
       {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) }}

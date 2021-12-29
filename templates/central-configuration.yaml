@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ template "xl-deploy.fullname" . }}-central-configuration
+  name: {{ template "xl-deploy.fullname" . }}-cc-server
   labels:
     chart: {{ template "xl-deploy.chart" . }}
     release: {{ .Release.Name }}
@@ -11,14 +11,14 @@ spec:
   selector:
     matchLabels:
       app: {{ template "xl-deploy.name" . }}
-      component: {{ template "xl-deploy.name" . }}-central-configuration
+      component: {{ template "xl-deploy.name" . }}-cc-server
       release: {{ .Release.Name }}
-  serviceName: {{ template "xl-deploy.fullname" . }}-central-configuration
+  serviceName: {{ template "xl-deploy.fullname" . }}-cc-server
   template:
     metadata:
       labels:
         app: {{ template "xl-deploy.name" . }}
-        component: {{ template "xl-deploy.name" . }}-central-configuration
+        component: {{ template "xl-deploy.name" . }}-cc-server
         release: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ template "xl-deploy.name" . }}-sa
@@ -131,10 +131,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "xl-deploy.fullname" . }}-central-configuration
+  name: {{ template "xl-deploy.fullname" . }}-cc-server
   labels:
     app: {{ template "xl-deploy.name" . }}
-    component: {{ template "xl-deploy.name" . }}-central-configuration
+    component: {{ template "xl-deploy.name" . }}-cc-server
     chart: {{ template "xl-deploy.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -146,5 +146,5 @@ spec:
       protocol: TCP
   selector:
     app: {{ template "xl-deploy.name" . }}
-    component: {{ template "xl-deploy.name" . }}-central-configuration
+    component: {{ template "xl-deploy.name" . }}-cc-server
     release: {{ .Release.Name }}
