@@ -11,7 +11,7 @@ spec:
   selector:
     matchLabels:
       app: {{ template "xl-deploy.name" . }}
-      component: {{ template "xl-deploy.name" . }}-central-configuration
+      component: {{ template "xl-deploy.name" . }}-cc-server
       release: {{ .Release.Name }}
   serviceName: {{ template "xl-deploy.fullname" . }}-cc-server
   template:
@@ -28,7 +28,7 @@ spec:
         - name: {{ .Values.centralConfiguration.image.pullSecret }}
       {{- end }}
       containers:
-        - name: central-configuration
+        - name: -cc-server
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
           imagePullPolicy: "{{ .Values.centralConfiguration.image.pullPolicy }}"
           ports:
