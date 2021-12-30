@@ -23,7 +23,7 @@ spec:
     spec:
       serviceAccountName: {{ template "xl-deploy.name" . }}-sa
       containers:
-        - name: central-configuration
+        - name: cc-server
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
           imagePullPolicy: "{{ .Values.centralConfiguration.image.pullPolicy }}"
           ports:
@@ -141,7 +141,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - name: central-configuration-http
+    - name: cc-server-http
       port: 8888
       protocol: TCP
   selector:
