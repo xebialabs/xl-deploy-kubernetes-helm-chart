@@ -146,7 +146,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - name: central-configuration-http
+    - name: cc-server-http
       port: 8888
       protocol: TCP
   selector:
