@@ -35,5 +35,5 @@ Create chart name and version as used by the chart label.
 shared central config encrypt key will be generated if not defined in values.yaml.
 */}}
 {{- define "central-config.encrypt-key" -}}
-{{- default (randAlphaNum 15) .Values.CentralConfigEncryptKey -}}
+{{- default "n8FfQW0m@L,(74b" .Values.CentralConfigEncryptKey -}}
 {{- end -}}
