@@ -131,7 +131,7 @@ spec:
   - metadata:
       name: data-dir
     spec:
-      accessModes: [ "ReadWriteMany" ]
+      accessModes: [ {{.Values.Persistence.AccessMode}} ]
       {{- if .Values.centralConfiguration.persistence.storageClass }}
       {{- if (eq "-" .Values.centralConfiguration.persistence.storageClass) }}
       storageClassName: ""
