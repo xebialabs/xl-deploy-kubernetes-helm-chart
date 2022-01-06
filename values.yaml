@@ -310,3 +310,4 @@ centralConfiguration:
     storageClass: "-"
     annotations: { }
     pvcSize: 500M
+  migrateFromEmbedded: false
