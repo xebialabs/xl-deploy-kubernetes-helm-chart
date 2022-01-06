@@ -302,7 +302,6 @@ oidc:
   userAuthorizationUri:
   logoutUri:
   redirectUri:
-  postLogoutRedirectUri:
   rolesClaimName:
   userNameClaimName:
 
