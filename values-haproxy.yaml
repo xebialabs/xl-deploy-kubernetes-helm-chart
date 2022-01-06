@@ -302,9 +302,6 @@ oidc:
   userAuthorizationUri:
   logoutUri:
   redirectUri:
-  postLogoutRedirectUri:
-  rolesClaimName:
-  userNameClaimName:
 centralConfiguration:
   replicas: 1
   image:
