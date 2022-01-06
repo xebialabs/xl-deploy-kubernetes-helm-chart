@@ -71,7 +71,7 @@ ingress:
 AdminPassword:
 # Provide the admin password to be used
 
-xldLicense: 
+xldLicense:
 # Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 -w 0 ) and put the output here
 
 RepositoryKeystore:
@@ -327,3 +327,4 @@ centralConfiguration:
     storageClass: "-"
     annotations: { }
     pvcSize: 500M
+  migrateFromEmbedded: false
