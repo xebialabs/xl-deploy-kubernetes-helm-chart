@@ -316,7 +316,7 @@ oidc:
   userNameClaimName:
 
 centralConfiguration:
-  replicas: 3 3 
+  replicas: 3 
   image:
     repository: xebialabs/central-configuration
     tag: 10.4.0
