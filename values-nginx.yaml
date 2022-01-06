@@ -314,6 +314,7 @@ oidc:
   postLogoutRedirectUri:
   rolesClaimName:
   userNameClaimName:
+
 centralConfiguration:
   replicas: 1
   image:
