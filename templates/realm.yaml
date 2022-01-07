@@ -1013,8 +1013,8 @@ data:
         "clientAuthenticatorType" : "client-secret",
         "secret" : "2c89c720-009c-428f-b815-4e488674176c",
         {{- range .Values.ingress.hosts }}
-        "redirectUris" : [ "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/oauth2/authorization/xl-deploy",
-        "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/login/external-login" ],
+        "redirectUris" : [ "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/xl-deploy/oauth2/authorization/xl-deploy",
+        "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/xl-deploy/login/external-login" ],
         "webOrigins" : [ ],
         "notBefore" : 0,
         "bearerOnly" : false,

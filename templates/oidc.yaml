@@ -54,8 +54,8 @@ data:
             logoutUri: "http{{ if $.Values.keycloak.ingress.tls }}s{{ end }}://{{ .host }}/auth/realms/digitalai-platform/protocol/openid-connect/logout"
             {{- end }}
             {{- range .Values.ingress.hosts }}
-            redirectUri: "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/login/external-login"
-            postLogoutRedirectUri: "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/oauth2/authorization/xl-deploy"
+            redirectUri: "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/xl-deploy/login/external-login"
+            postLogoutRedirectUri: "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/xl-deploy/oauth2/authorization/xl-deploy"
             {{- end }}
             rolesClaimName: "groups"
             userNameClaimName: "preferred_username"
