@@ -9,7 +9,7 @@ if [[ $# -eq 0 ]] ; then
     exit 1
 fi
 
-if [[ $# -eq 2 ]] ; then
+if [[ $# > 1 ]] ; then
   containerOrganization=$2
 fi
 
@@ -26,8 +26,8 @@ helm package xl-deploy-kubernetes-helm-chart
 rm -rf xl-deploy-kubernetes-helm-chart
 mv digitalai-deploy-*.tgz xld.tgz
 operator-sdk init --domain digital.ai --plugins=helm
-operator-sdk create api --group=xld --version=v1alpha1 --helm-chart=xld.tgz
-export OPERATOR_IMG="docker.io/$containerOrganization/deploy-operator:$1"
+operator-sdk create api --group=xldocp --version=v1alpha1 --helm-chart=xld.tgz
+export OPERATOR_IMG="docker.io/$containerOrganization/deploy-operator:$1-openshift"
 make docker-build docker-push IMG=$OPERATOR_IMG
 cd ..
 rm -rf xld
