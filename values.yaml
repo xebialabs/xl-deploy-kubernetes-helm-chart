@@ -221,7 +221,7 @@ satellite:
   Enabled: false
 
 keycloak:
-  install: true
+  install: false
   extraEnv: |
     - name: PROXY_ADDRESS_FORWARDING
       value: "true"
@@ -280,7 +280,7 @@ keycloak:
 
 # OIDC Settings
 oidc:
-  enabled: true
+  enabled: false
   external: false
   clientId:
   clientSecret:
