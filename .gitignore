@@ -2,3 +2,4 @@
 .gradle
 charts
 build
+Chart.lock
