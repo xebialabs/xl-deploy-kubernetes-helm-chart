@@ -1,11 +1,21 @@
 #!/bin/bash
 
 containerOrganization="xldevdocker"
+branchName="oc-master"
 
 if [[ $# -eq 0 ]] ; then
     printf "\e[31mProvide in a first parameter a version (SemVer compatible) to release !\e[m\n"
     echo "For example:"
-    printf "\e[1;32m./build_operator.sh 0.0.1\e[0m"
+    printf "\e[1;32m./build_operator.sh 22.0.0-114.1255 \e[0m"
+    echo ""
+    printf "\e[1;32m./build_operator.sh 22.0.0-114.1255 acierto\e[0m"
+    echo ""
+    printf "\e[1;32m./build_operator.sh 22.0.0-114.1255 acierto ENG-8769\e[0m"
+    echo ""
+    printf "Second example is about how to push the image to a non-default organization"
+    echo ""
+    printf "Third example shows how to push from the branch, even if you want to use the default organization, for a non-default branch you have to specify name for an organization."
+    echo ""
     exit 1
 fi
 
@@ -13,9 +23,13 @@ if [[ $# > 1 ]] ; then
   containerOrganization=$2
 fi
 
+if [[ $# > 2 ]] ; then
+  branchName=$3
+fi
+
 mkdir xld
 cd xld
-git clone -b oc-master git@github.com:xebialabs/xl-deploy-kubernetes-helm-chart.git
+git clone git@github.com:xebialabs/xl-deploy-kubernetes-helm-chart.git -b $branchName
 cd xl-deploy-kubernetes-helm-chart
 rm -f values-haproxy.yaml
 mv values-nginx.yaml values.yaml
