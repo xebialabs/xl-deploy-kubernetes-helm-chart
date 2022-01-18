@@ -121,16 +121,16 @@ spec:
               value: "false"
             - name: HOSTNAME_SUFFIX
               value: ".{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local"
-            {{- if index .Values "rabbitmq-ha" "install" }}
+            {{- if index .Values "rabbitmq" "install" }}
             - name: XLD_TASK_QUEUE_USERNAME
-              value: {{ index .Values "rabbitmq-ha" "rabbitmqUsername" }}
+              value: {{ index .Values "rabbitmq" "rabbitmqUsername" }}
             - name: XLD_TASK_QUEUE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-rabbitmq-ha
+                  name: {{ .Release.Name }}-rabbitmq
                   key: rabbitmq-password
             - name: XLD_TASK_QUEUE_URL
-              value: "amqp://{{ .Release.Name }}-rabbitmq-ha.{{ .Release.Namespace }}.svc.cluster.local:5672/%2F"
+              value: "amqp://{{ .Release.Name }}-rabbitmq.{{ .Release.Namespace }}.svc.cluster.local:5672/%2F"
             - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
               value: "com.rabbitmq.jms.admin.RMQConnectionFactory"
             {{- else }}
