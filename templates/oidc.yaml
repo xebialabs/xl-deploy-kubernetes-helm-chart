@@ -31,7 +31,7 @@ data:
       auth:
         providers:
           oidc:
-           {{- if .Values.oidc.external }}
+            loginMethodDescription: "Login using Keycloak"
             clientId: {{ .Values.oidc.clientId | quote }}
             clientSecret: {{ .Values.oidc.clientSecret | quote }}
             issuer: {{ .Values.oidc.issuer | quote }}
@@ -43,21 +43,4 @@ data:
             postLogoutRedirectUri: {{ .Values.oidc.postLogoutRedirectUri | quote }}
             rolesClaimName: {{ .Values.oidc.rolesClaimName | quote }}
             userNameClaimName: {{ .Values.oidc.userNameClaimName | quote }}
-            {{- else }}
-            clientId: "deploy"
-            clientSecret: "2c89c720-009c-428f-b815-4e488674176c"
-            {{- range .Values.keycloak.ingress.rules }}
-            issuer: "http{{ if $.Values.keycloak.ingress.tls }}s{{ end }}://{{ .host }}/auth/realms/digitalai-platform"
-            keyRetrievalUri: "http{{ if $.Values.keycloak.ingress.tls }}s{{ end }}://{{ .host }}/auth/realms/digitalai-platform/protocol/openid-connect/certs"
-            accessTokenUri: "http{{ if $.Values.keycloak.ingress.tls }}s{{ end }}://{{ .host }}/auth/realms/digitalai-platform/protocol/openid-connect/token"
-            userAuthorizationUri: "http{{ if $.Values.keycloak.ingress.tls }}s{{ end }}://{{ .host }}/auth/realms/digitalai-platform/protocol/openid-connect/auth"
-            logoutUri: "http{{ if $.Values.keycloak.ingress.tls }}s{{ end }}://{{ .host }}/auth/realms/digitalai-platform/protocol/openid-connect/logout"
-            {{- end }}
-            {{- range .Values.ingress.hosts }}
-            redirectUri: "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/login/external-login"
-            postLogoutRedirectUri: "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/oauth2/authorization/xl-deploy"
-            {{- end }}
-            rolesClaimName: "groups"
-            userNameClaimName: "preferred_username"
-            {{- end }}
 {{- end }}
