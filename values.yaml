@@ -58,7 +58,7 @@ ingress:
 AdminPassword:
   # Provide the admin password to be used
 
-xldLicense: 
+xldLicense:
 # Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 -w 0 ) and put the output here
 
 RepositoryKeystore:
@@ -107,13 +107,23 @@ postgresql:
   nodeSelector: {}
   affinity: {}
   tolerations: []
+  volumePermissions:
+    securityContext:
+      runAsUser: auto
+  securityContext:
+    enabled: false
+  containerSecurityContext:
+    enabled: false
+  shmVolume:
+    chmod:
+      enabled: false
 
 ## Ref: https://docs.xebialabs.com/v.9.7/deploy/how-to/configure-the-xl-deploy-sql-repository/#location-of-the-repository
 ## Ref: https://docs.xebialabs.com/v.9.7/deploy/docker/docker-environment-variables/
 UseExistingDB:
   Enabled: false
-  # If you want to use an existing database, set 'postgresql.install' to 'false' and 'UseExistingDB.Enabled' to 'true'.
-  # Uncomment the following lines and provide the values.
+  # If you want to use an existing database, change 'postgresql.install' to 'false'.
+  # Set 'UseExistingDB.Enabled' to 'true'.Uncomment the following lines and provide the values.
   # XL_DB_URL:
   # XL_DB_USERNAME:
   # XL_DB_PASSWORD:
@@ -122,63 +132,73 @@ UseExistingDB:
 ## ref: https://github.com/helm/charts/blob/master/stable/rabbitmq/README.md
 rabbitmq:
   install: true
-  rabbitmqUsername: guest
-  rabbitmqPassword: ""
-  rabbitmqErlangCookie: DEPLOYRABBITMQCLUSTER
-  rabbitmqMemoryHighWatermark: 500MB
-  rabbitmqNodePort: 5672
-  extraPlugins: |
-    rabbitmq_shovel,
-    rabbitmq_shovel_management,
-    rabbitmq_federation,
-    rabbitmq_federation_management,
-    rabbitmq_jms_topic_exchange,
-    rabbitmq_management,
   replicaCount: 3
   image:
-    repository: rabbitmq
-    tag: 3.8.7-alpine
-    pullPolicy: IfNotPresent
-    ## Secrets must be manually created in the namespace.
-    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-    # pullSecrets:
-    #   - myRegistrKeySecretName
-  rbac:
-    create: true
+    pullSecrets: []
+  auth:
+    username: guest
+    password: guest
+    erlangCookie: DEPLOYRABBITMQCLUSTER
+  extraPlugins: 'rabbitmq_jms_topic_exchange'
+  extraSecrets:
+    xld-load-definition:
+      xld-load_definition.json: |
+        {
+        "users": [
+          {
+              "name": "{{ .Values.auth.username }}",
+              "password": "{{ .Values.auth.password }}",
+              "tags": "administrator"
+          }
+          ],
+        "vhosts": [
+          {
+            "name": "/"
+          }
+          ],
+          "permissions": [
+          {
+            "user": "{{ .Values.auth.username }}",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+          }
+          ],
+        "global_parameters": [
+          {
+            "name": "cluster_name",
+            "value": ""
+          }
+          ],
+         "policies": [
+            {
+              "name": "ha-all",
+              "apply-to": "all",
+              "pattern": ".*",
+              "vhost": "/",
+              "definition": {
+                "ha-mode": "all",
+                "ha-sync-mode": "automatic",
+                "ha-sync-batch-size": 1
+              }
+            }
+          ]
+        }
+  loadDefinition:
+    enabled: true
+    existingSecret: xld-load-definition
+  extraConfiguration: |
+    load_definitions = /app/xld-load_definition.json
+    raft.wal_max_size_bytes = 1048576
+  persistence:
+    enabled: true
+    storageClass: "-"
+    size: 8Gi
   service:
     type: ClusterIP
-  persistentVolume:
+  volumePermissions:
     enabled: true
-    storageClass: "_"
-    size: 20Gi
-    annotations: {}
-    resources: {}
-  #  requests:
-  #    memory: "250Mi"
-  #    cpu: "100m"
-  #  limits:
-  #    memory: "550Mi"
-  #    cpu: "200m"
-  definitions:
-    policies: |-
-      {
-        "name": "ha-all",
-        "pattern": ".*",
-        "vhost": "/",
-        "definition": {
-          "ha-mode": "all",
-          "ha-sync-mode": "automatic",
-          "ha-sync-batch-size": 1
-        }
-      }
-    globalParameters: |-
-      {
-          "name": "cluster_name",
-          "value": ""
-      }
-  prometheus:
-    operator:
-      enabled: false
 
 # Ref: https://docs.xebialabs.com/v.9.7/deploy/how-to/configure-task-queueing/#how-it-works
 UseExistingMQ:
