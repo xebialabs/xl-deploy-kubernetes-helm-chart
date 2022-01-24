@@ -119,14 +119,11 @@ spec:
               value: "false"
             - name: HOSTNAME_SUFFIX
               value: ".{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local"
-            {{- if index .Values "rabbitmq" "install" }}
+            {{- if .Values.rabbitmq.install }}
             - name: XLD_TASK_QUEUE_USERNAME
-              value: {{ index .Values "rabbitmq" "rabbitmqUsername" }}
+              value: {{ .Values.rabbitmq.auth.username }}
             - name: XLD_TASK_QUEUE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-rabbitmq
-                  key: rabbitmq-password
+              value: {{ .Values.rabbitmq.auth.password }}
             - name: XLD_TASK_QUEUE_URL
               value: "amqp://{{ .Release.Name }}-rabbitmq.{{ .Release.Namespace }}.svc.cluster.local:5672/%2F"
             - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
@@ -134,9 +131,15 @@ spec:
             {{- else }}
             {{- if .Values.UseExistingMQ.Enabled }}
             - name: XLD_TASK_QUEUE_USERNAME
-              value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_USERNAME }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: rabbitmqUsername
             - name: XLD_TASK_QUEUE_PASSWORD
-              value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_PASSWORD | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "xl-deploy.fullname" . }}
+                  key: rabbitmqPassword
             - name: XLD_TASK_QUEUE_URL
               value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_URL | quote }}
             - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
