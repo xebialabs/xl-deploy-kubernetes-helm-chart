@@ -53,7 +53,7 @@ spec:
               value: "4516"
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.ImageRepository }}:{{ .Values.ImageTag }}"
+          image: "{{ .Values.WorkerImageRepository }}:{{ .Values.ImageTag }}"
           imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
           ports:
             - name: jmx-exporter
@@ -73,7 +73,7 @@ spec:
               mountPath: /opt/xebialabs/xl-deploy-server/conf
               subPath: conf
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/centalConfiguration
+              mountPath: /opt/xebialabs/xl-deploy-server/centralConfiguration
               subPath: centralConfiguration
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/ext
@@ -190,7 +190,6 @@ spec:
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
           args:
-            - "worker"
             - "-master"
             - "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180"
             - "-api"
