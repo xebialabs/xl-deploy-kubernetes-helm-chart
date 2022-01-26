@@ -187,7 +187,6 @@ spec:
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
           args:
-            - "worker"
             - "-master"
             - "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180"
             - "-api"
