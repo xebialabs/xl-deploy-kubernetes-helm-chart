@@ -31,12 +31,12 @@ spec:
           command:
             - sh
             - -c
-            - chown -R 10001 /opt/xebialabs/xl-deploy-server/
+            - chown -R 10001 /opt/xebialabs/deploy-task-engine/
           securityContext:
             privileged: true
           volumeMounts:
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/
+              mountPath: /opt/xebialabs/deploy-task-engine/
         - name: wait-for-master
           image: xebialabs/tiny-tools
           command:
@@ -61,34 +61,26 @@ spec:
             - name: akka
               containerPort: 8180
           volumeMounts:
-            {{- if .Values.oidc.enabled }}
-            - name: deploy-server
-              mountPath: /opt/xebialabs/xl-deploy-server/central-conf/deploy-server.yaml.template
-              subPath: deploy-server.yaml.template
-            {{- end }}
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/work
+              mountPath: /opt/xebialabs/deploy-task-engine/work
               subPath: work
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/conf
+              mountPath: /opt/xebialabs/deploy-task-engine/conf
               subPath: conf
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/centralConfiguration
-              subPath: centralConfiguration
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/ext
+              mountPath: /opt/xebialabs/deploy-task-engine/ext
               subPath: ext
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/log
+              mountPath: /opt/xebialabs/deploy-task-engine/log
               subPath: log
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/lib
+              mountPath: /opt/xebialabs/deploy-task-engine/hotfix/lib
               subPath: lib
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/plugins
+              mountPath: /opt/xebialabs/deploy-task-engine/hotfix/plugins
               subPath: plugins
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/satellite-lib
+              mountPath: /opt/xebialabs/deploy-task-engine/hotfix/satellite-lib
               subPath: satellite-lib
           {{- if .Values.HealthProbes }}
           livenessProbe:
@@ -201,11 +193,6 @@ spec:
         {{- if not .Values.Persistence.Enabled }}
         - name: data-dir
           emptyDir: {}
-        {{- end }}
-        {{- if .Values.oidc.enabled }}
-        - name: deploy-server
-          configMap:
-            name: xl-deploy-server
         {{- end }}
       {{- end }}
     {{- with .Values.nodeSelector }}
