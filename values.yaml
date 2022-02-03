@@ -244,7 +244,7 @@ centralConfiguration:
   replicas: 1
   image:
     repository: xebialabs/central-configuration
-    tag: 22.1.0
+    tag: 22.0.1
     pullPolicy: "Always"
   #    pullSecret:
   persistence:
