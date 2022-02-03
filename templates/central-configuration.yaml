@@ -24,7 +24,7 @@ spec:
       serviceAccountName: {{ template "xl-deploy.name" . }}-sa
       {{- if and (eq .Values.centralConfiguration.migrateFromEmbedded true) (eq .Values.centralConfiguration.persistence.enabled true) (eq .Values.Persistence.Enabled true)}}
       initContainers:
-        - name: wait-for-copy-central-config-from-master
+        - name: wait-for-migrate-from-embedded-cc-to-standalone
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
           imagePullPolicy: "{{ .Values.centralConfiguration.image.pullPolicy }}"
           command: ["sh", "/opt/xebialabs/central-configuration-server/bin/migrate-from-embedded-cc-to-standalone.sh"]
@@ -47,6 +47,14 @@ spec:
               containerPort: 8888
               protocol: TCP
           volumeMounts:
+            {{- if .Values.oidc.enabled }}
+            - name: deploy-server
+              mountPath: /opt/xebialabs/central-configuration-server/central-conf/deploy-server.yaml.template
+              subPath: deploy-server.yaml.template
+            - name: deploy-keycloak
+              mountPath: /opt/xebialabs/central-configuration-server/centralConfiguration/deploy-oidc.yaml
+              subPath: deploy-oidc.yaml
+            {{- end }}
             - name: data-dir
               mountPath: /opt/xebialabs/central-configuration-server/centralConfiguration
               subPath: centralConfiguration
@@ -121,10 +129,20 @@ spec:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: centralConfigEncryptKey
-      {{- if (eq .Values.centralConfiguration.persistence.enabled false) }}
+      {{- if or (eq .Values.centralConfiguration.persistence.enabled false) (eq .Values.oidc.enabled true) }}
       volumes:
+        {{- if not .Values.centralConfiguration.persistence.enabled }}
         - name: data-dir
           emptyDir: { }
+        {{- end }}
+        {{- if .Values.oidc.enabled }}
+        - name: deploy-server
+          configMap:
+            name: xl-deploy-server
+        - name: deploy-keycloak
+          configMap:
+            name: xl-deploy-keycloak
+        {{- end }}
       {{- end }}
   {{- if .Values.centralConfiguration.persistence.enabled }}
   volumeClaimTemplates:
