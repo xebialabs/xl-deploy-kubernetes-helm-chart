@@ -62,7 +62,7 @@ spec:
               value: "8888"
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.ImageRepository }}:{{ .Values.ImageTag }}"
+          image: "{{ .Values.ServerImageRepository }}:{{ .Values.ImageTag }}"
           imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
           ports:
             - name: http

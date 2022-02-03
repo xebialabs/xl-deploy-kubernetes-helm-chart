@@ -27,6 +27,7 @@ if [[ $# > 2 ]] ; then
   branchName=$3
 fi
 
+rm -rf xld
 mkdir xld
 cd xld
 git clone git@github.com:xebialabs/xl-deploy-kubernetes-helm-chart.git -b $branchName
