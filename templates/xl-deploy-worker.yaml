@@ -139,8 +139,8 @@ spec:
               value: "false"
             - name: XLD_IN_PROCESS
               value: "false"
-            - name: HOSTNAME_SUFFIX
-              value: ".{{ template "xl-deploy.name" . }}"
+            - name: USE_IP_AS_HOSTNAME
+              value: "true"
             {{- if .Values.rabbitmq.install }}
             - name: XLD_TASK_QUEUE_USERNAME
               value: {{ .Values.rabbitmq.auth.username }}
