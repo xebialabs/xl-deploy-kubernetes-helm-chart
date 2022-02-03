@@ -12,7 +12,8 @@ XldWorkerCount: 3
 
 ## XL-Deploy image version
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
-ImageRepository: "xebialabs/xl-deploy"
+ServerImageRepository: "xebialabs/xl-deploy"
+WorkerImageRepository: "xebialabs/deploy-task-engine"
 ImageTag: "10.2.4"
 
 ## Specify a imagePullPolicy
@@ -98,7 +99,7 @@ postgresql:
     existingClaim: ""
   postgresqlUsername: postgres
   postgresqlPassword: ""
-  postgresqlMaxConnections: ""
+  postgresqlMaxConnections: "300"
   service:
     type: ClusterIP
     port: 5432
