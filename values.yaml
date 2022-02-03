@@ -173,6 +173,7 @@ rabbitmq:
     existingSecret: xld-load-definition
   extraConfiguration: |
     load_definitions = /app/xld-load_definition.json
+    raft.wal_max_size_bytes = 1048576
   persistence:
     enabled: true
     storageClass: "-"
@@ -222,7 +223,7 @@ satellite:
   Enabled: false
 
 keycloak:
-  install: false
+  install: true
   extraEnv: |
     - name: PROXY_ADDRESS_FORWARDING
       value: "true"
@@ -281,7 +282,7 @@ keycloak:
 
 # OIDC Settings
 oidc:
-  enabled: false
+  enabled: true
   external: false
   clientId:
   clientSecret:
