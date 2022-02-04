@@ -10,6 +10,7 @@ metadata:
 data:
   deploy-server.yaml.template: |
     deploy.server:
+      hostname: ${HOSTNAME}${HOSTNAME_SUFFIX}
       license:
         daysBeforeWarning: 10
       security:
