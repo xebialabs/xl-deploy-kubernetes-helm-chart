@@ -3,3 +3,4 @@
 buildSrc
 charts
 Chart.lock
+.DS_Store
