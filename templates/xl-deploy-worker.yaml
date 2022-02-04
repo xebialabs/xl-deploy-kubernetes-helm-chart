@@ -131,8 +131,8 @@ spec:
               value: "false"
             - name: XLD_IN_PROCESS
               value: "false"
-            - name: USE_IP_AS_HOSTNAME
-              value: "true"
+            - name: HOSTNAME_SUFFIX
+              value: ".{{ template "xl-deploy.name" . }}"
             {{- if .Values.rabbitmq.install }}
             - name: XLD_TASK_QUEUE_USERNAME
               value: {{ .Values.rabbitmq.auth.username }}
@@ -178,15 +178,6 @@ spec:
             - name: ENABLE_SATELLITE
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
-            - name: CENTRAL_CONFIG_ENCRYPT_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "xl-deploy.fullname" . }}
-                  key: centralConfigEncryptKey
-            - name: USE_EXTERNAL_CENTRAL_CONFIG
-              value: "true"
-            - name: CENTRAL_CONFIG_URL
-              value: "http://{{ template "xl-deploy.fullname" . }}-cc-server.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
           args:
             - "-master"
             - "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180"
