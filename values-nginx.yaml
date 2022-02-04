@@ -14,7 +14,7 @@ XldWorkerCount: 3
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
 ServerImageRepository: "xebialabs/xl-deploy"
 WorkerImageRepository: "xebialabs/deploy-task-engine"
-ImageTag: "10.2.4"
+ImageTag: "22.0"
 
 ## Specify a imagePullPolicy
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
@@ -238,7 +238,7 @@ satellite:
   Enabled: false
 
 keycloak:
-  install: false
+  install: true
   extraEnv: |
     - name: PROXY_ADDRESS_FORWARDING
       value: "true"
@@ -299,7 +299,7 @@ keycloak:
     enabled: false
 
 oidc:
-  enabled: false
+  enabled: true
   external: false
   clientId:
   clientSecret:
