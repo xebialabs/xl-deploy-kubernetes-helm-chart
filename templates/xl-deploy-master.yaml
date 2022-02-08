@@ -202,7 +202,7 @@ spec:
       volumes:
         {{- if not .Values.Persistence.Enabled }}
         - name: data-dir
-          emptyDir: {}
+          emptyDir: { }
         {{- end }}
         {{- if .Values.oidc.enabled }}
         - name: deploy-server
@@ -230,7 +230,7 @@ spec:
     - metadata:
         name: data-dir
       spec:
-        accessModes: [ "ReadWriteMany" ]
+        accessModes: [ {{ .Values.Persistence.AccessMode }} ]
       {{- if .Values.Persistence.StorageClass }}
       {{- if (eq "-" .Values.Persistence.StorageClass) }}
         storageClassName: ""
