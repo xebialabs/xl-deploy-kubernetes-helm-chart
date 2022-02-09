@@ -27,11 +27,11 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.centralConfiguration.image.pullSecret }}
       {{- end }}
-      {{- if and (eq .Values.centralConfiguration.migrateFromEmbedded true) (eq .Values.centralConfiguration.persistence.enabled true) (eq .Values.Persistence.Enabled true)}}
+      {{- if and (eq .Values.centralConfiguration.migrateFromEmbedded true) (eq .Values.Persistence.Enabled true)}}
       initContainers:
         - name: wait-for-migrate-from-embedded-cc-to-standalone
-          image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
-          imagePullPolicy: "{{ .Values.centralConfiguration.image.pullPolicy }}"
+          image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.ImageTag }}"
+          imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
           command: ["sh", "/opt/xebialabs/central-configuration-server/bin/migrate-from-embedded-cc-to-standalone.sh"]
           volumeMounts:
             - mountPath: "/mnt/centralConfiguration-source-dir"
@@ -45,8 +45,8 @@ spec:
       {{- end }}
       containers:
         - name: cc-server
-          image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
-          imagePullPolicy: "{{ .Values.centralConfiguration.image.pullPolicy }}"
+          image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.ImageTag }}"
+          imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
           ports:
             - name: http
               containerPort: 8888
@@ -134,9 +134,9 @@ spec:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: centralConfigEncryptKey
-      {{- if or (eq .Values.centralConfiguration.persistence.enabled false) (eq .Values.oidc.enabled true) }}
+      {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) }}
       volumes:
-        {{- if not .Values.centralConfiguration.persistence.enabled }}
+        {{- if not .Values.Persistence.Enabled }}
         - name: data-dir
           emptyDir: { }
         {{- end }}
@@ -149,17 +149,17 @@ spec:
             name: xl-deploy-keycloak
         {{- end }}
       {{- end }}
-  {{- if .Values.centralConfiguration.persistence.enabled }}
+  {{- if .Values.Persistence.Enabled }}
   volumeClaimTemplates:
     - metadata:
         name: data-dir
       spec:
         accessModes: [ "ReadWriteMany" ]
-      {{- if .Values.centralConfiguration.persistence.storageClass }}
-      {{- if (eq "-" .Values.centralConfiguration.persistence.storageClass) }}
+      {{- if .Values.Persistence.StorageClass }}
+      {{- if (eq "-" .Values.Persistence.StorageClass) }}
         storageClassName: ""
       {{- else }}
-        storageClassName: "{{ .Values.centralConfiguration.persistence.storageClass }}"
+        storageClassName: "{{ .Values.Persistence.StorageClass }}"
       {{- end }}
       {{- end }}
         resources:

@@ -320,12 +320,8 @@ centralConfiguration:
   replicas: 1
   image:
     repository: xebialabs/central-configuration
-    tag: 22.0.1
-    pullPolicy: "Always"
   #    pullSecret:
   persistence:
-    enabled: true
-    storageClass: "-"
     annotations: { }
     pvcSize: 500M
   migrateFromEmbedded: false
