@@ -79,7 +79,7 @@ tasks.named<Test>("test") {
 tasks {
 
     val buildXldDir = layout.buildDirectory.dir("xld")
-    val buildXldOperatorDir = layout.buildDirectory.dir("xld/xl-deploy-kubernetes-helm-chart")
+    val buildXldOperatorDir = layout.buildDirectory.dir("xld/${project.name}")
 
     register("dumpVersion") {
         doLast {
@@ -153,8 +153,8 @@ tasks {
 
     register<Copy>("prepareValuesYaml") {
         dependsOn("prepareHelmPackage")
-        from(layout.buildDirectory.dir("xld/xl-deploy-kubernetes-helm-chart/values-nginx.yaml"))
-        into(layout.buildDirectory.dir("xld/xl-deploy-kubernetes-helm-chart/"))
+        from(layout.buildDirectory.dir("$buildXldOperatorDir/values-nginx.yaml"))
+        into(buildXldOperatorDir)
         rename("values-nginx.yaml", "values.yaml")
     }
 
@@ -182,16 +182,16 @@ tasks {
     register<Exec>("buildHelmPackage") {
         dependsOn("prepareHelmDeps")
         workingDir(buildXldDir)
-        commandLine("helm", "package", "--app-version", releasedVersion, "xl-deploy-kubernetes-helm-chart")
+        commandLine("helm", "package", "--app-version", releasedVersion, project.name)
 
         standardOutput = ByteArrayOutputStream()
         errorOutput = ByteArrayOutputStream()
 
         doLast {
             copy {
-                from(layout.buildDirectory.dir("xld/"))
+                from(buildXldDir)
                 include("*.tgz")
-                into(layout.buildDirectory.dir("xld/"))
+                into(buildXldDir)
                 rename("digitalai-deploy-.*.tgz", "xld.tgz")
             }
             logger.lifecycle(standardOutput.toString())
@@ -201,7 +201,7 @@ tasks {
     }
 
     register<Exec>("prepareOperatorImage") {
-        dependsOn("prepareHelmDeps")
+        dependsOn("buildHelmPackage")
         workingDir(buildXldDir)
         commandLine("operator-sdk", "init", "--domain", "digital.ai", "--plugins=helm")
 
