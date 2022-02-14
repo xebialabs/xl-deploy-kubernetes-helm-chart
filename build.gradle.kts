@@ -194,7 +194,7 @@ tasks {
     }
 
     register<Exec>("prepareOperatorImage") {
-        dependsOn("prepareHelmDeps")
+        dependsOn("buildHelmPackage")
         workingDir(buildXldDir)
         commandLine("operator-sdk", "init", "--domain=digital.ai", "--plugins=helm")
 
