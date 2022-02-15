@@ -186,7 +186,7 @@ tasks {
     register<Exec>("buildHelmPackage") {
         dependsOn("prepareHelmDeps")
         workingDir(buildXldDir)
-        commandLine("helm", "package", "--app-version", releasedVersion, project.name)
+        commandLine("helm", "package", "--app-version=$releasedVersion", project.name)
 
         standardOutput = ByteArrayOutputStream()
         errorOutput = ByteArrayOutputStream()
@@ -207,7 +207,7 @@ tasks {
     register<Exec>("prepareOperatorImage") {
         dependsOn("buildHelmPackage")
         workingDir(buildXldDir)
-        commandLine("operator-sdk", "init", "--domain", "digital.ai", "--plugins=helm")
+        commandLine("operator-sdk", "init", "--domain=digital.ai", "--plugins=helm")
 
         standardOutput = ByteArrayOutputStream()
         errorOutput = ByteArrayOutputStream()
@@ -255,7 +255,7 @@ publishing {
     publications {
         register("digitalai-deploy-helm", MavenPublication::class) {
             artifact("${buildDir}/xld/xld.tgz") {
-                artifactId = "digitalai-deploy-helm"
+                artifactId = "deploy-helm"
                 version = releasedVersion
             }
         }
