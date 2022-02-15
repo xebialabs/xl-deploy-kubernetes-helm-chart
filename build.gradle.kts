@@ -253,9 +253,9 @@ tasks {
 
 publishing {
     publications {
-        register("digitalai-deploy", MavenPublication::class) {
+        register("digitalai-deploy-helm", MavenPublication::class) {
             artifact("${buildDir}/xld/xld.tgz") {
-                artifactId = "digitalai-deploy"
+                artifactId = "digitalai-deploy-helm"
                 version = releasedVersion
             }
         }
