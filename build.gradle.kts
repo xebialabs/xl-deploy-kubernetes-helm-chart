@@ -40,9 +40,9 @@ project.defaultTasks = listOf("build")
 
 val dockerHubRepository = System.getenv()["DOCKER_HUB_REPOSITORY"] ?: "xebialabsunsupported"
 val releaseExplicitEnv = System.getenv()["RELEASE_EXPLICIT"]
-val releasedVersion = (releaseExplicitEnv ?: "22.0.0-${
+val releasedVersion = releaseExplicitEnv ?: "22.0.0-${
     LocalDateTime.now().format(DateTimeFormatter.ofPattern("Mdd.Hmm"))
-}") + "-openshift"
+}"
 project.extra.set("releasedVersion", releasedVersion)
 
 repositories {
@@ -231,7 +231,7 @@ tasks {
     register<Exec>("publishToDockerHub") {
         dependsOn("prepareOperatorImage")
         workingDir(buildXldDir)
-        val imageUrl = "docker.io/$dockerHubRepository/deploy-operator:${releasedVersion}-openshift"
+        val imageUrl = "docker.io/$dockerHubRepository/deploy-operator:$releasedVersion"
         commandLine("make", "docker-build", "docker-push", "IMG=$imageUrl")
 
         standardOutput = ByteArrayOutputStream()
@@ -242,6 +242,10 @@ tasks {
             logger.error(errorOutput.toString())
             logger.lifecycle("Publish to DockerHub $imageUrl finished")
         }
+    }
+
+    register("checkDependencyVersions") {
+        // a placeholder to unify with release in jenkins-job
     }
 }
 
