@@ -160,6 +160,16 @@ tasks {
         from(layout.buildDirectory.dir("$buildXldOperatorDir/values-nginx.yaml"))
         into(buildXldOperatorDir)
         rename("values-nginx.yaml", "values.yaml")
+        doLast {
+            exec {
+                workingDir(buildXldOperatorDir)
+                commandLine("rm", "-f", "values-haproxy.yaml")
+            }
+            exec {
+                workingDir(buildXldOperatorDir)
+                commandLine("rm", "-f", "values-nginx.yaml")
+            }
+        }
     }
 
     register<Exec>("prepareHelmDeps") {
@@ -235,7 +245,7 @@ tasks {
     }
 
     register<Exec>("publishToDockerHub") {
-        dependsOn("prepareOperatorImage")
+        dependsOn("buildOperatorImage")
         workingDir(buildXldDir)
         val imageUrl = "docker.io/$dockerHubRepository/deploy-operator:$releasedVersion"
         commandLine("make", "docker-build", "docker-push", "IMG=$imageUrl")
