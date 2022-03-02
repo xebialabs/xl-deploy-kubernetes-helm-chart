@@ -323,4 +323,4 @@ centralConfiguration:
   persistence:
     annotations: { }
     pvcSize: 500M
-  migrateFromEmbedded: false
+  migrateFromEmbedded: "false"
