@@ -157,7 +157,8 @@ tasks {
 
     register<Copy>("prepareValuesYaml") {
         dependsOn("prepareHelmPackage")
-        from(layout.buildDirectory.dir("$buildXldOperatorDir/values-nginx.yaml"))
+        from(buildXldOperatorDir)
+        include("values-nginx.yaml")
         into(buildXldOperatorDir)
         rename("values-nginx.yaml", "values.yaml")
         doLast {
