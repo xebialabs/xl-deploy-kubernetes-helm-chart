@@ -23,9 +23,9 @@ spec:
     spec:
       securityContext:
         fsGroup: 10001
-      {{- if .Values.centralConfiguration.image.pullSecret }}
+      {{- if .Values.ImagePullSecret }}
       imagePullSecrets:
-        - name: {{ .Values.centralConfiguration.image.pullSecret }}
+        - name: {{ .Values.ImagePullSecret }}
       {{- end }}
       {{- if and (eq .Values.centralConfiguration.migrateFromEmbedded "true") (eq .Values.Persistence.Enabled true)}}
       initContainers:
