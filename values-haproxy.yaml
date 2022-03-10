@@ -73,6 +73,9 @@ RepositoryKeystore:
 KeystorePassphrase:
 # Passphrase for repository-keystore.jceks file
 
+CentralConfigEncryptKey:
+# spring cloud config encryption key
+
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
@@ -304,3 +307,12 @@ oidc:
   redirectUri:
   rolesClaimName:
   userNameClaimName:
+
+centralConfiguration:
+  replicas: 1
+  image:
+    repository: xebialabs/central-configuration
+  persistence:
+    annotations: { }
+    pvcSize: 500M
+  migrateFromEmbedded: "false"
