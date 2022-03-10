@@ -33,7 +33,6 @@ cd xld
 git clone git@github.com:xebialabs/xl-deploy-kubernetes-helm-chart.git -b $branchName
 cd xl-deploy-kubernetes-helm-chart
 rm -f values-haproxy.yaml
-mv values-nginx.yaml values.yaml
 helm dependency update .
 rm -f Chart.lock
 cd ..
