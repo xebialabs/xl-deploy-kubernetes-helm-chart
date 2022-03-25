@@ -97,7 +97,6 @@ resources: {}
 ## Install postgresql chart. If you have an existing database deployment, set 'install' to 'false'.
 postgresql:
   install: true
-  initdbScriptsSecret: "postgresql-init-sql-xld"
   image:
     pullSecrets: []
   persistence:
@@ -106,7 +105,7 @@ postgresql:
     size: 8Gi
     existingClaim: ""
   postgresqlUsername: postgres
-  postgresqlPassword: ""
+  postgresqlPassword: postgres
   postgresqlMaxConnections: "300"
   service:
     type: ClusterIP

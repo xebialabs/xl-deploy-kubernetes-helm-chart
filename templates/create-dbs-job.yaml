@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgresql-init-dbs
+spec:
+  template:
+    metadata:
+      name: postgresql-init-dbs-sql
+    spec:
+      initContainers:
+        - name: wait-for-postgresql
+          image: {{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}
+          command:
+            - sh
+            - -c
+            - >
+              until nc -z -w 2 $POSTGRES_SVC $POSTGRES_PORT && echo database ok; do
+              sleep 2;
+              done;
+          env:
+            - name: POSTGRES_SVC
+              value: {{ .Release.Name }}-postgresql
+            - name: POSTGRES_PORT
+              value: "5432"
+      containers:
+        - name: init-dbs
+          image: {{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}
+          command:
+            - sh
+            - -c
+            - >
+              psql -h $POSTGRES_SVC -p $POSTGRES_PORT -U $USERNAME -f /var/init-dbs-sql/init.sql
+          env:
+            - name: POSTGRES_SVC
+              value: {{ .Release.Name }}-postgresql
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: PGPASSWORD
+              value: {{ .Values.postgresql.postgresqlPassword }}
+            - name: USERNAME
+              value: {{ .Values.postgresql.postgresqlUsername }}
+          volumeMounts:
+            - mountPath: /var/init-dbs-sql
+              name: init-dbs-sql
+      volumes:
+        - name: init-dbs-sql
+          secret:
+            secretName: postgresql-init-sql-xld
+      restartPolicy: Never
