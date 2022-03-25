@@ -114,7 +114,7 @@ postgresql:
     size: 8Gi
     existingClaim: ""
   postgresqlUsername: postgres
-  postgresqlPassword: "postgres"
+  postgresqlPassword: ""
   postgresqlMaxConnections: "300"
   service:
     type: ClusterIP
@@ -325,7 +325,7 @@ oidc:
 centralConfiguration:
   replicas: 1
   image:
-    repository: xebialabs/central-configuration
+    repository: xebialabsunsupported/central-configuration
   persistence:
     annotations: { }
     pvcSize: 500M
