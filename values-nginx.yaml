@@ -325,7 +325,7 @@ oidc:
 centralConfiguration:
   replicas: 1
   image:
-    repository: xebialabsunsupported/central-configuration
+    repository: xebialabs/central-configuration
   persistence:
     annotations: { }
     pvcSize: 500M
