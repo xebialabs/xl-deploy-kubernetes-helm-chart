@@ -32,7 +32,7 @@ spec:
       initContainers:
         {{- if .Values.postgresql.install }}
         - name: wait-for-postgresql
-          image: xebialabs/tiny-tools
+          image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
           command:
             - sh
             - -c
@@ -47,12 +47,12 @@ spec:
               value: "5432"
         {{- end }}
         - name: wait-for-central-configuration
-          image: xebialabs/tiny-tools
+          image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
           command:
             - sh
             - -c
             - >
-              until nc -z -w 2 $CENTRAL_CONFIGURATION_SVC $CENTRAL_CONFIGURATION_PORT && echo database ok; do
+              until nc -z -w 2 $CENTRAL_CONFIGURATION_SVC $CENTRAL_CONFIGURATION_PORT && echo centralConfiguration ok; do
               sleep 2;
               done;
           env:
