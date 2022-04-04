@@ -27,7 +27,7 @@ spec:
       serviceAccountName: {{ template "xl-deploy.name" . }}-sa
       initContainers:
         - name: fix-the-volume-permission
-          image: xebialabs/tiny-tools
+          image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
           command:
             - sh
             - -c
@@ -38,7 +38,7 @@ spec:
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/
         - name: wait-for-master
-          image: xebialabs/tiny-tools
+          image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
           command:
             - sh
             - -c
