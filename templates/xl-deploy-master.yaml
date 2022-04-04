@@ -32,7 +32,7 @@ spec:
       initContainers:
         {{- if .Values.postgresql.install }}
         - name: wait-for-postgresql
-          image: xebialabs/tiny-tools
+          image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
           command:
             - sh
             - -c
