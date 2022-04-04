@@ -41,7 +41,7 @@ spec:
               mountPath: /opt/xebialabs/xl-deploy-server/
         {{- if .Values.postgresql.install }}
         - name: wait-for-postgresql
-          image: xebialabs/tiny-tools
+          image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
           command:
             - sh
             - -c
