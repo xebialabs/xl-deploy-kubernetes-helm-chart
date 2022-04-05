@@ -9,7 +9,12 @@ XldWorkerCount: 3
 ## XL-Deploy image version
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
 ImageRepository: "xebialabs/xl-deploy"
-ImageTag: "10.2.4"
+ImageTag: "10.3"
+
+## xebialabs/tiny-tools image version
+## Ref: https://hub.docker.com/r/xebialabs/tiny-tools/tags
+TinyToolsImageRepository: "xebialabs/tiny-tools"
+TinyToolsImageTag: "22.2.0"
 
 ## Specify a imagePullPolicy
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
