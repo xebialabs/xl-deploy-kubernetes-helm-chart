@@ -31,7 +31,7 @@ spec:
       {{- end }}
       initContainers:
         - name: wait-for-master
-          image: xebialabs/tiny-tools
+          image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
           command:
             - sh
             - -c
