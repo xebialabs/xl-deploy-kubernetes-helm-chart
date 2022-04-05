@@ -40,7 +40,7 @@ spec:
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/
         - name: wait-for-master
-          image: xebialabs/tiny-tools
+          image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
           command:
             - sh
             - -c
