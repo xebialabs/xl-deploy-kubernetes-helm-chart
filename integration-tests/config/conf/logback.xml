@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+    <resetJUL>true</resetJUL>
+  </contextListener>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] {%mdc} %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>log/${LOGFILE:-deployit-server}.log</file>
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] {%mdc} %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="ai.digital.deploy" level="debug"/>
+  <logger name="com.xebialabs.deployit.engine.tasker.distribution.versioning" level="trace"/>
+  <logger name="ch.qos" level="warn"/>
+  <logger name="com.xebialabs.deployit.engine" level="debug"/>
+  <logger name="com.xebialabs.xldeploy.task" level="debug"/>
+
+  <logger name="com.xebialabs" level="debug"/>
+  <logger name="com.xebialabs.deployit.security" level="warn"/>
+  <logger name="com.xebialabs.deployit.cli.api" level="debug"/>
+  <logger name="com.xebialabs.deployit.repository.SearchQueryBuilder" level="warn"/>
+
+  <logger name="org.springframework" level="warn"/>
+  <logger name="org.eclipse.aether" level="debug"/>
+  <logger name="com.google.inject.internal.util" level="error"/>
+
+  <root level="info">
+    <appender-ref ref="STDOUT"/>
+    <appender-ref ref="FILE"/>
+  </root>
+</configuration>

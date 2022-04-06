@@ -1,0 +1,126 @@
+def getTestProperties() {
+    def activeProviderName = project.hasProperty("activeProviderName") ? project.activeProviderName : null
+    def destroyClusterOnShutdown = project.hasProperty("destroyClusterOnShutdown") ? Boolean.valueOf(project.destroyClusterOnShutdown as String) : false
+
+
+    [
+        activeProviderName                 : activeProviderName,
+        destroyClusterOnShutdown           : destroyClusterOnShutdown,
+    ]
+}
+
+def setupTestProperties(obj, Map<String, Serializable> testProperties) {
+    obj.destroyClusterOnShutdown = testProperties.destroyClusterOnShutdown
+}
+
+def testProperties = getTestProperties()
+
+Map<String, Object> serverOverlays = [
+    conf: [
+        fileTree(dir: "$rootDir/integration-tests/config/conf", includes: ["*.*"])
+    ]
+]
+
+deployIntegrationServer {
+    cli {
+        filesToExecute = [file("$rootDir/integration-tests/config/cluster-itest/provision.py")]
+        overlays = [
+            ext: [
+                fileTree(dir: "$rootDir/integration-tests/config/cli", includes: ["**/*.py"])
+            ],
+            lib: [
+                "com.xebialabs.xl-platform.test-utils:py-modules:${testUtilsVersion}@jar"
+            ]
+        ]
+    }
+    cluster {
+        enable = true
+        profile = 'helm'
+        publicPort = 10001
+    }
+    if (testProperties.activeProviderName) {
+        clusterProfiles {
+            helm {
+                activeProviderName = testProperties.activeProviderName
+
+                awsEks {
+                    name = 'aws-eks-test-cluster'
+                    region = 'us-east-1'
+                    setupTestProperties(it, testProperties)
+                }
+                awsOpenshift {
+                    apiServerURL = 'https://api.acierto.lnfl.p1.openshiftapps.com:6443'
+                    host = 'router-default.apps.acierto.lnfl.p1.openshiftapps.com'
+                    name = 'aws-openshift-test-cluster'
+                    oauthHostName = "oauth-openshift.apps.acierto.lnfl.p1.openshiftapps.com"
+                    setupTestProperties(it, testProperties)
+                }
+                azureAks {
+                    name = 'azure-aks-test-cluster'
+                    clusterNodeCount = 3
+                    location = 'northcentralus'
+                    setupTestProperties(it, testProperties)
+                }
+                gcpGke {
+                    name = 'gcp-gke-test-cluster'
+                    storageClass = 'standard-rwx'
+                    accountName = 'gcp-gke-test-cluster@apollo-playground.iam.gserviceaccount.com'
+                    projectName = 'apollo-playground'
+                    regionZone = 'us-central1-a'
+                    clusterNodeCount = 3
+                    clusterNodeVmSize = 'e2-standard-2'
+                    setupTestProperties(it, testProperties)
+                }
+                onPremise {
+                    name = 'onprem-test-cluster'
+                    clusterNodeCpus = 4
+                    clusterNodeMemory = 15000
+                    setupTestProperties(it, testProperties)
+                }
+            }
+        }
+    }
+    operatorServer {
+        dockerImage = "xebialabsunsupported/xl-deploy"
+        version = xlDeployTrialVersion
+    }
+    servers {
+        server01 {
+            dockerImage = "${testProperties.xlDeployStartDockerRepository}/xl-deploy"
+            pingRetrySleepTime = 10
+            pingTotalTries = 120
+            version = testProperties.xlDeployStartVersion
+            overlays = serverOverlays
+        }
+        server02 {
+        }
+    }
+    workers {
+        worker01 {
+            dockerImage = "${testProperties.xlDeployWorkerStartDockerRepository}/deploy-task-engine"
+        }
+        worker02 {
+        }
+    }
+}
+
+['ClusterTestGroup'].each { String groupName ->
+    def processors = (Runtime.runtime.availableProcessors()).intValue()
+    def numberOfThreads = project.hasProperty("itestNumberOfThreads") ?
+        Integer.valueOf(project.itestNumberOfThreads) : Math.max(processors.intdiv(2), 3)
+
+    tasks.create name: "parallelTests$groupName", type: Test, {
+        useTestNG()
+        testClassesDirs = sourceSets.test.output.classesDirs + sourceSets.main.output.classesDirs
+        maxParallelForks = numberOfThreads
+        forkEvery = 1
+        includes = ["**/$groupName*"]
+        environment = [
+            EXPECTED_DEPLOYIT_VERSION : testProperties.xlDeployStartVersion,
+            EXPECTED_NUMBER_OF_WORKERS: 2
+        ]
+        outputs.upToDateWhen {
+            false
+        }
+    }
+}

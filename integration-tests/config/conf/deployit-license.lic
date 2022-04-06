@@ -1,0 +1,17 @@
+--- License ---
+License version: 3
+Product: XL Deploy
+Licensed to: XebiaLabs - Testing Only!
+Contact: Jython Test
+Expires after: 2037-01-01
+Maximum number of users: 2
+Licensed number of CIs: udm.Application=10000
+Licensed plugin: tomcat-plugin
+Licensed plugin: was-plugin
+Licensed plugin: iis-plugin
+Support policy: 24x7
+Edition: Enterprise
+--- Signature (SHA1withDSA) ---
+302c021464e13f7766a2effa4ed5174268c382896703f28402141181103f48eafb0958a2671cfec1
+5b5f39d756fb
+--- End of Signature ---
