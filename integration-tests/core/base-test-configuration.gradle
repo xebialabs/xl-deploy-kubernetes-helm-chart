@@ -1,11 +1,26 @@
 def getTestProperties() {
     def activeProviderName = project.hasProperty("activeProviderName") ? project.activeProviderName : null
     def destroyClusterOnShutdown = project.hasProperty("destroyClusterOnShutdown") ? Boolean.valueOf(project.destroyClusterOnShutdown as String) : false
-
+    def namespace = project.hasProperty("namespace") ? project.namespace : null
+    def doCleanup = project.hasProperty("doCleanup") ? Boolean.valueOf(project.doCleanup as String) : true
+    def xlDeployStartDockerRepository = project.hasProperty("xlDeployStartDockerRepository") ? project.xlDeployStartDockerRepository : "xebialabsunsupported"
+    def xlDeployWorkerStartDockerRepository = project.hasProperty("xlDeployWorkerStartDockerRepository") ? project.xlDeployWorkerStartDockerRepository : xlDeployStartDockerRepository
+    def xlDeployCentralConfigStartDockerRepository = project.hasProperty("xlDeployCentralConfigStartDockerRepository") ? project.xlDeployCentralConfigStartDockerRepository : xlDeployStartDockerRepository
+    def xlDeployStartVersion = project.hasProperty("xlDeployStartVersion") ? project.xlDeployStartVersion : xlDeployVersion
+    def keycloakUrl = project.hasProperty("keycloakUrl") ? project.keycloakUrl as String : null
+    def ingressType = project.hasProperty("ingressType") ? project.ingressType as String : null
 
     [
         activeProviderName                 : activeProviderName,
+        namespace                           : namespace,
+        doCleanup                           : doCleanup,
         destroyClusterOnShutdown           : destroyClusterOnShutdown,
+        xlDeployStartDockerRepository      : xlDeployStartDockerRepository,
+        xlDeployWorkerStartDockerRepository: xlDeployWorkerStartDockerRepository,
+        xlDeployCentralConfigStartDockerRepository: xlDeployCentralConfigStartDockerRepository,
+        xlDeployStartVersion               : xlDeployStartVersion,
+        keycloakUrl                        : keycloakUrl,
+        ingressType                        : ingressType,
     ]
 }
 
@@ -42,7 +57,13 @@ deployIntegrationServer {
         clusterProfiles {
             helm {
                 activeProviderName = testProperties.activeProviderName
-
+                doCleanup = testProperties.doCleanup
+                if (testProperties.namespace) {
+                    namespace = testProperties.namespace
+                }
+                if (testProperties.ingressType) {
+                    ingressType = testProperties.ingressType
+                }
                 awsEks {
                     name = 'aws-eks-test-cluster'
                     region = 'us-east-1'
@@ -87,6 +108,7 @@ deployIntegrationServer {
     servers {
         server01 {
             dockerImage = "${testProperties.xlDeployStartDockerRepository}/xl-deploy"
+            centralConfigDockerImage = "${testProperties.xlDeployCentralConfigStartDockerRepository}/central-configuration"
             pingRetrySleepTime = 10
             pingTotalTries = 120
             version = testProperties.xlDeployStartVersion
