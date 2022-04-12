@@ -54,6 +54,8 @@ public class DeployitIntegrationTest {
                 return new OperatorMetadataBasedProps();
             } else if (ClusterMetadataBasedProps.clusterMetadataProperties.exists()) {
                 return new ClusterMetadataBasedProps();
+            } else if (HelmMetadataBasedProps.helmMetadataProperties.exists()) {
+                return new HelmMetadataBasedProps();
             } else {
                 return new DeployitConfBasedProps();
             }
@@ -173,6 +175,34 @@ public class DeployitIntegrationTest {
         @Override
         protected String getHost() {
             return PropertyUtil.readPropertiesFile(operatorMetadataProperties).getProperty("cluster.fqdn");
+        }
+    }
+
+    private static class HelmMetadataBasedProps extends Props {
+        static final File helmMetadataProperties = new File("build/integration-server/deploy/helm/helm-metadata.properties");
+
+        HelmMetadataBasedProps() {
+            super(false, false);
+        }
+
+        @Override
+        protected File getServerRuntime() {
+            return null;
+        }
+
+        @Override
+        protected int getIntegrationTestPort() {
+            return Integer.parseInt(PropertyUtil.readPropertiesFile(helmMetadataProperties).getProperty("cluster.port"));
+        }
+
+        @Override
+        protected String getContextRoot() {
+            return PropertyUtil.readPropertiesFile(helmMetadataProperties).getProperty("cluster.context-root");
+        }
+
+        @Override
+        protected String getHost() {
+            return PropertyUtil.readPropertiesFile(helmMetadataProperties).getProperty("cluster.fqdn");
         }
     }
 
