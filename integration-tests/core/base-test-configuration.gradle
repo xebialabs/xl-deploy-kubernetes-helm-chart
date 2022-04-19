@@ -3,10 +3,11 @@ def getTestProperties() {
     def destroyClusterOnShutdown = project.hasProperty("destroyClusterOnShutdown") ? Boolean.valueOf(project.destroyClusterOnShutdown as String) : false
     def namespace = project.hasProperty("namespace") ? project.namespace : null
     def doCleanup = project.hasProperty("doCleanup") ? Boolean.valueOf(project.doCleanup as String) : true
+    def xlDeployStartVersion = project.hasProperty("xlDeployStartVersion") ? project.xlDeployStartVersion : xlDeployVersion
+    def xlDeployUpgradeVersion = project.hasProperty("xlDeployUpgradeVersion") ? project.xlDeployUpgradeVersion : xlDeployVersion
     def xlDeployStartDockerRepository = project.hasProperty("xlDeployStartDockerRepository") ? project.xlDeployStartDockerRepository : "xebialabsunsupported"
     def xlDeployWorkerStartDockerRepository = project.hasProperty("xlDeployWorkerStartDockerRepository") ? project.xlDeployWorkerStartDockerRepository : xlDeployStartDockerRepository
     def xlDeployCentralConfigStartDockerRepository = project.hasProperty("xlDeployCentralConfigStartDockerRepository") ? project.xlDeployCentralConfigStartDockerRepository : xlDeployStartDockerRepository
-    def xlDeployStartVersion = project.hasProperty("xlDeployStartVersion") ? project.xlDeployStartVersion : xlDeployVersion
     def keycloakUrl = project.hasProperty("keycloakUrl") ? project.keycloakUrl as String : null
     def ingressType = project.hasProperty("ingressType") ? project.ingressType as String : null
 
@@ -19,6 +20,7 @@ def getTestProperties() {
         xlDeployWorkerStartDockerRepository: xlDeployWorkerStartDockerRepository,
         xlDeployCentralConfigStartDockerRepository: xlDeployCentralConfigStartDockerRepository,
         xlDeployStartVersion               : xlDeployStartVersion,
+        xlDeployUpgradeVersion             : xlDeployUpgradeVersion,
         keycloakUrl                        : keycloakUrl,
         ingressType                        : ingressType,
     ]
@@ -73,12 +75,15 @@ deployIntegrationServer {
                     apiServerURL = 'https://api.acierto.lnfl.p1.openshiftapps.com:6443'
                     host = 'router-default.apps.acierto.lnfl.p1.openshiftapps.com'
                     name = 'aws-openshift-test-cluster'
+                    helmBranch = 'oc-master'
+                    helmXldReleaseName = 'dai-ocp-xld'
                     oauthHostName = "oauth-openshift.apps.acierto.lnfl.p1.openshiftapps.com"
                     setupTestProperties(it, testProperties)
                 }
                 azureAks {
                     name = 'azure-aks-test-cluster'
                     clusterNodeCount = 3
+                    clusterNodeVmSize = 'Standard_DS3_v2'
                     location = 'northcentralus'
                     setupTestProperties(it, testProperties)
                 }
@@ -94,6 +99,7 @@ deployIntegrationServer {
                 }
                 onPremise {
                     name = 'onprem-test-cluster'
+                    driver = 'docker'
                     clusterNodeCpus = 4
                     clusterNodeMemory = 15000
                     setupTestProperties(it, testProperties)
@@ -143,6 +149,24 @@ deployIntegrationServer {
         ]
         outputs.upToDateWhen {
             false
+        }
+    }
+}
+
+
+afterEvaluate {
+    def parallelTests = []
+
+    ['ClusterTestGroup'].each { String groupName ->
+        parallelTests.add(tasks["parallelTests$groupName"])
+    }
+
+    [parallelTests].flatten().each {
+        if (!project.hasProperty("keepServerRunning")) {
+            it.dependsOn startDeployCluster
+            if (testProperties.xlDeployUpgradeVersion != null) {
+                it.finalizedBy stopDeployCluster
+            }
         }
     }
 }
