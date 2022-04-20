@@ -76,14 +76,12 @@ deployIntegrationServer {
                     host = 'router-default.apps.acierto.lnfl.p1.openshiftapps.com'
                     name = 'aws-openshift-test-cluster'
                     helmBranch = 'oc-master'
-                    helmXldReleaseName = 'dai-ocp-xld'
                     oauthHostName = "oauth-openshift.apps.acierto.lnfl.p1.openshiftapps.com"
                     setupTestProperties(it, testProperties)
                 }
                 azureAks {
                     name = 'azure-aks-test-cluster'
                     clusterNodeCount = 3
-                    clusterNodeVmSize = 'Standard_DS3_v2'
                     location = 'northcentralus'
                     setupTestProperties(it, testProperties)
                 }
@@ -99,7 +97,6 @@ deployIntegrationServer {
                 }
                 onPremise {
                     name = 'onprem-test-cluster'
-                    driver = 'docker'
                     clusterNodeCpus = 4
                     clusterNodeMemory = 15000
                     setupTestProperties(it, testProperties)
