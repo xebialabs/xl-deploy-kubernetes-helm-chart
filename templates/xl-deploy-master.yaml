@@ -30,7 +30,7 @@ spec:
       - name: {{ .Values.ImagePullSecret }}
       {{- end }}
       initContainers:
-        {{- if .Values.postgresql.install }}
+        {{- if and (not .Values.UseExistingDB.Enabled) (.Values.postgresql.install) }}
         - name: wait-for-postgresql
           image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
           command:
@@ -145,14 +145,6 @@ spec:
                   key: deploy-password
             - name: XL_CLUSTER_MODE
               value: default
-            {{- if .Values.postgresql.install }}
-            - name: XL_DB_URL
-              value: jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/xld-db
-            - name: XL_DB_USERNAME
-              value: xld
-            - name: XL_DB_PASSWORD
-              value: "xld"
-            {{- else }}
             {{- if .Values.UseExistingDB.Enabled }}
             - name: XL_DB_URL
               value: {{.Values.UseExistingDB.XL_DB_URL | quote}}
@@ -166,6 +158,14 @@ spec:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: databasePassword
+            {{- else }}
+            {{- if .Values.postgresql.install }}
+            - name: XL_DB_URL
+              value: jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/xld-db
+            - name: XL_DB_USERNAME
+              value: xld
+            - name: XL_DB_PASSWORD
+              value: "xld"
             {{- end }}
             {{- end }}
             - name: XL_LICENSE
