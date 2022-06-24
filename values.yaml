@@ -21,6 +21,9 @@ TinyToolsImageTag: "22.2.0"
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
 ImagePullPolicy: "Always"
 
+## Resets part of the configuration files and license
+resetConf: true
+
 ## Ref: https://docs.openshift.com/container-platform/4.5/networking/routes/route-configuration.html
 route:
   Enabled: true
