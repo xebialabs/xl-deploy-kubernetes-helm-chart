@@ -44,6 +44,20 @@ spec:
               value: {{ template "xl-deploy.fullname" . }}-lb
             - name: MASTER_PORT
               value: "4516"
+        {{- if .Values.resetConf }}
+        - name: prepare-conf
+          image: "{{ .Values.WorkerImageRepository }}:{{ .Values.ImageTag }}"
+          imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
+          volumeMounts:
+            - name: data-dir
+              mountPath: /opt/xebialabs/deploy-task-engine/conf
+              subPath: conf
+          command:
+            - sh
+            - -c
+            - >
+              rm -fv /opt/xebialabs/deploy-task-engine/conf/xld-wrapper.conf.common; rm -fv /opt/xebialabs/deploy-task-engine/conf/deployit-license.lic;
+        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.WorkerImageRepository }}:{{ .Values.ImageTag }}"
