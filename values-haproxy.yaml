@@ -100,7 +100,6 @@ resources: {}
 ## Install postgresql chart. If you have an existing database deployment, set 'install' to 'false'.
 postgresql:
   install: true
-  initdbScriptsSecret: "postgresql-init-sql-xld"
   image:
     pullSecrets: []
   persistence:
@@ -319,7 +318,7 @@ oidc:
 centralConfiguration:
   replicas: 1
   image:
-    repository: xebialabs/central-configuration
+    repository: xebialabsunsupported/central-configuration
   persistence:
     annotations: { }
     pvcSize: 500M
