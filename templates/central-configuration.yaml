@@ -148,7 +148,7 @@ spec:
                   key: centralConfigEncryptKey
       volumes:
         {{- if eq .Values.Persistence.Enabled true }}
-        {{- if eq .Values.centralConfiguration.migrateFromEmbedded "true" )
+        {{- if eq .Values.centralConfiguration.migrateFromEmbedded "true" }}
         - name: source-dir
           persistentVolumeClaim:
             claimName: data-dir-{{ template "xl-deploy.fullname" . }}-master-0
