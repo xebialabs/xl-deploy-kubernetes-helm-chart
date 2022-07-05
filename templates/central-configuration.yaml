@@ -55,12 +55,6 @@ spec:
               rm -fv /opt/xebialabs/central-configuration-server/conf/xlc-wrapper.conf.common;
         {{- end }}
       {{- end }}
-      {{- if and (eq .Values.centralConfiguration.migrateFromEmbedded "true") (eq .Values.Persistence.Enabled true)}}
-      volumes:
-        - name: source-dir
-          persistentVolumeClaim:
-            claimName: data-dir-{{ template "xl-deploy.fullname" . }}-master-0
-      {{- end }}
       containers:
         - name: cc-server
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.ImageTag }}"
@@ -152,9 +146,14 @@ spec:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: centralConfigEncryptKey
-      {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) }}
       volumes:
-        {{- if not .Values.Persistence.Enabled }}
+        {{- if eq .Values.Persistence.Enabled true }}
+        {{- if eq .Values.centralConfiguration.migrateFromEmbedded "true" }}
+        - name: source-dir
+          persistentVolumeClaim:
+            claimName: data-dir-{{ template "xl-deploy.fullname" . }}-master-0
+        {{- end }}
+        {{- else }}
         - name: data-dir
           emptyDir: { }
         {{- end }}
@@ -166,7 +165,6 @@ spec:
           configMap:
             name: xl-deploy-keycloak
         {{- end }}
-      {{- end }}
   {{- if .Values.Persistence.Enabled }}
   volumeClaimTemplates:
     - metadata:
