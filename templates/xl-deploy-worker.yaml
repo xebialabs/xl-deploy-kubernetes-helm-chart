@@ -44,20 +44,6 @@ spec:
               value: {{ template "xl-deploy.fullname" . }}-lb
             - name: MASTER_PORT
               value: "4516"
-        {{- if .Values.resetConf }}
-        - name: prepare-conf
-          image: "{{ .Values.WorkerImageRepository }}:{{ .Values.ImageTag }}"
-          imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
-          volumeMounts:
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/conf
-              subPath: conf
-          command:
-            - sh
-            - -c
-            - >
-              rm -fv /opt/xebialabs/deploy-task-engine/conf/xld-wrapper.conf.common; rm -fv /opt/xebialabs/deploy-task-engine/conf/deployit-license.lic;
-        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.WorkerImageRepository }}:{{ .Values.ImageTag }}"
@@ -67,6 +53,24 @@ spec:
               containerPort: 9100
             - name: akka
               containerPort: 8180
+          {{- if .Values.deploy.configurationManagement.worker.configuration.enabled }}
+          command:
+            - sh
+            - -c
+            - >
+              {{- range $.Values.deploy.configurationManagement.worker.configuration.resetFiles }}
+              rm -fv /opt/xebialabs/deploy-task-engine/conf/{{ . }};
+              {{- end }}
+              echo "Finished reset of the conf files"; 
+              mkdir /opt/xebialabs/deploy-task-engine/xld-configuration-management/; 
+              ORIGINAL_PWD=$(pwd);
+              cd /opt/xebialabs/deploy-task-engine/xld-configuration-management/; 
+              cp /opt/xebialabs/xld-configuration-management/* .; chmod +x *.sh; 
+              [ -x ./op-configuration-management.sh ] && ./op-configuration-management.sh;
+              cd $ORIGINAL_PWD;
+              echo "Finished deploy worker configuration management";
+              /opt/xebialabs/tini -s -- /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh -master "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180" -api "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
+          {{- end }}
           volumeMounts:
             - name: data-dir
               mountPath: /opt/xebialabs/deploy-task-engine/work
@@ -89,6 +93,17 @@ spec:
             - name: data-dir
               mountPath: /opt/xebialabs/deploy-task-engine/log
               subPath: log
+            {{- if .Values.deploy.configurationManagement.worker.volumeMounts.enabled }}
+            {{- range $key, $val := .Values.deploy.configurationManagement.worker.volumeMounts.paths }}
+            - name: data-dir
+              mountPath: /opt/xebialabs/deploy-task-engine/{{ $key }}
+              subPath: {{ $val }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.deploy.configurationManagement.worker.configuration.enabled }}
+            - name: xld-worker-configuration-management-volume
+              mountPath: /opt/xebialabs/xld-configuration-management
+            {{- end }}
           {{- if .Values.HealthProbes }}
           livenessProbe:
             tcpSocket:
@@ -200,20 +215,33 @@ spec:
               value: "true"
             - name: CENTRAL_CONFIG_URL
               value: "http://{{ template "xl-deploy.fullname" . }}-cc-server.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
+            {{- if .Values.deploy.configurationManagement.worker.environment.enabled }}
+            {{- range $key, $val := .Values.deploy.configurationManagement.worker.environment.variables }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+            {{- end }}
+          {{- if eq .Values.deploy.configurationManagement.worker.configuration.enabled false }}
           args:
             - "-master"
             - "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180"
             - "-api"
             - "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
+          {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
-      {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) }}
+      {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) (eq .Values.deploy.configurationManagement.worker.configuration.enabled true) }}
       volumes:
         {{- if not .Values.Persistence.Enabled }}
         - name: data-dir
           emptyDir: {}
         {{- end }}
-      {{- end }}
+        {{- if .Values.deploy.configurationManagement.worker.configuration.enabled }}
+        - name: xld-worker-configuration-management-volume
+          configMap:
+            name: xld-worker-configuration-management-script
+        {{- end }}
+  {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
