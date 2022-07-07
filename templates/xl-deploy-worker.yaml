@@ -78,7 +78,7 @@ spec:
               [ -x ./op-configuration-management.sh ] && ./op-configuration-management.sh;
               cd $ORIGINAL_PWD;
               echo "Finished deploy worker configuration management";
-              /opt/xebialabs/tini -s -- /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh -master "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180" -api "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
+              /opt/xebialabs/tini -s -- /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh worker -master "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180" -api "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
           {{- end }}
           volumeMounts:
             {{- if .Values.oidc.enabled }}
