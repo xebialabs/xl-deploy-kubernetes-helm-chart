@@ -28,8 +28,58 @@ ImagePullPolicy: "Always"
 ## Secrets must be manually created in the namespace.
 # ImagePullSecret: xlDeploy
 
-## Resets part of the configuration files and license
-resetConf: true
+deploy:
+  configurationManagement:
+    centralConfiguration:
+      configuration:
+        enabled: true
+        resetFiles: ## Resets part of the configuration files
+          - xlc-wrapper.conf.common
+        script: |-
+          cat example.txt && echo ""; # Add here commands to be executed before centralConfiguration server start
+        scriptData: ## Add here files that will be used by the configurationScript
+          example.txt: |-
+            Nothing to manage at this point.
+      environment:
+        enabled: true
+        variables: {}
+      volumeMounts:
+        enabled: true
+        paths: {}
+    master:
+      configuration:
+        enabled: true
+        resetFiles: ## Resets part of the configuration files and license
+          - deployit-license.lic
+          - xld-wrapper.conf.common
+        script: |-
+          cat example.txt && echo ""; # Add here commands to be executed before master start
+        scriptData: ## Add here files that will be used by the configurationScript
+          example.txt: |-
+            Nothing to manage at this point.
+      environment:
+        enabled: true
+        variables: { }
+      volumeMounts:
+        enabled: true
+        paths: { }
+    worker:
+      configuration:
+        enabled: true
+        resetFiles: ## Resets part of the configuration files and license
+          - deployit-license.lic
+          - xld-wrapper.conf.common
+        script: |-
+          cat example.txt && echo ""; # Add here commands to be executed before worker start
+        scriptData: ## Add here files that will be used by the configurationScript
+          example.txt: |-
+            Nothing to manage at this point.
+      environment:
+        enabled: true
+        variables: { }
+      volumeMounts:
+        enabled: true
+        paths: { }
 
 ## Install nginx subchart. If you have nginx already installed, set 'install' to 'false'.
 ## If you have any other ingress controller installed, you can set the 'install' to 'false'.
