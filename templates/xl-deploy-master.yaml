@@ -76,20 +76,6 @@ spec:
            - name: RABBITMQ_PORT
              value: "5672"
         {{- end }}
-        {{- if .Values.resetConf }}
-        - name: prepare-conf
-          image: "{{ .Values.ServerImageRepository }}:{{ .Values.ImageTag }}"
-          imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
-          volumeMounts:
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/conf
-              subPath: conf
-          command:
-            - sh
-            - -c
-            - >
-              rm -fv /opt/xebialabs/xl-deploy-server/conf/xld-wrapper.conf.common; rm -fv /opt/xebialabs/xl-deploy-server/conf/deployit-license.lic;
-        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.ServerImageRepository }}:{{ .Values.ImageTag }}"
@@ -102,6 +88,24 @@ spec:
               containerPort: 9100
             - name: akka
               containerPort: 8180
+          {{- if .Values.deploy.configurationManagement.master.configuration.enabled }}
+          command:
+            - sh
+            - -c
+            - >
+              {{- range $.Values.deploy.configurationManagement.master.configuration.resetFiles }}
+              rm -fv /opt/xebialabs/xl-deploy-server/conf/{{ . }};
+              {{- end }}
+              echo "Finished reset of the conf files"; 
+              mkdir /opt/xebialabs/xl-deploy-server/xld-configuration-management/; 
+              ORIGINAL_PWD=$(pwd);
+              cd /opt/xebialabs/xl-deploy-server/xld-configuration-management/; 
+              cp /opt/xebialabs/xld-configuration-management/* .; chmod +x *.sh; 
+              [ -x ./op-configuration-management.sh ] && ./op-configuration-management.sh;
+              cd $ORIGINAL_PWD;
+              echo "Finished deploy master server configuration management";
+              /opt/xebialabs/tini -s -- /opt/xebialabs/xl-deploy-server/bin/run-in-container.sh
+          {{- end }}
           volumeMounts:
             {{- if .Values.oidc.enabled }}
             - name: deploy-server
@@ -135,6 +139,17 @@ spec:
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/log
               subPath: log
+            {{- if .Values.deploy.configurationManagement.master.volumeMounts.enabled }}
+            {{- range $key, $val := .Values.deploy.configurationManagement.master.volumeMounts.paths }}
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/{{ $key }}
+              subPath: {{ $val }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.deploy.configurationManagement.master.configuration.enabled }}
+            - name: xld-master-configuration-management-volume
+              mountPath: /opt/xebialabs/xld-configuration-management
+            {{- end }}
           {{- if .Values.HealthProbes }}
           livenessProbe:
             httpGet:
@@ -249,9 +264,15 @@ spec:
               value: "true"
             - name: CENTRAL_CONFIG_URL
               value: "http://{{ template "xl-deploy.fullname" . }}-cc-server.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
+            {{- if .Values.deploy.configurationManagement.master.environment.enabled }}
+            {{- range $key, $val := .Values.deploy.configurationManagement.master.environment.variables }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+            {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
-      {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) }}
+      {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) (eq .Values.deploy.configurationManagement.master.configuration.enabled true) }}
       volumes:
         {{- if not .Values.Persistence.Enabled }}
         - name: data-dir
@@ -265,7 +286,12 @@ spec:
           configMap:
             name: xl-deploy-keycloak
         {{- end }}
-      {{- end }}
+        {{- if .Values.deploy.configurationManagement.master.configuration.enabled }}
+        - name: xld-master-configuration-management-volume
+          configMap:
+            name: xld-master-configuration-management-script
+        {{- end }}
+  {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
