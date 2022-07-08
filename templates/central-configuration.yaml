@@ -29,7 +29,6 @@ spec:
       {{- end }}
       {{- if or (and (eq .Values.centralConfiguration.migrateFromEmbedded "true") (eq .Values.Persistence.Enabled true)) }}
       initContainers:
-        {{- if and (eq .Values.centralConfiguration.migrateFromEmbedded "true") (eq .Values.Persistence.Enabled true)}}
         - name: wait-for-migrate-from-embedded-cc-to-standalone
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.ImageTag }}"
           imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
@@ -39,7 +38,6 @@ spec:
               name: source-dir
             - mountPath: "/mnt/centralConfiguration-target-dir"
               name: data-dir
-        {{- end }}
       {{- end }}
       containers:
         - name: cc-server
