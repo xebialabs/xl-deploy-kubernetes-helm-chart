@@ -157,10 +157,10 @@ spec:
         - name: data-dir
           emptyDir: { }
         {{- end }}
-        {{- if .Values.oidc.enabled }}
         - name: deploy-server
           configMap:
             name: xl-deploy-server
+        {{- if .Values.oidc.enabled }}
         - name: deploy-keycloak
           configMap:
             name: xl-deploy-keycloak

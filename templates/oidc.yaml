@@ -59,4 +59,19 @@ data:
             rolesClaimName: "groups"
             userNameClaimName: "preferred_username"
             {{- end }}
+{{- else }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: xl-deploy-server
+  labels:
+    app: {{ template "xl-deploy.name" . }}
+    chart: {{ template "xl-deploy.chart" . }}
+    release: {{ .Release.Name }}
+data:
+  deploy-server.yaml: |
+    deploy.server:
+      license:
+        daysBeforeWarning: 10
 {{- end }}
