@@ -239,7 +239,7 @@ spec:
           {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
-      {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) }}
+      {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) (eq .Values.deploy.configurationManagement.worker.configuration.enabled true) }}
       volumes:
         {{- if not .Values.Persistence.Enabled }}
         - name: data-dir
