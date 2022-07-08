@@ -105,8 +105,8 @@ spec:
           volumeMounts:
             {{- if .Values.oidc.enabled }}
             - name: deploy-server
-              mountPath: /opt/xebialabs/xl-deploy-server/central-conf/deploy-server.yaml.template
-              subPath: deploy-server.yaml.template
+              mountPath: /opt/xebialabs/xl-deploy-server/centralConfiguration/deploy-server.yaml
+              subPath: deploy-server.yaml
             - name: deploy-keycloak
               mountPath: /opt/xebialabs/xl-deploy-server/centralConfiguration/deploy-oidc.yaml
               subPath: deploy-oidc.yaml

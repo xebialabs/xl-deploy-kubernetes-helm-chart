@@ -8,7 +8,7 @@ metadata:
     chart: {{ template "xl-deploy.chart" . }}
     release: {{ .Release.Name }}
 data:
-  deploy-server.yaml.template: |
+  deploy-server.yaml: |
     deploy.server:
       license:
         daysBeforeWarning: 10
