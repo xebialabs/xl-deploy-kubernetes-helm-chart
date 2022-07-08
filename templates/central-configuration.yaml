@@ -64,10 +64,10 @@ spec:
               containerPort: 8888
               protocol: TCP
           volumeMounts:
-            {{- if .Values.oidc.enabled }}
             - name: deploy-server
               mountPath: /opt/xebialabs/central-configuration-server/centralConfiguration/deploy-server.yaml
               subPath: deploy-server.yaml
+            {{- if .Values.oidc.enabled }}
             - name: deploy-keycloak
               mountPath: /opt/xebialabs/central-configuration-server/centralConfiguration/deploy-oidc.yaml
               subPath: deploy-oidc.yaml
