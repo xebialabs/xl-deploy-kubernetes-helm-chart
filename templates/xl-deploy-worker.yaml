@@ -104,7 +104,7 @@ spec:
             {{- if .Values.deploy.configurationManagement.worker.volumeMounts.enabled }}
             {{- range $key, $val := .Values.deploy.configurationManagement.worker.volumeMounts.paths }}
             - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/{{ $key }}
+              mountPath: /opt/xebialabs/xl-deploy-server/{{ $key }}
               subPath: {{ $val }}
             {{- end }}
             {{- end }}
