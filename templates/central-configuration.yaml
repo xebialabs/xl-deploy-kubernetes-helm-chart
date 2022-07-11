@@ -55,7 +55,10 @@ spec:
               {{- range $.Values.deploy.configurationManagement.centralConfiguration.configuration.resetFiles }}
               rm -fv /opt/xebialabs/central-configuration-server/conf/{{ . }};
               {{- end }}
-              echo "Finished reset of the conf files"; 
+              echo "Finished reset of the conf files";
+              {{- range $.Values.deploy.configurationManagement.centralConfiguration.configuration.resetCcFiles }}
+              rm -fv /opt/xebialabs/xl-deploy-server/centralConfiguration/{{ . }};
+              {{- end }}
               mkdir /opt/xebialabs/central-configuration-server/xld-configuration-management/; 
               ORIGINAL_PWD=$(pwd);
               cd /opt/xebialabs/central-configuration-server/xld-configuration-management/; 

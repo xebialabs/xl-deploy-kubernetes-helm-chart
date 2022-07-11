@@ -35,6 +35,8 @@ deploy:
         enabled: true
         resetFiles: ## Resets part of the configuration files
           - xlc-wrapper.conf.common
+        resetCcFiles:
+          - deploy-server.yaml
         script: |-
           cat example.txt && echo ""; # Add here commands to be executed before centralConfiguration server start
         scriptData: ## Add here files that will be used by the configurationScript
