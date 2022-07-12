@@ -22,6 +22,7 @@ TinyToolsImageTag: "22.2.0"
 ImagePullPolicy: "Always"
 
 deploy:
+  configurationManagement:
     master:
       configuration:
         enabled: true
