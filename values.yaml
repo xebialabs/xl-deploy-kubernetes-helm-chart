@@ -21,6 +21,7 @@ TinyToolsImageTag: "22.2.0"
 ImagePullPolicy: "Always"
 
 deploy:
+  configurationManagement:
     master:
       configuration:
         enabled: true
@@ -57,20 +58,20 @@ deploy:
         paths: {}
 
 ## Ref: https://docs.openshift.com/container-platform/4.5/networking/routes/route-configuration.html
-route:	
-  Enabled: true	
-  annotations:	
-    haproxy.router.openshift.io/cookie_name: SESSION_XLD	
-    haproxy.router.openshift.io/disable_cookies: "false"	
-    haproxy.router.openshift.io/rewrite-target: /	
-  path: /	
-  hosts:	
+route:
+  Enabled: true
+  annotations:
+    haproxy.router.openshift.io/cookie_name: SESSION_XLD
+    haproxy.router.openshift.io/disable_cookies: "false"
+    haproxy.router.openshift.io/rewrite-target: /
+  path: /
+  hosts:
     - app.example.com
 
 ## By default only Edge Termination is supported with Deploy.
 ## To configure SSL/TLS with Deploy uncomment the below tls section and provide the private key, certificate and optional caCertificate.
 ## The allowed values for insecureEdgeTerminationPolicy are: None or empty (for disabled), Allow or Redirect
-## Ref: https://docs.openshift.com/container-platform/4.5/networking/routes/secured-routes.html	
+## Ref: https://docs.openshift.com/container-platform/4.5/networking/routes/secured-routes.html
 #  tls:
 #    key: |-
 #      -----BEGIN PRIVATE KEY-----
@@ -82,12 +83,12 @@ route:
 #      -----BEGIN CERTIFICATE-----
 #      -----END CERTIFICATE-----
 #    insecureEdgeTerminationPolicy: Redirect
-     
+
 # https://docs.xebialabs.com/v.10.2/deploy/docker/docker-environment-variables/
 AdminPassword:
   # Provide the admin password to be used
 
-xldLicense: 
+xldLicense:
 # Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 -w 0 ) and put the output here
 
 RepositoryKeystore:
@@ -136,22 +137,22 @@ postgresql:
   nodeSelector: {}
   affinity: {}
   tolerations: []
-  volumePermissions:	
-    securityContext:	
-      runAsUser: auto	
-  securityContext:	
-    enabled: false	
-  containerSecurityContext:	
-    enabled: false	
-  shmVolume:	
-    chmod:	
+  volumePermissions:
+    securityContext:
+      runAsUser: auto
+  securityContext:
+    enabled: false
+  containerSecurityContext:
+    enabled: false
+  shmVolume:
+    chmod:
       enabled: false
 
 # https://docs.xebialabs.com/v.10.2/deploy/how-to/configure-the-xl-deploy-sql-repository/
 UseExistingDB:
   Enabled: false
-  # If you want to use an existing database, change 'postgresql.install' to 'false'.	
-  # Set 'UseExistingDB.Enabled' to 'true'.Uncomment the following lines and provide the values.	
+  # If you want to use an existing database, change 'postgresql.install' to 'false'.
+  # Set 'UseExistingDB.Enabled' to 'true'.Uncomment the following lines and provide the values.
   # XL_DB_URL:
   # XL_DB_USERNAME:
   # XL_DB_PASSWORD:
@@ -222,7 +223,7 @@ rabbitmq:
     storageClass: "-"
     size: 8Gi
   service:
-    type: ClusterIP     
+    type: ClusterIP
   volumePermissions:
     enabled: true
 
