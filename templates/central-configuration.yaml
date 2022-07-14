@@ -22,8 +22,9 @@ spec:
         release: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ template "xl-deploy.name" . }}-sa
-      {{- if and (eq .Values.centralConfiguration.migrateFromEmbedded "true") (eq .Values.Persistence.Enabled true)}}
+      {{- if or (and (eq .Values.centralConfiguration.migrateFromEmbedded "true") (eq .Values.Persistence.Enabled true)) (.Values.resetConf) }}
       initContainers:
+        {{- if and (eq .Values.centralConfiguration.migrateFromEmbedded "true") (eq .Values.Persistence.Enabled true)}}
         - name: wait-for-migrate-from-embedded-cc-to-standalone
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.ImageTag }}"
           imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
@@ -33,6 +34,21 @@ spec:
               name: source-dir
             - mountPath: "/mnt/centralConfiguration-target-dir"
               name: data-dir
+        {{- end }}
+        {{- if .Values.resetConf }}
+        - name: prepare-conf
+          image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.ImageTag }}"
+          imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
+          volumeMounts:
+            - name: data-dir
+              mountPath: /opt/xebialabs/central-configuration-server/conf
+              subPath: conf
+          command:
+            - sh
+            - -c
+            - >
+              rm -fv /opt/xebialabs/central-configuration-server/conf/xlc-wrapper.conf.common;
+        {{- end }}
       {{- end }}
       containers:
         - name: cc-server
@@ -60,14 +76,6 @@ spec:
           env:
             - name: XL_CLUSTER_MODE
               value: default
-            {{- if .Values.postgresql.install }}
-            - name: XL_DB_URL
-              value: jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/xld-db
-            - name: XL_DB_USERNAME
-              value: xld
-            - name: XL_DB_PASSWORD
-              value: "xld"
-            {{- else }}
             {{- if .Values.UseExistingDB.Enabled }}
             - name: XL_DB_URL
               value: {{.Values.UseExistingDB.XL_DB_URL | quote}}
@@ -81,6 +89,14 @@ spec:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: databasePassword
+            {{- else }}
+            {{- if .Values.postgresql.install }}
+            - name: XL_DB_URL
+              value: jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/xld-db
+            - name: XL_DB_USERNAME
+              value: xld
+            - name: XL_DB_PASSWORD
+              value: "xld"
             {{- end }}
             {{- end }}
             - name: XL_METRICS_ENABLED
