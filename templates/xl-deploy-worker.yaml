@@ -53,6 +53,24 @@ spec:
               containerPort: 9100
             - name: akka
               containerPort: 8180
+          {{- if .Values.deploy.configurationManagement.worker.configuration.enabled }}
+          command:
+            - sh
+            - -c
+            - >
+              {{- range $.Values.deploy.configurationManagement.worker.configuration.resetFiles }}
+              rm -fv /opt/xebialabs/xl-deploy-server/conf/{{ . }};
+              {{- end }}
+              echo "Finished reset of the conf files"; 
+              mkdir /opt/xebialabs/xl-deploy-server/xld-configuration-management/; 
+              ORIGINAL_PWD=$(pwd);
+              cd /opt/xebialabs/xl-deploy-server/xld-configuration-management/; 
+              cp /opt/xebialabs/xld-configuration-management/* .; chmod +x *.sh; 
+              [ -x ./op-configuration-management.sh ] && ./op-configuration-management.sh;
+              cd $ORIGINAL_PWD;
+              echo "Finished deploy worker configuration management";
+              /opt/xebialabs/tini -s -- /opt/xebialabs/xl-deploy-server/bin/run-in-container.sh worker -master "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180" -api "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
+          {{- end }}
           volumeMounts:
             {{- if .Values.oidc.enabled }}
             - name: deploy-server
@@ -83,6 +101,17 @@ spec:
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/log
               subPath: log
+            {{- if .Values.deploy.configurationManagement.worker.volumeMounts.enabled }}
+            {{- range $key, $val := .Values.deploy.configurationManagement.worker.volumeMounts.paths }}
+            - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/{{ $key }}
+              subPath: {{ $val }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.deploy.configurationManagement.worker.configuration.enabled }}
+            - name: xld-worker-configuration-management-volume
+              mountPath: /opt/xebialabs/xld-configuration-management
+            {{- end }}
           {{- if .Values.HealthProbes }}
           livenessProbe:
             tcpSocket:
@@ -185,15 +214,23 @@ spec:
             - name: ENABLE_SATELLITE
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
+            {{- if .Values.deploy.configurationManagement.worker.environment.enabled }}
+            {{- range $key, $val := .Values.deploy.configurationManagement.worker.environment.variables }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+            {{- end }}
+          {{- if eq .Values.deploy.configurationManagement.worker.configuration.enabled false }}
           args:
             - "worker"
             - "-master"
             - "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180"
             - "-api"
             - "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
+          {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
-      {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) }}
+      {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) (eq .Values.deploy.configurationManagement.worker.configuration.enabled true) }}
       volumes:
         {{- if not .Values.Persistence.Enabled }}
         - name: data-dir
@@ -203,6 +240,11 @@ spec:
         - name: deploy-server
           configMap:
             name: xl-deploy-server
+        {{- end }}
+        {{- if .Values.deploy.configurationManagement.worker.configuration.enabled }}
+        - name: xld-worker-configuration-management-volume
+          configMap:
+            name: xld-worker-configuration-management-script
         {{- end }}
       {{- end }}
     {{- with .Values.nodeSelector }}
