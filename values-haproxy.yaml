@@ -27,6 +27,43 @@ ImagePullPolicy: "Always"
 ## Secrets must be manually created in the namespace.
 # ImagePullSecret: xlDeploy
 
+deploy:
+  configurationManagement:
+    master:
+      configuration:
+        enabled: true
+        resetFiles: ## Resets part of the configuration files and license
+          - deployit-license.lic
+          - xld-wrapper.conf.common
+        script: |-
+          cat example.txt && echo ""; # Add here commands to be executed before master start
+        scriptData: ## Add here files that will be used by the configurationScript
+          example.txt: |-
+            Nothing to manage at this point.
+      environment:
+        enabled: true
+        variables: {}
+      volumeMounts:
+        enabled: true
+        paths: {}
+    worker:
+      configuration:
+        enabled: true
+        resetFiles: ## Resets part of the configuration files and license
+          - deployit-license.lic
+          - xld-wrapper.conf.common
+        script: |-
+          cat example.txt && echo ""; # Add here commands to be executed before worker start
+        scriptData: ## Add here files that will be used by the configurationScript
+          example.txt: |-
+            Nothing to manage at this point.
+      environment:
+        enabled: true
+        variables: {}
+      volumeMounts:
+        enabled: true
+        paths: {}
+
 ## Install haproxy subchart. If you have haproxy already installed, set 'install' to 'false'.
 ## If you have any other ingress controller installed, you can set the 'install' to 'false'.
 haproxy-ingress:
@@ -66,7 +103,7 @@ ingress:
 AdminPassword:
   # Provide the admin password to be used
 
-xldLicense: 
+xldLicense:
 # Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 -w 0 ) and put the output here
 
 RepositoryKeystore:
@@ -197,9 +234,9 @@ rabbitmq:
     storageClass: "-"
     size: 8Gi
   service:
-    type: ClusterIP  
+    type: ClusterIP
   volumePermissions:
-    enabled: true  
+    enabled: true
 
 # https://docs.xebialabs.com/v.10.2/deploy/how-to/configure-task-queueing/
 UseExistingMQ:
