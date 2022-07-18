@@ -20,21 +20,58 @@ TinyToolsImageTag: "22.2.0"
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
 ImagePullPolicy: "Always"
 
+deploy:
+  configurationManagement:
+    master:
+      configuration:
+        enabled: true
+        resetFiles: ## Resets part of the configuration files and license
+          - deployit-license.lic
+          - xld-wrapper.conf.common
+        script: |-
+          cat example.txt && echo ""; # Add here commands to be executed before master start
+        scriptData: ## Add here files that will be used by the configurationScript
+          example.txt: |-
+            Nothing to manage at this point.
+      environment:
+        enabled: true
+        variables: {}
+      volumeMounts:
+        enabled: true
+        paths: {}
+    worker:
+      configuration:
+        enabled: true
+        resetFiles: ## Resets part of the configuration files and license
+          - deployit-license.lic
+          - xld-wrapper.conf.common
+        script: |-
+          cat example.txt && echo ""; # Add here commands to be executed before worker start
+        scriptData: ## Add here files that will be used by the configurationScript
+          example.txt: |-
+            Nothing to manage at this point.
+      environment:
+        enabled: true
+        variables: {}
+      volumeMounts:
+        enabled: true
+        paths: {}
+
 ## Ref: https://docs.openshift.com/container-platform/4.5/networking/routes/route-configuration.html
-route:	
-  Enabled: true	
-  annotations:	
-    haproxy.router.openshift.io/cookie_name: SESSION_XLD	
-    haproxy.router.openshift.io/disable_cookies: "false"	
-    haproxy.router.openshift.io/rewrite-target: /	
-  path: /	
-  hosts:	
+route:
+  Enabled: true
+  annotations:
+    haproxy.router.openshift.io/cookie_name: SESSION_XLD
+    haproxy.router.openshift.io/disable_cookies: "false"
+    haproxy.router.openshift.io/rewrite-target: /
+  path: /
+  hosts:
     - app.example.com
 
 ## By default only Edge Termination is supported with Deploy.
 ## To configure SSL/TLS with Deploy uncomment the below tls section and provide the private key, certificate and optional caCertificate.
 ## The allowed values for insecureEdgeTerminationPolicy are: None or empty (for disabled), Allow or Redirect
-## Ref: https://docs.openshift.com/container-platform/4.5/networking/routes/secured-routes.html	
+## Ref: https://docs.openshift.com/container-platform/4.5/networking/routes/secured-routes.html
 #  tls:
 #    key: |-
 #      -----BEGIN PRIVATE KEY-----
@@ -46,12 +83,12 @@ route:
 #      -----BEGIN CERTIFICATE-----
 #      -----END CERTIFICATE-----
 #    insecureEdgeTerminationPolicy: Redirect
-     
+
 # https://docs.xebialabs.com/v.10.2/deploy/docker/docker-environment-variables/
 AdminPassword:
   # Provide the admin password to be used
 
-xldLicense: 
+xldLicense:
 # Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 -w 0 ) and put the output here
 
 RepositoryKeystore:
@@ -109,8 +146,8 @@ postgresql:
 # https://docs.xebialabs.com/v.10.2/deploy/how-to/configure-the-xl-deploy-sql-repository/
 UseExistingDB:
   Enabled: false
-  # If you want to use an existing database, change 'postgresql.install' to 'false'.	
-  # Set 'UseExistingDB.Enabled' to 'true'.Uncomment the following lines and provide the values.	
+  # If you want to use an existing database, change 'postgresql.install' to 'false'.
+  # Set 'UseExistingDB.Enabled' to 'true'.Uncomment the following lines and provide the values.
   # XL_DB_URL:
   # XL_DB_USERNAME:
   # XL_DB_PASSWORD:
@@ -182,7 +219,7 @@ rabbitmq:
     storageClass: "-"
     size: 8Gi
   service:
-    type: ClusterIP     
+    type: ClusterIP
   volumePermissions:
     enabled: true
 
