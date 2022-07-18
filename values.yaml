@@ -21,6 +21,59 @@ TinyToolsImageTag: "22.2.0"
 ## Defaults to 'Always' if image tag is 'latest',set to 'IfNotPresent'
 ImagePullPolicy: "Always"
 
+deploy:
+  configurationManagement:
+    centralConfiguration:
+      configuration:
+        enabled: true
+        resetFiles: ## Resets part of the configuration files
+          - xlc-wrapper.conf.common
+        script: |-
+          cat example.txt && echo ""; # Add here commands to be executed before centralConfiguration server start
+        scriptData: ## Add here files that will be used by the configurationScript
+          example.txt: |-
+            Nothing to manage at this point.
+      environment:
+        enabled: true
+        variables: {}
+      volumeMounts:
+        enabled: true
+        paths: {}
+    master:
+      configuration:
+        enabled: true
+        resetFiles: ## Resets part of the configuration files and license
+          - deployit-license.lic
+          - xld-wrapper.conf.common
+        script: |-
+          cat example.txt && echo ""; # Add here commands to be executed before master start
+        scriptData: ## Add here files that will be used by the configurationScript
+          example.txt: |-
+            Nothing to manage at this point.
+      environment:
+        enabled: true
+        variables: {}
+      volumeMounts:
+        enabled: true
+        paths: {}
+    worker:
+      configuration:
+        enabled: true
+        resetFiles: ## Resets part of the configuration files and license
+          - deployit-license.lic
+          - xld-wrapper.conf.common
+        script: |-
+          cat example.txt && echo ""; # Add here commands to be executed before worker start
+        scriptData: ## Add here files that will be used by the configurationScript
+          example.txt: |-
+            Nothing to manage at this point.
+      environment:
+        enabled: true
+        variables: {}
+      volumeMounts:
+        enabled: true
+        paths: {}
+
 ## Ref: https://docs.openshift.com/container-platform/4.5/networking/routes/route-configuration.html
 route:
   Enabled: true
