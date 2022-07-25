@@ -54,8 +54,8 @@ deploy:
         enabled: true
         resetFiles: ## Resets part of the configuration files and license
           - deployit-license.lic
-          - xld-wrapper.conf.common
           - jmx-exporter.yaml
+          - xld-wrapper.conf.common
         script: |-
           cat example.txt && echo ""; # Add here commands to be executed before master start
         scriptData: ## Add here files that will be used by the configurationScript
@@ -72,8 +72,8 @@ deploy:
         enabled: true
         resetFiles: ## Resets part of the configuration files and license
           - deployit-license.lic
-          - xld-wrapper.conf.common
           - jmx-exporter.yaml
+          - xld-wrapper.conf.common
         script: |-
           cat example.txt && echo ""; # Add here commands to be executed before worker start
         scriptData: ## Add here files that will be used by the configurationScript
