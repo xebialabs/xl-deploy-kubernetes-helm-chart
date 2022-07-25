@@ -54,8 +54,8 @@ deploy:
         enabled: true
         resetFiles: ## Resets part of the configuration files and license
           - deployit-license.lic
-          - xld-wrapper.conf.common
           - jmx-exporter.yaml
+          - xld-wrapper.conf.common
         script: |-
           cat example.txt && echo ""; # Add here commands to be executed before master start
         scriptData: ## Add here files that will be used by the configurationScript
@@ -72,8 +72,8 @@ deploy:
         enabled: true
         resetFiles: ## Resets part of the configuration files and license
           - deployit-license.lic
-          - xld-wrapper.conf.common
           - jmx-exporter.yaml
+          - xld-wrapper.conf.common
         script: |-
           cat example.txt && echo ""; # Add here commands to be executed before worker start
         scriptData: ## Add here files that will be used by the configurationScript
@@ -106,7 +106,7 @@ ingress:
   annotations:
     # ingress.kubernetes.io/tls-acme: "true"
     ingress.kubernetes.io/ssl-redirect: "false"
-    kubernetes.io/ingress.class: haproxy
+    kubernetes.io/ingress.class: haproxy-dai-xld
     ingress.kubernetes.io/rewrite-target: /
     ingress.kubernetes.io/affinity: cookie
     ingress.kubernetes.io/session-cookie-name: SESSION_XLD
