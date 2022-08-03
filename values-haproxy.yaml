@@ -31,10 +31,10 @@ ImagePullPolicy: "Always"
 deploy:
   master:
     image:
-      tag: "22.0"
+      tag: ""
   worker:
     image:
-      tag: "22.0"
+      tag: ""
   configurationManagement:
     master:
       configuration:
