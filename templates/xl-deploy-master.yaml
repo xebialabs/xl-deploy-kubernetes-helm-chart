@@ -78,7 +78,11 @@ spec:
         {{- end }}
       containers:
         - name: {{ .Chart.Name }}
+          {{- if .Values.deploy.master.image.tag }}
+          image: "{{ .Values.ServerImageRepository }}:{{ .Values.deploy.master.image.tag }}"
+          {{- else }}
           image: "{{ .Values.ServerImageRepository }}:{{ .Values.ImageTag }}"
+          {{- end }}
           imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
           ports:
             - name: http
