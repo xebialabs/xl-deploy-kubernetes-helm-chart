@@ -29,6 +29,12 @@ ImagePullPolicy: "Always"
 # ImagePullSecret: xlDeploy
 
 deploy:
+  master:
+    image:
+      tag: ""
+  worker:
+    image:
+      tag: ""
   configurationManagement:
     master:
       configuration:
