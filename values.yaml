@@ -24,10 +24,10 @@ ImagePullPolicy: "Always"
 deploy:
   master:
     image:
-      tag: 22.2
+      tag: ""
   worker:
     image:
-      tag: 22.2
+      tag: ""
   configurationManagement:
     centralConfiguration:
       configuration:
@@ -373,7 +373,7 @@ centralConfiguration:
   replicas: 1
   image:
     repository: xebialabs/central-configuration
-    tag: 22.2
+    tag: ""
   persistence:
     annotations: { }
     pvcSize: 500M
