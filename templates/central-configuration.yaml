@@ -41,7 +41,11 @@ spec:
       {{- end }}
       containers:
         - name: cc-server
-          image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.ImageTag }}"
+          {{- if .Values.centralConfiguration.image.tag }}
+          image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.centralConfiguration.image.tag }}"
+          {{- else }}
+          image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.ImageTag}}"
+          {{- end }}
           imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
           ports:
             - name: http

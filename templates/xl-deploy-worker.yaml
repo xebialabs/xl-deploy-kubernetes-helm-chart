@@ -46,7 +46,11 @@ spec:
               value: "4516"
       containers:
         - name: {{ .Chart.Name }}
+          {{- if .Values.deploy.worker.image.tag }}
+          image: "{{ .Values.WorkerImageRepository }}:{{ .Values.deploy.worker.image.tag }}"
+          {{- else }}
           image: "{{ .Values.WorkerImageRepository }}:{{ .Values.ImageTag }}"
+          {{- end }}
           imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
           ports:
             - name: jmx-exporter
