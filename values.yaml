@@ -22,6 +22,12 @@ TinyToolsImageTag: "22.2.0"
 ImagePullPolicy: "Always"
 
 deploy:
+  master:
+    image:
+      tag: ""
+  worker:
+    image:
+      tag: ""
   configurationManagement:
     master:
       configuration:
