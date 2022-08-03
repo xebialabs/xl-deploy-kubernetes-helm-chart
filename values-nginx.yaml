@@ -14,7 +14,8 @@ XldWorkerCount: 3
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
 ServerImageRepository: "xebialabs/xl-deploy"
 WorkerImageRepository: "xebialabs/deploy-task-engine"
-ImageTag: "22.0"
+ImageTag: "22.2"
+
 
 ## xebialabs/tiny-tools image version
 ## Ref: https://hub.docker.com/r/xebialabs/tiny-tools/tags
@@ -29,6 +30,12 @@ ImagePullPolicy: "Always"
 # ImagePullSecret: xlDeploy
 
 deploy:
+  master:
+    image:
+      tag: ""
+  worker:
+    image:
+      tag: ""
   configurationManagement:
     centralConfiguration:
       configuration:
@@ -385,6 +392,7 @@ centralConfiguration:
   replicas: 1
   image:
     repository: xebialabs/central-configuration
+    tag: ""
   persistence:
     annotations: { }
     pvcSize: 500M
