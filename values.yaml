@@ -358,6 +358,20 @@ oidc:
   external: false
   clientId:
   clientSecret:
+  clientAuthMethod:
+  clientAuthJwt:
+    enable: false
+    jwsAlg:
+    tokenKeyId:
+    keyStore:
+      enable: false
+      path:
+      password:
+      type:
+    key:
+      enable: false
+      alias:
+      password:
   issuer:
   keyRetrievalUri:
   accessTokenUri:
@@ -367,6 +381,18 @@ oidc:
   postLogoutRedirectUri:
   rolesClaimName:
   userNameClaimName:
+  scopes:
+  idTokenJWSAlg:
+  accessToken:
+    enable: false
+    issuer:
+    audience:
+    keyRetrievalUri:
+    jwsAlg:
+    secretKey:
+  loginMethodDescription:
+  proxyHost:
+  proxyPort:
 
 # Central configuration settings
 centralConfiguration:
