@@ -34,6 +34,9 @@ data:
             loginMethodDescription: "Login using Keycloak"
             clientId: {{ .Values.oidc.clientId | quote }}
             clientSecret: {{ .Values.oidc.clientSecret | quote }}
+            {{- if .Values.oidc.clientAuthMethod }}
+            clientAuthMethod: {{ .Values.oidc.clientAuthMethod | quote }}
+            {{- end }}
             issuer: {{ .Values.oidc.issuer | quote }}
             keyRetrievalUri: {{ .Values.oidc.keyRetrievalUri | quote }}
             accessTokenUri: {{ .Values.oidc.accessTokenUri | quote }}
@@ -43,4 +46,35 @@ data:
             postLogoutRedirectUri: {{ .Values.oidc.postLogoutRedirectUri | quote }}
             rolesClaimName: {{ .Values.oidc.rolesClaimName | quote }}
             userNameClaimName: {{ .Values.oidc.userNameClaimName | quote }}
+            {{- if .Values.oidc.scopes }}
+            scopes: {{ .Values.oidc.scopes }}
+            {{- end }}
+            {{- if .Values.oidc.idTokenJWSAlg }}
+            idTokenJWSAlg: {{ .Values.oidc.idTokenJWSAlg | quote }}
+            {{- end }}
+            {{- if .Values.oidc.accessToken.enable }}
+            access-token:
+              {{- if .Values.oidc.accessToken.issuer }}
+              issuer: {{ .Values.oidc.accessToken.issuer | quote }}
+              {{- end }}
+              {{- if .Values.oidc.accessToken.audience }}
+              audience: {{ .Values.oidc.accessToken.audience | quote }}
+              {{- end }}
+              {{- if .Values.oidc.accessToken.keyRetrievalUri }}
+              keyRetrievalUri: {{ .Values.oidc.accessToken.keyRetrievalUri | quote }}
+              {{- end }}
+              {{- if .Values.oidc.accessToken.jwsAlg }}
+              jwsAlg: {{ .Values.oidc.accessToken.jwsAlg | quote }}
+              {{- end }}
+              {{- if .Values.oidc.accessToken.secretKey }}
+              secretKey: {{ .Values.oidc.accessToken.secretKey | quote }}
+              {{- end }}
+            {{- end }}
+            loginMethodDescription: {{ default "External login (OpenID Connect)" .Values.oidc.loginMethodDescription | quote }}
+            {{- if .Values.oidc.proxyHost }}
+            proxyHost: {{ .Values.oidc.proxyHost | quote }}
+            {{- end }}
+            {{- if .Values.oidc.proxyPort }}
+            proxyPort: {{ .Values.oidc.proxyPort | quote }}
+            {{- end }}
 {{- end }}
