@@ -300,6 +300,7 @@ oidc:
   enabled: false
   clientId:
   clientSecret:
+  clientAuthMethod:
   issuer:
   keyRetrievalUri:
   accessTokenUri:
@@ -309,3 +310,15 @@ oidc:
   postLogoutRedirectUri:
   rolesClaimName:
   userNameClaimName:
+  scopes:
+  idTokenJWSAlg:
+  accessToken:
+    enable: false
+    issuer:
+    audience:
+    keyRetrievalUri:
+    jwsAlg:
+    secretKey:
+  loginMethodDescription:
+  proxyHost:
+  proxyPort:
