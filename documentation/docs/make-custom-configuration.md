@@ -146,6 +146,8 @@ For example, if you want to update deployit-security.xml, it is in the `/opt/xeb
             deploy-server.yaml.template: |-
               deploy.server:
               ...
+            deploy-oidc.yaml: |-
+              deploy.security:
   ```
 
   4. Save and apply changes from the CR file. Restart pods.
