@@ -18,15 +18,15 @@ sidebar_position: 14
 ## Steps
 
 1. Download current template configuration file that exists on you Deploy pod that is running.
-For example, if you want to update xl-deploy.conf.template, it is in the `/opt/xebialabs/xl-deploy-server/default-conf/xl-deploy.conf.template` in master pod.
+For example, if you want to update deployit-security.xml, it is in the `/opt/xebialabs/xl-deploy-server/conf/deployit-security.xml` in master pod.
 
     ```shell
-    kubectl cp digitalai/dai-xld-digitalai-deploy-master-0:/opt/xebialabs/xl-deploy-server/default-conf/xl-deploy.conf.template .
+    kubectl cp digitalai/dai-xld-digitalai-deploy-master-0:/opt/xebialabs/xl-deploy-server/conf/deployit-security.xml .
     ```
 
 2. Update the CR file or CR on the cluster
 
-    Use that file to update your CR file under `spec.deploy.configurationManagement.master.configuration.scriptData` path. Add there the content of the `xl-deploy.conf.template` file under the `xl-deploy.conf.template` key.
+    Use that file to update your CR file under `spec.deploy.configurationManagement.master.configuration.scriptData` path. Add there the content of the `deployit-security.xml` file under the `deployit-security.xml` key.
 
     Also update the script under the `spec.deploy.configurationManagement.master.configuration.script` path. Add there 
 
@@ -36,19 +36,14 @@ For example, if you want to update xl-deploy.conf.template, it is in the `/opt/x
     ...
             script: |-
               ...
-              cp /opt/xebialabs/xl-deploy-server/xld-configuration-management/xl-deploy.conf.template /opt/xebialabs/xl-deploy-server/default-conf/xl-deploy.conf.template && echo "Changing the xl-deploy.conf.template";
+              cp /opt/xebialabs/xl-deploy-server/xld-configuration-management/deployit-security.xml /opt/xebialabs/xl-deploy-server/conf/deployit-security.xml && echo "Changing the deployit-security.xml";
             scriptData:
               ...
-              xl-deploy.conf.template: |-
-                xl {
-                  ...
-                }
+              deployit-security.xml: |-
+                <?xml version="1.0" encoding="UTF-8"?>
+                ...
     ```
     
     Note: This is the example of master configuration. Under spec.deploy.configurationManagement there are also worker and centralConfiguration sections.
 
-3. If you have oidc enabled, in that case disable it. Because the changes that are from there will conflict with your changes in the `xl-deploy.conf.template` file.
-
-    Just in CR file put `spec.oidc.enabled: false`.
-
-4. Save and apply changes from the CR file. Restart pods. 
+3. Save and apply changes from the CR file. Restart pods. 
