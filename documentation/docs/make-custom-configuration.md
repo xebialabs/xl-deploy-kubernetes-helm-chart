@@ -24,26 +24,48 @@ For example, if you want to update deployit-security.xml, it is in the `/opt/xeb
     kubectl cp digitalai/dai-xld-digitalai-deploy-master-0:/opt/xebialabs/xl-deploy-server/conf/deployit-security.xml .
     ```
 
-2. Update the CR file or CR on the cluster
+2.1. Update the CR file or CR on the cluster
 
-    Use that file to update your CR file under `spec.deploy.configurationManagement.master.configuration.scriptData` path. Add there the content of the `deployit-security.xml` file under the `deployit-security.xml` key.
+   Use that file to update your CR file under `spec.deploy.configurationManagement.master.configuration.scriptData` path. Add there the content of the `deployit-security.xml` file under the `deployit-security.xml` key.
 
-    Also update the script under the `spec.deploy.configurationManagement.master.configuration.script` path. Add there 
+   Also update the script under the `spec.deploy.configurationManagement.master.configuration.script` path. Add there 
 
-    For example:
+   For example:
 
-    ```yaml
-    ...
-            script: |-
+  ```yaml
+  ...
+          script: |-
+            ...
+            cp /opt/xebialabs/xl-deploy-server/xld-configuration-management/deployit-security.xml /opt/xebialabs/xl-deploy-server/conf/deployit-security.xml && echo "Changing the deployit-security.xml";
+          scriptData:
+            ...
+            deployit-security.xml: |-
+              <?xml version="1.0" encoding="UTF-8"?>
               ...
-              cp /opt/xebialabs/xl-deploy-server/xld-configuration-management/deployit-security.xml /opt/xebialabs/xl-deploy-server/conf/deployit-security.xml && echo "Changing the deployit-security.xml";
-            scriptData:
-              ...
-              deployit-security.xml: |-
-                <?xml version="1.0" encoding="UTF-8"?>
-                ...
-    ```
+  ```
     
-    Note: This is the example of master configuration. Under spec.deploy.configurationManagement there are also worker and centralConfiguration sections.
+   Note: This is the example of master configuration. Under spec.deploy.configurationManagement there are also worker and centralConfiguration sections.
 
-3. Save and apply changes from the CR file. Restart pods. 
+2.2. Another example of configuration update is shown under this step for deployit.conf.template configuration file.
+
+   Update your CR file under `spec.deploy.configurationManagement.master.configuration.scriptData` path. Add there the content of the `deployit.conf.template` file under the `deployit.conf.template` key.
+
+   Also update the script under the `spec.deploy.configurationManagement.master.configuration.script` path. Add there 
+
+   For example:
+
+  ```yaml
+  ...
+          script: |-
+            ...
+            cp /opt/xebialabs/xl-deploy-server/xld-configuration-management/deployit.conf.template /opt/xebialabs/xl-deploy-server/default-conf/deployit.conf.template && echo "Changing the deployit.conf.template";
+          scriptData:
+            ...
+            deployit.conf.template: |-
+              # Template for non-HOCON XL Deploy configuration file
+              #
+              admin.password=${ADMIN_PASSWORD}
+              ...
+  ```
+
+4. Save and apply changes from the CR file. Restart pods. 
