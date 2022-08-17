@@ -68,4 +68,4 @@ For example, if you want to update deployit-security.xml, it is in the `/opt/xeb
               ...
   ```
 
-4. Save and apply changes from the CR file. Restart pods. 
+3. Save and apply changes from the CR file. Restart pods. 
