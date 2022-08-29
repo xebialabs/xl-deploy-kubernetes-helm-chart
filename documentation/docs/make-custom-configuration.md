@@ -155,5 +155,7 @@ For example, if you want to update deployit-security.xml, it is in the `/opt/xeb
 
   ```shell
   kubectl rollout restart sts dai-xld-digitalai-deploy-cc-server -n digitalai
+  kubectl rollout restart sts dai-xld-digitalai-deploy-master -n digitalai
+  kubectl rollout restart sts dai-xld-digitalai-deploy-worker -n digitalai
   ```
 
