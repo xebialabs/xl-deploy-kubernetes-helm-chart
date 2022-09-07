@@ -173,6 +173,7 @@ spec:
               value: {{ $val | quote }}
             {{- end }}
             {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.deploy.centralConfiguration.terminationGracePeriodSeconds }}
       volumes:
         {{- if eq .Values.Persistence.Enabled true }}
         {{- if eq .Values.centralConfiguration.migrateFromEmbedded "true" }}
