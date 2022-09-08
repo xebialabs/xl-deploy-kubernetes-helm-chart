@@ -21,6 +21,10 @@ TinyToolsImageTag: "22.2.0"
 ImagePullPolicy: "Always"
 
 deploy:
+  master:
+    terminationGracePeriodSeconds: 200
+  worker:
+    terminationGracePeriodSeconds: 200
   configurationManagement:
     master:
       configuration:
