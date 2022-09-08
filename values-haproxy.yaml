@@ -30,9 +30,11 @@ ImagePullPolicy: "Always"
 
 deploy:
   master:
+    terminationGracePeriodSeconds: 200
     image:
       tag: ""
   worker:
+    terminationGracePeriodSeconds: 200
     image:
       tag: ""
   configurationManagement:
