@@ -28,6 +28,10 @@ ImagePullPolicy: "Always"
 # ImagePullSecret: xlDeploy
 
 deploy:
+  master:
+    terminationGracePeriodSeconds: 200
+  worker:
+    terminationGracePeriodSeconds: 200
   configurationManagement:
     master:
       configuration:
