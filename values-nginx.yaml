@@ -31,11 +31,15 @@ ImagePullPolicy: "Always"
 
 deploy:
   master:
+    terminationGracePeriodSeconds: 200
     image:
       tag: ""
   worker:
+    terminationGracePeriodSeconds: 200
     image:
       tag: ""
+  centralConfiguration:
+    terminationGracePeriodSeconds: 30
   configurationManagement:
     centralConfiguration:
       configuration:

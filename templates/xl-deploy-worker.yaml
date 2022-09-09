@@ -62,18 +62,7 @@ spec:
             - sh
             - -c
             - >
-              {{- range $.Values.deploy.configurationManagement.worker.configuration.resetFiles }}
-              rm -fv /opt/xebialabs/deploy-task-engine/conf/{{ . }};
-              {{- end }}
-              echo "Finished reset of the conf files"; 
-              mkdir /opt/xebialabs/deploy-task-engine/xld-configuration-management/; 
-              ORIGINAL_PWD=$(pwd);
-              cd /opt/xebialabs/deploy-task-engine/xld-configuration-management/; 
-              cp /opt/xebialabs/xld-configuration-management/* .; chmod +x *.sh; 
-              [ -x ./op-configuration-management.sh ] && ./op-configuration-management.sh;
-              cd $ORIGINAL_PWD;
-              echo "Finished deploy worker configuration management";
-              /opt/xebialabs/tini -s -- /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh -master "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180" -api "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
+              /opt/xebialabs/tini -- /opt/xebialabs/xld-configuration-management/op-based-run.sh
           {{- end }}
           volumeMounts:
             - name: data-dir
@@ -234,6 +223,7 @@ spec:
           {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
+      terminationGracePeriodSeconds: {{ .Values.deploy.worker.terminationGracePeriodSeconds }}
       {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) (eq .Values.deploy.configurationManagement.worker.configuration.enabled true) }}
       volumes:
         {{- if not .Values.Persistence.Enabled }}
@@ -244,6 +234,7 @@ spec:
         - name: xld-worker-configuration-management-volume
           configMap:
             name: xld-worker-configuration-management-script
+            defaultMode: 0777
         {{- end }}
   {{- end }}
     {{- with .Values.nodeSelector }}
