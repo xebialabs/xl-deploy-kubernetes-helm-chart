@@ -97,18 +97,7 @@ spec:
             - sh
             - -c
             - >
-              {{- range $.Values.deploy.configurationManagement.master.configuration.resetFiles }}
-              rm -fv /opt/xebialabs/xl-deploy-server/conf/{{ . }};
-              {{- end }}
-              echo "Finished reset of the conf files"; 
-              mkdir /opt/xebialabs/xl-deploy-server/xld-configuration-management/; 
-              ORIGINAL_PWD=$(pwd);
-              cd /opt/xebialabs/xl-deploy-server/xld-configuration-management/; 
-              cp /opt/xebialabs/xld-configuration-management/* .; chmod +x *.sh; 
-              [ -x ./op-configuration-management.sh ] && ./op-configuration-management.sh;
-              cd $ORIGINAL_PWD;
-              echo "Finished deploy master server configuration management";
-              /opt/xebialabs/tini -s -- /opt/xebialabs/xl-deploy-server/bin/run-in-container.sh
+              /opt/xebialabs/tini -- /opt/xebialabs/xld-configuration-management/op-based-run.sh
           {{- end }}
           volumeMounts:
             {{- if .Values.oidc.enabled }}
@@ -276,6 +265,7 @@ spec:
             {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
+      terminationGracePeriodSeconds: {{ .Values.deploy.master.terminationGracePeriodSeconds }}
       {{- if or (eq .Values.Persistence.Enabled false) (eq .Values.oidc.enabled true) (eq .Values.deploy.configurationManagement.master.configuration.enabled true) }}
       volumes:
         {{- if not .Values.Persistence.Enabled }}
@@ -294,6 +284,7 @@ spec:
         - name: xld-master-configuration-management-volume
           configMap:
             name: xld-master-configuration-management-script
+            defaultMode: 0777
         {{- end }}
   {{- end }}
     {{- with .Values.nodeSelector }}
