@@ -56,22 +56,7 @@ spec:
             - sh
             - -c
             - >
-              {{- range $.Values.deploy.configurationManagement.centralConfiguration.configuration.resetFiles }}
-              rm -fv /opt/xebialabs/central-configuration-server/conf/{{ . }};
-              {{- end }}
-              echo "Finished reset of the conf files";
-              {{- range $.Values.deploy.configurationManagement.centralConfiguration.configuration.resetCcFiles }}
-              rm -fv /opt/xebialabs/central-configuration-server/centralConfiguration/{{ . }};
-              {{- end }}
-              echo "Finished reset of the centralConfiguration files";
-              mkdir /opt/xebialabs/central-configuration-server/xld-configuration-management/; 
-              ORIGINAL_PWD=$(pwd);
-              cd /opt/xebialabs/central-configuration-server/xld-configuration-management/; 
-              cp /opt/xebialabs/xld-configuration-management/* .; chmod +x *.sh; 
-              [ -x ./op-configuration-management.sh ] && ./op-configuration-management.sh;
-              cd $ORIGINAL_PWD;
-              echo "Finished central configuration server configuration management";
-              /opt/xebialabs/tini -s -- /opt/xebialabs/central-configuration-server/bin/run-in-container.sh
+              /opt/xebialabs/tini -- /opt/xebialabs/xld-configuration-management/op-based-run.sh
           {{- end }}
           volumeMounts:
             {{- if .Values.oidc.enabled }}
@@ -173,6 +158,7 @@ spec:
               value: {{ $val | quote }}
             {{- end }}
             {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.deploy.centralConfiguration.terminationGracePeriodSeconds }}
       volumes:
         {{- if eq .Values.Persistence.Enabled true }}
         {{- if eq .Values.centralConfiguration.migrateFromEmbedded "true" }}
@@ -196,6 +182,7 @@ spec:
         - name: xld-cc-configuration-management-volume
           configMap:
             name: xld-cc-configuration-management-script
+            defaultMode: 0777
         {{- end }}
   {{- if .Values.Persistence.Enabled }}
   volumeClaimTemplates:
