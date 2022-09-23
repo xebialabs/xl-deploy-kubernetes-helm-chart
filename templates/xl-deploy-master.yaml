@@ -166,7 +166,7 @@ spec:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: deploy-password
             - name: XL_CLUSTER_MODE
-              value: default
+              value: {{ .Values.deploy.clusterMode }}
             {{- if .Values.UseExistingDB.Enabled }}
             - name: XL_DB_URL
               value: {{.Values.UseExistingDB.XL_DB_URL | quote}}
