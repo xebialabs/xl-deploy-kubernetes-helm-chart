@@ -29,6 +29,7 @@ ImagePullPolicy: "Always"
 # ImagePullSecret: xlDeploy
 
 deploy:
+  clusterMode: full
   master:
     terminationGracePeriodSeconds: 200
     image:
