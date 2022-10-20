@@ -2,6 +2,10 @@
 sidebar_position: 10
 ---
 
+:::caution
+This is internal documentation. This document can be used only if it was recommended by the Support Team.
+:::
+
 # Parameters
 
 For deployment on Production environment, all parameters need to be configured as per users requirement and
