@@ -2,6 +2,10 @@
 sidebar_position: 5
 ---
 
+:::caution
+This is internal documentation. This document can be used only if it was recommended by the Support Team.
+:::
+
 # Installing Storage Class
  If you are using storage class other than NFS and EFS then please proceed with installation steps
 ## NFS Client Provisioner for On-Premises Kubernetes cluster

@@ -2,6 +2,14 @@
 sidebar_position: 12
 ---
 
+:::caution
+This is internal documentation. This document can be used only if it was recommended by the Support Team.
+:::
+
+:::caution
+From 10.2 version helm chart is not used directly. Use operator based installation instead.
+:::
+
 # Useful links
 
 - [`xebialabs/xl-deploy:<tagname>`](https://hub.docker.com/r/xebialabs/xl-deploy) – Docker Hub repository for Digital.ai Deploy

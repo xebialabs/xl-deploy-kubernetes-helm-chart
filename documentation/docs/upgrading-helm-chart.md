@@ -2,6 +2,14 @@
 sidebar_position: 7
 ---
 
+:::caution
+This is internal documentation. This document can be used only if it was recommended by the Support Team.
+:::
+
+:::caution
+From 10.2 version helm chart is not used directly. Use operator based installation instead.
+:::
+
 # Upgrading Helm Chart
 
 To upgrade the version `ImageTag` parameter needs to be updated to the desired version. To see the list of available ImageTag for Digital.ai Deploy, refer the following links [Deploy_tags](https://hub.docker.com/r/xebialabs/xl-deploy/tags). For upgrade, Rolling Update strategy is used.
