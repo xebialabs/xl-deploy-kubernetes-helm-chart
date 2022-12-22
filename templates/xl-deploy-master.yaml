@@ -25,6 +25,10 @@ spec:
         release: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ template "xl-deploy.name" . }}-sa
+      {{- if .Values.ImagePullSecret }}      
+      imagePullSecrets:
+        - name: {{ .Values.ImagePullSecret }}
+      {{- end }}    
       initContainers:
         - name: fix-the-volume-permission
           image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
