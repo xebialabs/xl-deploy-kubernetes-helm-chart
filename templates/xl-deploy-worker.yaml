@@ -27,7 +27,7 @@ spec:
         fsGroup: 10001
       {{- if .Values.ImagePullSecret }}
       imagePullSecrets:
-        - name: {{ .Values.ImagePullSecret }}
+      - name: {{ .Values.ImagePullSecret }}
       {{- end }}
       initContainers:
         - name: wait-for-master
