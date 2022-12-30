@@ -22,6 +22,10 @@ spec:
         release: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ template "xl-deploy.name" . }}-sa
+      {{- if .Values.ImagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.ImagePullSecret }}
+      {{- end }}      
       {{- if or (and (eq .Values.centralConfiguration.migrateFromEmbedded "true") (eq .Values.Persistence.Enabled true)) }}
       initContainers:
         - name: wait-for-migrate-from-embedded-cc-to-standalone
@@ -81,7 +85,7 @@ spec:
             {{- end }}
           env:
             - name: XL_CLUSTER_MODE
-              value: default
+              value: {{ .Values.deploy.clusterMode }}
             {{- if .Values.UseExistingDB.Enabled }}
             - name: XL_DB_URL
               value: {{.Values.UseExistingDB.XL_DB_URL | quote}}
