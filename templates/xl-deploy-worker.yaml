@@ -28,7 +28,7 @@ spec:
       {{- if .Values.ImagePullSecret }}
       imagePullSecrets:
         - name: {{ .Values.ImagePullSecret }}
-      {{- end }}       
+      {{- end }}
       initContainers:
         - name: fix-the-volume-permission
           image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
@@ -84,7 +84,7 @@ spec:
               mountPath: /opt/xebialabs/xl-deploy-server/conf
               subPath: conf
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/centalConfiguration
+              mountPath: /opt/xebialabs/xl-deploy-server/centralConfiguration
               subPath: centralConfiguration
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/ext
@@ -168,13 +168,16 @@ spec:
               value: "false"
             - name: XLD_IN_PROCESS
               value: "false"
-            - name: HOSTNAME_SUFFIX
-              value: ".{{ template "xl-deploy.name" . }}"
+            - name: USE_IP_AS_HOSTNAME
+              value: "true"
             {{- if .Values.rabbitmq.install }}
             - name: XLD_TASK_QUEUE_USERNAME
               value: {{ .Values.rabbitmq.auth.username }}
             - name: XLD_TASK_QUEUE_PASSWORD
-              value: {{ .Values.rabbitmq.auth.password }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-rabbitmq
+                  key: rabbitmq-password
             - name: XLD_TASK_QUEUE_URL
               value: "amqp://{{ .Release.Name }}-rabbitmq.{{ .Release.Namespace }}.svc.cluster.local:5672/%2F"
             - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
