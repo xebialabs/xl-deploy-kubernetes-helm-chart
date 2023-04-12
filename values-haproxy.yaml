@@ -14,7 +14,7 @@ XldWorkerCount: 3
 ## Ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags
 ServerImageRepository: "xebialabs/xl-deploy"
 WorkerImageRepository: "xebialabs/deploy-task-engine"
-ImageTag: "22.2"
+ImageTag: "22.3"
 
 ## xebialabs/tiny-tools image version
 ## Ref: https://hub.docker.com/r/xebialabs/tiny-tools/tags
@@ -106,6 +106,7 @@ haproxy-ingress:
     kind: DaemonSet
     service:
       type: NodePort
+    ingressClass:  haproxy-dai-xld
 
 nginx-ingress-controller:
   install: false
@@ -166,24 +167,36 @@ resources: {}
 ## Install postgresql chart. If you have an existing database deployment, set 'install' to 'false'.
 postgresql:
   install: true
-  initdbScriptsSecret: "postgresql-init-sql-xld"
-  image:
-    pullSecrets: []
-  persistence:
-    enabled: true
+  global:
+    postgresql:
+      auth:
+        postgresPassword: "postgres"
     storageClass: "-"
-    size: 8Gi
-    existingClaim: ""
-  postgresqlUsername: postgres
-  postgresqlPassword: ""
-  postgresqlMaxConnections: "300"
-  service:
-    type: ClusterIP
-    port: 5432
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 250m
+  auth:
+    enablePostgresUser: true
+    postgresPassword: "postgres"
+  primary:
+    extendedConfiguration: |
+      max_connections = 300
+    initdb:
+      scriptsSecret: "postgresql-init-sql-xld"
+      user: "postgres"
+      password: "postgres"
+    persistence:
+      enabled: true
+      storageClass: "-"
+      size: 8Gi
+      existingClaim: ""
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+    service:
+      type: ClusterIP
+      port: 5432
+  image:
+    debug: true
+    pullSecrets: []
 
 # https://docs.xebialabs.com/v.10.2/deploy/how-to/configure-the-xl-deploy-sql-repository/
 UseExistingDB:
@@ -254,6 +267,7 @@ rabbitmq:
   loadDefinition:
     enabled: true
     existingSecret: xld-load-definition
+    file: /app/xld-load_definition.json
   extraConfiguration: |
     load_definitions = /app/xld-load_definition.json
     raft.wal_max_size_bytes = 1048576
