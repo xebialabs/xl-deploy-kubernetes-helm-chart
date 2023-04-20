@@ -110,7 +110,7 @@ This example creates a secret `regcred` which will be used for pull secrets for 
 
 ### Use `xl kube install` to install using custom docker image registry option
 
-When using custom docker registry, the repository name will be of the format `myrepo_host/myrepo` and operator image will be in the format `myrepo_host/myrepo/deploy-operator:image_tag`
+When using custom docker registry, the operator image will be in the format `myrepo_host/myrepo/deploy-operator:image_tag`
 
 Here is example of the installation on minikube with a local docker registry running at `localhost:5000`
 
@@ -124,7 +124,7 @@ In the below example the repository name looks like `localhost:5000/myrepo`, so 
 ? Product server you want to perform install for: dai-deploy [Digital.ai Deploy]
 ? Select the type of Image Registry: public [Custom Public Registry (Overrides defaults to use a specific custom public registry)]
 ? Enter the custom docker image registry name: localhost:5000
-? Enter the repository name (eg: <imageRegistryName>/<repositoryName> from <imageRegistryName>/<repositoryName>/<imageName>:<tagName>): localhost:5000/myrepo
+? Enter the repository name (eg: <repositoryName> from <repositoryName>/<imageName>:<tagName>): myrepo
 ? Enter the deploy server image name (eg: <imageName> from <repositoryName>/<imageName>:<tagName>): xl-deploy
 ? Enter the image tag (eg: <tagName> from <repositoryName>/<imageName>:<tagName>): 22.3.1
 ? Enter the deploy task engine image name for version 22 and above (eg: <imageName> from <repositoryName>/<imageName>:<tagName>): deploy-task-engine
@@ -142,7 +142,7 @@ In the below example the repository name looks like `localhost:5000/myrepo`, so 
 ? Type of the OIDC configuration: embedded [Embedded Keycloak Configuration]
 ? Use embedded DB for keycloak: Yes
 ? Enter Keycloak public URL: k.test.com
-? Enter the operator image to use (eg: <repositoryName>/<imageName>:<tagName>): localhost:5000/myrepo/deploy-operator:22.3.1
+? Enter the operator image to use (eg: <imageRegistryName>/<repositoryName>/<imageName>:<tagName>): localhost:5000/myrepo/deploy-operator:22.3.1
 ? Select source of the license: file [Path to the license file (the file can be in clean text or base64 encoded)]
 ? Provide license file for the server: c:\downloads\xld-license.lic
 ? Select source of the repository keystore: generate [Generate the repository keystore during installation (you need to have keytool utility installed in your path)]
@@ -238,9 +238,9 @@ During upgrade for the question `Edit list of custom resource keys that will mig
 ...
 ? Select the type of Image Registry: public [Custom Public Registry (Overrides defaults to use a specific custom public registry)]
 ? Enter the custom docker image registry name: localhost:5000
-? Enter the repository name (eg: <imageRegistryName>/<repositoryName> from <imageRegistryName>/<repositoryName>/<imageName>:<tagName>): localhost:5000/myrepo
+? Enter the repository name (eg: <repositoryName> from <repositoryName>/<imageName>:<tagName>): myrepo
 ...
-? Enter the operator image to use (eg: <repositoryName>/<imageName>:<tagName>): localhost:5000/myrepo/deploy-operator:22.3.1
+? Enter the operator image to use (eg: <imageRegistryName>/<repositoryName>/<imageName>:<tagName>): localhost:5000/myrepo/deploy-operator:22.3.1
 ...
 ? Edit list of custom resource keys that will migrate to the new Deploy CR: 
 ...
