@@ -12,7 +12,7 @@ This is internal documentation. This document can be used only if it was recomme
 
 - Running k8s cluster
 - `kubectl` connected to the cluster
-- `xl-cli` installed - version 23.3.5 or above
+- `xl-cli` installed - version 22.3.5 or above
 - Deploy operator version above following:
     - 22.3.1
 
@@ -28,12 +28,14 @@ Check what you need with `xl kube help`, for example:
 
 Install, upgrade or clean Digital.ai Deploy or Digital.ai Release on a Kubernetes cluster using operator technology.
 
-Installation blueprint files are used from https://dist.xebialabs.com/public/xl-op-blueprints/23.3.5/.
+Installation blueprint files are used from https://dist.xebialabs.com/public/xl-op-blueprints/23.1.x/
 
 You need to have kubectl installed and configured for the target Kubernetes cluster.
 ```
 
-You can see from here that `xl kube` needs blueprints from location [https://dist.xebialabs.com/public/xl-op-blueprints/23.3.5/](https://dist.xebialabs.com/public/xl-op-blueprints/23.3.5/).
+You can see from here that `xl kube` needs blueprints from location [https://dist.xebialabs.com/public/xl-op-blueprints/23.1.x/](https://dist.xebialabs.com/public/xl-op-blueprints/23.1.x/) 
+(Note: 23.1.x denotes the appropriate version of `xl-op-blueprints` pointed by `xl`. Use the specific version in your case.)
+
 You need to download and put all files from that location to the server where you will execute `xl kube`.
 
 :::TIP
@@ -50,13 +52,13 @@ The kubernetes cluster running in airgapped environment cannot download any imag
 
 #### Prerequisite Images
 Push the images according to your planned installation to your image repository. 
-For example, for version 23.3.5, following is the list of the images that you will need:
+For example, for version 23.1.x, following is the list of the images that you will need:
 
-- docker.io/xebialabs/xl-deploy:23.3.5
-- docker.io/xebialabs/deploy-task-engine:23.3.5
-- docker.io/xebialabs/central-configuration:23.3.5
+- docker.io/xebialabs/xl-deploy:23.1.x
+- docker.io/xebialabs/deploy-task-engine:23.1.x
+- docker.io/xebialabs/central-configuration:23.1.x
 - docker.io/xebialabs/tiny-tools:22.2.0
-- docker.io/xebialabs/deploy-operator:23.3.5
+- docker.io/xebialabs/deploy-operator:23.1.x
 - gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
 
 #### If you are using nginx include
@@ -114,7 +116,7 @@ When using custom docker registry, the operator image will be in the format `myr
 
 Here is example of the installation on minikube with a local docker registry running at `localhost:5000`
 
-In the below example the repository name looks like `localhost:5000/myrepo`, so operator image would be like `localhost:5000/myrepo/deploy-operator:22.3.1`. Remember to override default answer and specify in this format.
+In the below example the registry name is `localhost:5000`, the repository name is `myrepo`, so operator image would be like `localhost:5000/myrepo/deploy-operator:23.1.x`. Remember to override default answer and specify in this format. And also use the actual image tag version in place of `23.1.x`
 
 ```
 ❯ xl kube install -l c:\proj\xl-op-blueprints
@@ -126,7 +128,7 @@ In the below example the repository name looks like `localhost:5000/myrepo`, so 
 ? Enter the custom docker image registry name: localhost:5000
 ? Enter the repository name (eg: <repositoryName> from <repositoryName>/<imageName>:<tagName>): myrepo
 ? Enter the deploy server image name (eg: <imageName> from <repositoryName>/<imageName>:<tagName>): xl-deploy
-? Enter the image tag (eg: <tagName> from <repositoryName>/<imageName>:<tagName>): 22.3.1
+? Enter the image tag (eg: <tagName> from <repositoryName>/<imageName>:<tagName>): 23.1.x
 ? Enter the deploy task engine image name for version 22 and above (eg: <imageName> from <repositoryName>/<imageName>:<tagName>): deploy-task-engine
 ? Enter the central configuration image name for version 22 and above (eg: <imageName> from <repositoryName>/<imageName>:<tagName>): central-configuration
 ? Enter the deploy master server replica count: 1
@@ -142,7 +144,7 @@ In the below example the repository name looks like `localhost:5000/myrepo`, so 
 ? Type of the OIDC configuration: embedded [Embedded Keycloak Configuration]
 ? Use embedded DB for keycloak: Yes
 ? Enter Keycloak public URL: k.test.com
-? Enter the operator image to use (eg: <imageRegistryName>/<repositoryName>/<imageName>:<tagName>): localhost:5000/myrepo/deploy-operator:22.3.1
+? Enter the operator image to use (eg: <imageRegistryName>/<repositoryName>/<imageName>:<tagName>): localhost:5000/myrepo/deploy-operator:23.1.x
 ? Select source of the license: file [Path to the license file (the file can be in clean text or base64 encoded)]
 ? Provide license file for the server: c:\downloads\xld-license.lic
 ? Select source of the repository keystore: generate [Generate the repository keystore during installation (you need to have keytool utility installed in your path)]
@@ -240,7 +242,7 @@ During upgrade for the question `Edit list of custom resource keys that will mig
 ? Enter the custom docker image registry name: localhost:5000
 ? Enter the repository name (eg: <repositoryName> from <repositoryName>/<imageName>:<tagName>): myrepo
 ...
-? Enter the operator image to use (eg: <imageRegistryName>/<repositoryName>/<imageName>:<tagName>): localhost:5000/myrepo/deploy-operator:22.3.1
+? Enter the operator image to use (eg: <imageRegistryName>/<repositoryName>/<imageName>:<tagName>): localhost:5000/myrepo/deploy-operator:23.1.x
 ...
 ? Edit list of custom resource keys that will migrate to the new Deploy CR: 
 ...
