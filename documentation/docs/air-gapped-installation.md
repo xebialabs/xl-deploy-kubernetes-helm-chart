@@ -124,7 +124,7 @@ In the below example the registry name is `localhost:5000`, the repository name 
 ? Select the Kubernetes setup where the Digital.ai Devops Platform will be installed, updated or cleaned: PlainK8s [Plain multi-node K8s cluster]
 ? Do you want to use an custom Kubernetes namespace (current default is 'digitalai'): No
 ? Product server you want to perform install for: dai-deploy [Digital.ai Deploy]
-? Select the type of Image Registry: public [Custom Public Registry (Overrides defaults to use a specific custom public registry)]
+? Select type of image registry: public [Custom Public Registry (Uses a specific custom registry)]
 ? Enter the custom docker image registry name: localhost:5000
 ? Enter the repository name (eg: <repositoryName> from <repositoryName>/<imageName>:<tagName>): myrepo
 ? Enter the deploy server image name (eg: <imageName> from <repositoryName>/<imageName>:<tagName>): xl-deploy
@@ -172,6 +172,26 @@ After the install command completes successfully, you will see operator and othe
 ## Upgrade steps
 
 Use `xl kube upgrade` to upgrade. It is similar to installation steps. Here the already installed cluster resources are overwritten/upgraded with the newly supplied values.
+
+### Example of running upgrade using custom docker image registry option
+
+```
+❯ xl kube upgrade -l ./xl-op-blueprints
+...
+? Select type of image registry: public [Custom Public Registry (Uses a specific custom registry)]
+? Enter the custom docker image registry name: localhost:5000
+? Enter the repository name (eg: <repositoryName> from <repositoryName>/<imageName>:<tagName>): myrepo
+...
+? Enter the operator image to use (eg: <imageRegistryName>/<repositoryName>/<imageName>:<tagName>): localhost:5000/myrepo/deploy-operator:23.1.x
+...
+? Edit list of custom resource keys that will migrate to the new Deploy CR: 
+...
+? Do you want to proceed to the deployment with these values? Yes
+For current process files will be generated in the: digitalai/dai-deploy/digitalai/20221020-011911/kubernetes
+Generated answers file successfully: digitalai/generated_answers_dai-deploy_digitalai_upgrade-20221020-011911.yaml
+Starting upgrade processing.
+...
+```
 
 During upgrade for the question `Edit list of custom resource keys that will migrate to the new Deploy CR:` append to the list following keys:
 
@@ -232,25 +252,6 @@ During upgrade for the question `Edit list of custom resource keys that will mig
 .spec.keycloak.postgresql.imagePullSecrets.name
 .spec.postgresql.global.imagePullSecrets
 .spec.rabbitmq.global.imagePullSecrets
-```
-### Example of running upgrade using custom docker image registry option
-
-```
-❯ xl kube upgrade -l ./xl-op-blueprints
-...
-? Select the type of Image Registry: public [Custom Public Registry (Overrides defaults to use a specific custom public registry)]
-? Enter the custom docker image registry name: localhost:5000
-? Enter the repository name (eg: <repositoryName> from <repositoryName>/<imageName>:<tagName>): myrepo
-...
-? Enter the operator image to use (eg: <imageRegistryName>/<repositoryName>/<imageName>:<tagName>): localhost:5000/myrepo/deploy-operator:23.1.x
-...
-? Edit list of custom resource keys that will migrate to the new Deploy CR: 
-...
-? Do you want to proceed to the deployment with these values? Yes
-For current process files will be generated in the: digitalai/dai-deploy/digitalai/20221020-011911/kubernetes
-Generated answers file successfully: digitalai/generated_answers_dai-deploy_digitalai_upgrade-20221020-011911.yaml
-Starting upgrade processing.
-...
 ```
 
 ## Image repository related fields that are getting updated in Installation and Upgrade process by xl cli when using custom image registry
