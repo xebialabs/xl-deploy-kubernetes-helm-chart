@@ -299,6 +299,20 @@ spec:
       tolerations:
 {{ toYaml . | indent 8 }}
     {{- end }}
+    {{- with .Values.deploy.master.hostAliases }}
+      hostAliases:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.deploy.master.dnsConfig }}
+      dnsConfig:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      {{- if .Values.deploy.master.dnsPolicy }}
+      dnsPolicy: {{ .Values.deploy.master.dnsPolicy }}
+      {{- end }}
+      {{- if .Values.deploy.master.hostNetwork }}
+      hostNetwork: {{ .Values.deploy.master.hostNetwork }}
+      {{- end }}
   {{- if .Values.Persistence.Enabled }}
   volumeClaimTemplates:
     - metadata:
