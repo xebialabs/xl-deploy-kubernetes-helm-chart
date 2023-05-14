@@ -256,7 +256,7 @@ spec:
             - name: USE_EXTERNAL_CENTRAL_CONFIG
               value: "true"
             - name: USE_IP_AS_HOSTNAME
-              value: {{.Values.deploy.centralConfiguration.useIpAsHostname | quote}}
+              value: {{.Values.deploy.master.useIpAsHostname | quote}}
             - name: CENTRAL_CONFIG_URL
               value: "http://{{ template "xl-deploy.fullname" . }}-cc-server.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
             {{- if .Values.deploy.configurationManagement.master.environment.enabled }}
