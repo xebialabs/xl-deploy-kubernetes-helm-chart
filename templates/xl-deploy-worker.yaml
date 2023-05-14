@@ -200,6 +200,8 @@ spec:
             - name: ENABLE_SATELLITE
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
+            - name: USE_IP_AS_HOSTNAME
+              value: {{.Values.deploy.worker.useIpAsHostname | quote}}
             {{- if .Values.deploy.configurationManagement.worker.environment.enabled }}
             {{- range $key, $val := .Values.deploy.configurationManagement.worker.environment.variables }}
             - name: {{ $key }}
