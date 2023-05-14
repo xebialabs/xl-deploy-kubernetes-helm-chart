@@ -154,7 +154,7 @@ spec:
             - name: XLD_IN_PROCESS
               value: "false"
             - name: USE_IP_AS_HOSTNAME
-              value: "true"
+              value: {{.Values.deploy.worker.useIpAsHostname | quote}}
             {{- if .Values.rabbitmq.install }}
             - name: XLD_TASK_QUEUE_USERNAME
               value: {{ .Values.rabbitmq.auth.username }}
