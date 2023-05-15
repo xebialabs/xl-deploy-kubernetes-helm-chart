@@ -147,6 +147,8 @@ spec:
             - name: ENABLE_SATELLITE
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
+            - name: USE_IP_AS_HOSTNAME
+              value: {{.Values.deploy.centralConfiguration.useIpAsHostname | quote}}
             - name: CENTRAL_CONFIG_ENCRYPT_KEY
               valueFrom:
                 secretKeyRef:
