@@ -184,6 +184,20 @@ spec:
             name: xld-cc-configuration-management-script
             defaultMode: 0777
         {{- end }}
+    {{- with .Values.deploy.centralConfiguration.hostAliases }}
+      hostAliases:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.deploy.centralConfiguration.dnsConfig }}
+      dnsConfig:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      {{- if .Values.deploy.centralConfiguration.dnsPolicy }}
+      dnsPolicy: {{ .Values.deploy.centralConfiguration.dnsPolicy }}
+      {{- end }}
+      {{- if .Values.deploy.centralConfiguration.hostNetwork }}
+      hostNetwork: {{ .Values.deploy.centralConfiguration.hostNetwork }}
+      {{- end }}
   {{- if .Values.Persistence.Enabled }}
   volumeClaimTemplates:
     - metadata:
