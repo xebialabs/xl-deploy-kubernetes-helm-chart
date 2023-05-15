@@ -151,6 +151,8 @@ spec:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: centralConfigEncryptKey
+            - name: USE_IP_AS_HOSTNAME
+              value: {{.Values.deploy.centralConfiguration.useIpAsHostname | quote}}
             {{- if .Values.deploy.configurationManagement.centralConfiguration.environment.enabled }}
             {{- range $key, $val := .Values.deploy.configurationManagement.centralConfiguration.environment.variables }}
             - name: {{ $key }}
