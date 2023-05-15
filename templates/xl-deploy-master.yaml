@@ -234,6 +234,8 @@ spec:
             - name: ENABLE_SATELLITE
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
+            - name: USE_IP_AS_HOSTNAME
+              value: {{.Values.deploy.master.useIpAsHostname | quote}}
             {{- if .Values.deploy.configurationManagement.master.environment.enabled }}
             {{- range $key, $val := .Values.deploy.configurationManagement.master.environment.variables }}
             - name: {{ $key }}
