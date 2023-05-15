@@ -250,6 +250,20 @@ spec:
       tolerations:
 {{ toYaml . | indent 8 }}
     {{- end }}
+    {{- with .Values.deploy.worker.hostAliases }}
+      hostAliases:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.deploy.worker.dnsConfig }}
+      dnsConfig:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      {{- if .Values.deploy.worker.dnsPolicy }}
+      dnsPolicy: {{ .Values.deploy.worker.dnsPolicy }}
+      {{- end }}
+      {{- if .Values.deploy.worker.hostNetwork }}
+      hostNetwork: {{ .Values.deploy.worker.hostNetwork }}
+      {{- end }}
   {{- if .Values.Persistence.Enabled }}
   volumeClaimTemplates:
     - metadata:
