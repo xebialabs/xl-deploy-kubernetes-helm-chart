@@ -30,14 +30,17 @@ ImagePullPolicy: "Always"
 
 deploy:
   master:
+    useIpAsHostname: false
     terminationGracePeriodSeconds: 200
     image:
       tag: ""
   worker:
+    useIpAsHostname: false
     terminationGracePeriodSeconds: 200
     image:
       tag: ""
   centralConfiguration:
+    useIpAsHostname: false
     terminationGracePeriodSeconds: 30
   configurationManagement:
     centralConfiguration:
