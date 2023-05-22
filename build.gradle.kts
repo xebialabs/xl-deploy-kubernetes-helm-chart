@@ -27,11 +27,11 @@ buildscript {
 }
 
 plugins {
-    kotlin("jvm") version "1.4.20"
+    kotlin("jvm") version "1.8.10"
 
     id("com.github.node-gradle.node") version "3.1.0"
     id("idea")
-    id("nebula.release") version "15.3.1"
+    id("nebula.release") version "17.1.0"
     id("maven-publish")
 }
 
@@ -43,7 +43,7 @@ group = "ai.digital.deploy.helm"
 project.defaultTasks = listOf("build")
 
 val dockerHubRepository = System.getenv()["DOCKER_HUB_REPOSITORY"] ?: "xebialabsunsupported"
-val releasedVersion = System.getenv()["RELEASE_EXPLICIT"] ?: "22.3.0-${
+val releasedVersion = System.getenv()["RELEASE_EXPLICIT"] ?: "23.3.0-${
     LocalDateTime.now().format(DateTimeFormatter.ofPattern("Mdd.Hmm"))
 }"
 project.extra.set("releasedVersion", releasedVersion)
@@ -154,6 +154,11 @@ tasks {
 
     register<Copy>("prepareHelmPackage") {
         dependsOn("dumpVersion")
+        dependsOn ("integration-tests:core:compileJava")
+        dependsOn (":integration-tests:core:compileTestJava")
+        dependsOn (":integration-tests:core:jar")
+        dependsOn (":integration-tests:core:test")
+        dependsOn (":integration-tests:core:processTestResources")
         from(layout.projectDirectory)
         exclude(
             layout.buildDirectory.get().asFile.name,
