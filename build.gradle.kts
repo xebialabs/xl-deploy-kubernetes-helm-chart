@@ -38,6 +38,7 @@ plugins {
 apply(plugin = "ai.digital.gradle-commit")
 apply(plugin = "integration.server")
 apply(plugin = "com.xebialabs.dependency")
+apply(from = "buildSrc/deploy-helm-artifact.gradle.kts")
 
 group = "ai.digital.deploy.helm"
 project.defaultTasks = listOf("build")
