@@ -29,7 +29,7 @@ buildscript {
 plugins {
     kotlin("jvm") version "1.8.10"
 
-    id("com.github.node-gradle.node") version "3.1.0"
+    id("com.github.node-gradle.node") version "4.0.0"
     id("idea")
     id("nebula.release") version (properties["nebulaReleasePluginVersion"] as String)
     id("maven-publish")
