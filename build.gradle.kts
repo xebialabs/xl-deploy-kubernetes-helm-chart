@@ -31,7 +31,7 @@ plugins {
 
     id("com.github.node-gradle.node") version "3.1.0"
     id("idea")
-    id("nebula.release") version "15.3.1"
+    id("nebula.release") version (properties["nebulaReleasePluginVersion"] as String)
     id("maven-publish")
 }
 
