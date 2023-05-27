@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-realm
+  name: {{ include "common.names.fullname" . }}-deploy-keycloak
 data:
   digitalai-platform-realm.json: |-
     {
@@ -1014,7 +1014,7 @@ data:
         "secret" : "2c89c720-009c-428f-b815-4e488674176c",
         {{- range .Values.ingress.hosts }}
         "redirectUris" : [ "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/oauth2/authorization/xl-deploy",
-        "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/login/external-login" ],
+          "http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}/login/external-login" ],
         "webOrigins" : [ ],
         "notBefore" : 0,
         "bearerOnly" : false,

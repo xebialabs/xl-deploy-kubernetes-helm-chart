@@ -1,0 +1,9 @@
+centralConfiguration:
+  diagnosticMode:
+    enabled: true
+master:
+  diagnosticMode:
+    enabled: true
+worker:
+  diagnosticMode:
+    enabled: true
