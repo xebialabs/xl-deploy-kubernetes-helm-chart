@@ -21,11 +21,13 @@ spec:
         component: {{ template "xl-deploy.name" . }}-cc-server
         release: {{ .Release.Name }}
     spec:
+      securityContext:
+        fsGroup: 10001
       serviceAccountName: {{ template "xl-deploy.name" . }}-sa
       {{- if .Values.ImagePullSecret }}
       imagePullSecrets:
         - name: {{ .Values.ImagePullSecret }}
-      {{- end }}      
+      {{- end }}
       {{- if or (and (eq .Values.centralConfiguration.migrateFromEmbedded "true") (eq .Values.Persistence.Enabled true)) }}
       initContainers:
         - name: wait-for-migrate-from-embedded-cc-to-standalone
