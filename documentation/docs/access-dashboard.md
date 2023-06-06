@@ -2,6 +2,8 @@
 sidebar_position: 9
 ---
 
+# Access Dashboard
+
 :::caution
 This is internal documentation. This document can be used only if it was recommended by the Support Team.
 :::
@@ -10,7 +12,6 @@ This is internal documentation. This document can be used only if it was recomme
 From 10.2 version helm chart is not used directly. Use operator based installation instead.
 :::
 
-# Access Dashboard
 
 By default, the NodePort service is exposed externally on the available k8s worker nodes and can be seen by running below command
 ```bash

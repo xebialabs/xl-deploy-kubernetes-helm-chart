@@ -2,12 +2,13 @@
 sidebar_position: 5
 ---
 
+# Installing Storage Class
+
 :::caution
 This is internal documentation. This document can be used only if it was recommended by the Support Team.
 :::
 
-# Installing Storage Class
- If you are using storage class other than NFS and EFS then please proceed with installation steps
+If you are using storage class other than NFS and EFS then please proceed with installation steps
 ## NFS Client Provisioner for On-Premises Kubernetes cluster
 * For deploying helm chart, `nfs server` and `nfs mount path` are required.
 * Before installing NFS Provisioner helm chart, you need to add the stable helm repository to your helm client as shown below:
