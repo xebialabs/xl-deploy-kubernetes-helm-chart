@@ -2,11 +2,11 @@
 sidebar_position: 14
 ---
 
+# Make custom configuration for the Deploy
+
 :::caution
 This is internal documentation. This document can be used only if it was recommended by the Support Team.
 :::
-
-# Make custom configuration for the Deploy
 
 ## Requirements
 

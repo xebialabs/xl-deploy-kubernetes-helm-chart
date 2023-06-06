@@ -2,11 +2,11 @@
 sidebar_position: 10
 ---
 
+# Parameters
+
 :::caution
 This is internal documentation. This document can be used only if it was recommended by the Support Team.
 :::
-
-# Parameters
 
 For deployment on Production environment, all parameters need to be configured as per users requirement and
  k8s setup which is under use. However, for deployment on test environment, most of the default values will suffice.
