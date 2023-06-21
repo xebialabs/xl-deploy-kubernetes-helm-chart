@@ -125,6 +125,10 @@ spec:
             failureThreshold: {{ .Values.HealthProbeFailureThreshold }}
           {{- end }}
           env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -220,6 +224,12 @@ spec:
               value: "true"
             - name: CENTRAL_CONFIG_URL
               value: "http://{{ template "xl-deploy.fullname" . }}-cc-server.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
+            {{- if .Values.deploy.worker.podServiceTemplate.enabled }}
+            - name: HOSTNAME_SUFFIX
+              value: .{{.Release.Namespace}}.svc.cluster.local
+            - name: SERVER_PORT
+              value: {{ .Values.deploy.worker.podServiceTemplate.ports.deployAkka | quote }}
+            {{- end }}             
             {{- if .Values.deploy.configurationManagement.worker.environment.enabled }}
             {{- range $key, $val := .Values.deploy.configurationManagement.worker.environment.variables }}
             - name: {{ $key }}
@@ -228,10 +238,10 @@ spec:
             {{- end }}
           {{- if eq .Values.deploy.configurationManagement.worker.configuration.enabled false }}
           args:
-            - "-master"
-            - "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180"
             - "-api"
             - "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
+            - "-master"
+            - "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180"
           {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}

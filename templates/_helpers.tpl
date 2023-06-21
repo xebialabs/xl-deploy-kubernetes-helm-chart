@@ -37,3 +37,17 @@ shared central config encrypt key will be generated if not defined in values.yam
 {{- define "central-config.encrypt-key" -}}
 {{- default "n8FfQW0m@L,(74b" .Values.CentralConfigEncryptKey -}}
 {{- end -}}
+
+{{/*
+Renders a value that contains template.
+Usage:
+{{ include "common.tplvalues.render" ( dict "value" .Values.path.to.the.Value "context" $) }}
+*/}}
+{{- define "common.tplvalues.render" -}}
+    {{- if typeIs "string" .value }}
+        {{- tpl .value .context }}
+    {{- else }}
+        {{- tpl (.value | toYaml) .context }}
+    {{- end }}
+{{- end -}}
+

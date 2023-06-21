@@ -1,0 +1,131 @@
+{{- $serviceTemplate := .Values.deploy.master.podServiceTemplate }}
+{{- if $serviceTemplate.enabled }}
+{{- range $podNumber := untilStep 0 (int .Values.XldMasterCount) 1 }}
+{{- $newValues := merge (dict "podNumber" $podNumber) $ }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{- include "common.tplvalues.render" (dict "value" $serviceTemplate.name "context" $newValues) }}"
+  labels: 
+    app: {{ template "xl-deploy.name" $ }}
+    component: {{ template "xl-deploy.name" $ }}-master
+    chart: {{ template "xl-deploy.chart" $ }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+spec:
+  type: {{ $serviceTemplate.type }}
+  {{- if and $serviceTemplate.clusterIP (eq $serviceTemplate.type "ClusterIP") }}
+  clusterIP: {{ $serviceTemplate.clusterIP }}
+  {{- end }}
+  {{- if $serviceTemplate.publishNotReadyAddresses }}
+  publishNotReadyAddresses: {{ $serviceTemplate.publishNotReadyAddresses }}
+  {{- end }}
+  {{- if eq $serviceTemplate.type "LoadBalancer" }}
+  {{- if not (empty $serviceTemplate.loadBalancerIP) }}
+  loadBalancerIP: {{ $serviceTemplate.loadBalancerIP }}
+  {{- end }}
+  {{- if $serviceTemplate.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{- toYaml $serviceTemplate.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  {{- if or (eq $serviceTemplate.type "LoadBalancer") (eq $serviceTemplate.type "NodePort") }}
+  externalTrafficPolicy: {{ $serviceTemplate.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if $serviceTemplate.sessionAffinity }}
+  sessionAffinity: {{ $serviceTemplate.sessionAffinity }}
+  {{- end }}
+  {{- if $serviceTemplate.sessionAffinityConfig }}
+  sessionAffinityConfig: {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.sessionAffinityConfig "context" $) | nindent 4 }}
+  {{- end }}
+  {{- if $serviceTemplate.externalIPs }}
+  externalIPs: {{- toYaml $serviceTemplate.externalIPs | nindent 4 }}
+  {{- end }}
+  ports:
+    {{- if $serviceTemplate.portEnabled }}
+    - name: {{ $serviceTemplate.portNames.deployAkka }}
+      port: {{ add $serviceTemplate.ports.deployAkka $podNumber }}
+      targetPort: {{ $serviceTemplate.portNames.deployAkka }}
+      {{- if (eq $serviceTemplate.type "ClusterIP") }}
+      nodePort: null
+      {{- else if and (or (eq $serviceTemplate.type "NodePort") (eq $serviceTemplate.type "LoadBalancer")) (not (empty $serviceTemplate.nodePorts.deployAkka)) }}
+      nodePort: {{ add $serviceTemplate.nodePorts.deployAkka $podNumber }}
+      {{- end }}
+    {{- end }}
+    {{- if $serviceTemplate.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  selector:
+    app: {{ template "xl-deploy.name" $ }}
+    component: {{ template "xl-deploy.name" $ }}-master
+    release: {{ $.Release.Name }}
+  {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.podLabels "context" $newValues) | nindent 4 }}
+---
+{{- end }}
+{{- end }}
+
+---
+
+{{- $serviceTemplate := .Values.deploy.worker.podServiceTemplate }}
+{{- if $serviceTemplate.enabled }}
+{{- range $podNumber := untilStep 0 (int .Values.XldWorkerCount) 1 }}
+{{- $newValues := merge (dict "podNumber" $podNumber) $ }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{- include "common.tplvalues.render" (dict "value" $serviceTemplate.name "context" $newValues) }}"
+  labels: 
+    app: {{ template "xl-deploy.name" $ }}
+    component: {{ template "xl-deploy.name" $ }}-master
+    chart: {{ template "xl-deploy.chart" $ }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+spec:
+  type: {{ $serviceTemplate.type }}
+  {{- if and $serviceTemplate.clusterIP (eq $serviceTemplate.type "ClusterIP") }}
+  clusterIP: {{ $serviceTemplate.clusterIP }}
+  {{- end }}
+  {{- if $serviceTemplate.publishNotReadyAddresses }}
+  publishNotReadyAddresses: {{ $serviceTemplate.publishNotReadyAddresses }}
+  {{- end }}
+  {{- if eq $serviceTemplate.type "LoadBalancer" }}
+  {{- if not (empty $serviceTemplate.loadBalancerIP) }}
+  loadBalancerIP: {{ $serviceTemplate.loadBalancerIP }}
+  {{- end }}
+  {{- if $serviceTemplate.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{- toYaml $serviceTemplate.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  {{- if or (eq $serviceTemplate.type "LoadBalancer") (eq $serviceTemplate.type "NodePort") }}
+  externalTrafficPolicy: {{ $serviceTemplate.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if $serviceTemplate.sessionAffinity }}
+  sessionAffinity: {{ $serviceTemplate.sessionAffinity }}
+  {{- end }}
+  {{- if $serviceTemplate.sessionAffinityConfig }}
+  sessionAffinityConfig: {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.sessionAffinityConfig "context" $) | nindent 4 }}
+  {{- end }}
+  {{- if $serviceTemplate.externalIPs }}
+  externalIPs: {{- toYaml $serviceTemplate.externalIPs | nindent 4 }}
+  {{- end }}
+  ports:
+    {{- if $serviceTemplate.portEnabled }}
+    - name: {{ $serviceTemplate.portNames.deployAkka }}
+      port: {{ add $serviceTemplate.ports.deployAkka $podNumber }}
+      targetPort: {{ $serviceTemplate.portNames.deployAkka }}
+      {{- if (eq $serviceTemplate.type "ClusterIP") }}
+      nodePort: null
+      {{- else if and (or (eq $serviceTemplate.type "NodePort") (eq $serviceTemplate.type "LoadBalancer")) (not (empty $serviceTemplate.nodePorts.deployAkka)) }}
+      nodePort: {{ add $serviceTemplate.nodePorts.deployAkka $podNumber }}
+      {{- end }}
+    {{- end }}
+    {{- if $serviceTemplate.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  selector:
+    app: {{ template "xl-deploy.name" $ }}
+    component: {{ template "xl-deploy.name" $ }}-worker
+    release: {{ $.Release.Name }}
+  {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.podLabels "context" $newValues) | nindent 4 }}
+---
+{{- end }}
+{{- end }}

@@ -173,6 +173,10 @@ spec:
             failureThreshold: {{ .Values.HealthProbeFailureThreshold }}
           {{- end }}
           env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -214,8 +218,6 @@ spec:
               value: "true"
             - name: XLD_IN_PROCESS
               value: "false"
-            - name: HOSTNAME_SUFFIX
-              value: ".{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local"
             {{- if .Values.rabbitmq.install }}
             - name: XLD_TASK_QUEUE_USERNAME
               value: {{ .Values.rabbitmq.auth.username }}
@@ -268,6 +270,17 @@ spec:
               value: "true"
             - name: CENTRAL_CONFIG_URL
               value: "http://{{ template "xl-deploy.fullname" . }}-cc-server.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
+            {{- if .Values.deploy.master.podServiceTemplate.enabled }}
+            - name: HOSTNAME_SUFFIX
+              value: .{{.Release.Namespace}}.svc.cluster.local
+            - name: SERVER_PORT
+              value: {{ .Values.deploy.master.podServiceTemplate.ports.deployAkka | quote }}
+            - name: CLUSTER_NODE_HOSTNAME_SUFFIX
+              value: ".{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local"
+            {{- else }}
+            - name: HOSTNAME_SUFFIX
+              value: ".{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local"
+            {{- end }}
             {{- if .Values.deploy.configurationManagement.master.environment.enabled }}
             {{- range $key, $val := .Values.deploy.configurationManagement.master.environment.variables }}
             - name: {{ $key }}

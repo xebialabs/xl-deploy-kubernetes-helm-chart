@@ -52,6 +52,13 @@ data:
     cp /opt/xebialabs/xld-configuration-management/* .; chmod +x *.sh; 
     [ -x ./op-configuration-management.sh ] && ./op-configuration-management.sh;
     cd $ORIGINAL_PWD;
+
+    {{- if .Values.deploy.master.podServiceTemplate.enabled }}
+    POD_POSITION=$(echo $POD_NAME | grep -Eo "[0-9]+$")
+    export SERVER_PORT=$(echo $SERVER_PORT+$POD_POSITION | bc)
+    echo "Using master port: $SERVER_PORT"
+    {{- end }}
+    
     echo "Finished deploy master server configuration management";
     exec /opt/xebialabs/xl-deploy-server/bin/run-in-container.sh
 
@@ -83,7 +90,23 @@ data:
     [ -x ./op-configuration-management.sh ] && ./op-configuration-management.sh;
     cd $ORIGINAL_PWD;
     echo "Finished deploy worker configuration management";
-    exec /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh -master "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180" -api "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
+
+    {{- if .Values.deploy.master.podServiceTemplate.enabled }}
+    POD_POSITION=$(echo $POD_NAME | grep -Eo "[0-9]+$")
+    export SERVER_PORT=$(echo $SERVER_PORT+$POD_POSITION | bc)
+    echo "Using worker port: $SERVER_PORT"
+    exec /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh \ 
+      {{- range $podNumber := untilStep 0 (int .Values.XldMasterCount) 1 }}
+      {{- $newValues := merge (dict "podNumber" $podNumber) $ }}
+      -master "{{ template "xl-deploy.fullname" $ }}-master-{{$podNumber}}.{{$.Release.Namespace}}.svc.cluster.local:{{ add $.Values.deploy.master.podServiceTemplate.nodePorts.deployAkka $podNumber }}" \
+      {{- end }}
+      -hostname "$POD_NAME$HOSTNAME_SUFFIX" \
+      -api "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/" 
+    {{- else }}
+    exec /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh \ 
+      -master "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180" \
+      -api "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
+    {{- end }}
 
   op-configuration-management.sh: |-
     {{- .Values.deploy.configurationManagement.worker.configuration.script | default "echo \"Nothing to execute.\"" | nindent 4 }}
