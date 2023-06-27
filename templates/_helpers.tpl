@@ -51,3 +51,56 @@ Usage:
     {{- end }}
 {{- end -}}
 
+{{/*
+Get the Deploy Master hostname suffix
+*/}}
+{{- define "deploy.masterHostnameSuffix" -}}
+{{- if .Values.deploy.master.podServiceTemplate.enabled -}}
+{{- include "common.tplvalues.render" (dict "value" .Values.deploy.master.podServiceTemplate.overrideHostnameSuffix "context" $) }}
+{{- else -}}
+.{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local
+{{- end -}}
+{{- end -}}
+
+{{- define "deploy.masterHostname" -}}
+{{- include "common.tplvalues.render" (dict "value" .Values.deploy.master.podServiceTemplate.overrideHostname "context" .) }}
+{{- end -}}
+
+{{/*
+Get the Deploy Worker hostname suffix
+*/}}
+{{- define "deploy.workerHostnameSuffix" -}}
+{{- if .Values.deploy.worker.podServiceTemplate.enabled -}}
+{{- include "common.tplvalues.render" (dict "value" .Values.deploy.worker.podServiceTemplate.overrideHostnameSuffix "context" $) }}
+{{- else -}}
+.{{ template "xl-deploy.fullname" . }}-worker.{{.Release.Namespace}}.svc.cluster.local
+{{- end -}}
+{{- end -}}
+
+{{- define "deploy.workerHostname" -}}
+{{- include "common.tplvalues.render" (dict "value" .Values.deploy.worker.podServiceTemplate.overrideHostname "context" .) }}
+{{- end -}}
+
+{{/*
+Get the Deploy Worker hostname suffix
+*/}}
+{{- define "deploy.workerMasters" -}}
+{{- $serviceTemplate := .Values.deploy.master.podServiceTemplate }}
+{{- if $serviceTemplate.enabled }}
+{{- $maxServices := 1 }}
+{{- if or (ne $serviceTemplate.serviceMode "SingleService") (and (eq $serviceTemplate.type "ClusterIP") (has "None" $serviceTemplate.clusterIPs)) }}
+{{- $maxServices = int .Values.XldMasterCount }}
+{{- end }}
+{{- range $podNumber := untilStep 0 $maxServices 1 }}
+{{- $newValues := merge (dict "podNumber" $podNumber) $ }}
+{{- $masterHostname := include "deploy.masterHostname" $newValues }}
+{{- $masterPort := $serviceTemplate.nodePorts.deployAkka }}
+{{- if contains $serviceTemplate.serviceMode "SingleHostname;MultiService" }}
+{{- $masterPort = add $masterPort $podNumber }}
+{{- end }}
+      -master "{{ $masterHostname }}{{ include "deploy.masterHostnameSuffix" $newValues }}:{{ $masterPort }}" \
+{{- end }}
+{{- else }}
+      -master "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180" \
+{{- end }}
+{{- end -}}

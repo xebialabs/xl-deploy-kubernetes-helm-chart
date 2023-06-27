@@ -16,7 +16,11 @@ spec:
       app: {{ template "xl-deploy.name" . }}
       component: {{ template "xl-deploy.name" . }}-worker
       release: {{ .Release.Name }}
+  {{- if and .Values.deploy.worker.podServiceTemplate.enabled (eq .Values.deploy.worker.podServiceTemplate.serviceMode "SingleService") }}
+  serviceName: "{{- include "common.tplvalues.render" (dict "value" .Values.deploy.worker.podServiceTemplate.name "context" $) }}"
+  {{- else }}
   serviceName: {{ template "xl-deploy.fullname" . }}-worker
+  {{- end }}
   template:
     metadata:
       labels:
@@ -170,8 +174,6 @@ spec:
               value: "false"
             - name: XLD_IN_PROCESS
               value: "false"
-            - name: USE_IP_AS_HOSTNAME
-              value: "true"
             {{- if .Values.rabbitmq.install }}
             - name: XLD_TASK_QUEUE_USERNAME
               value: {{ .Values.rabbitmq.auth.username }}
@@ -226,7 +228,7 @@ spec:
               value: "http://{{ template "xl-deploy.fullname" . }}-cc-server.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
             {{- if .Values.deploy.worker.podServiceTemplate.enabled }}
             - name: HOSTNAME_SUFFIX
-              value: .{{.Release.Namespace}}.svc.cluster.local
+              value: {{ include "deploy.workerHostnameSuffix" . }}
             - name: SERVER_PORT
               value: {{ .Values.deploy.worker.podServiceTemplate.ports.deployAkka | quote }}
             {{- end }}             

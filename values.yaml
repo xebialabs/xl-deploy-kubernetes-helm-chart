@@ -25,6 +25,7 @@ deploy:
   clusterMode: full
   master:
     useIpAsHostname: false
+    clusterNodeHostnameSuffix: '.{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local'
     terminationGracePeriodSeconds: 200
     image:
       tag: ""
@@ -36,7 +37,11 @@ deploy:
       ##
       type: NodePort
 
-      name: '{{ printf "%s-master-%d" (include "xl-deploy.fullname" $) .podNumber }}'
+      name: '{{ printf "%s-master-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
+      ## Possible values: SingleHostname (IncrementPort, MultiService), SinglePort (IncrementHostname, MultiService), MultiService (IncrementHostname, IncrementPort), SingleService (IncrementHostname, SinglePort)
+      serviceMode: MultiService
+      overrideHostnameSuffix: '.{{.Release.Namespace}}.svc.cluster.local'
+      overrideHostname: '{{ printf "%s-master-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
 
       ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
       ##
@@ -76,14 +81,17 @@ deploy:
       ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
       ##
       externalTrafficPolicy: Local
-      ## @param service.loadBalancerIP Set the LoadBalancerIP
-      ##
-      loadBalancerIP: ""
-      ## @param service.clusterIP Kubernetes service Cluster IP
+      ## @param service.clusterIPs Kubernetes service Cluster IP
       ## e.g.:
-      ## clusterIP: None
+      ## clusterIP: [ None ]
       ##
-      clusterIP: ""
+      clusterIPs: [ ]
+      ## @param service.annotations Service annotations. Evaluated as a template
+      ## Example:
+      ## annotations:
+      ##   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+      ##
+      annotations: { }
       publishNotReadyAddresses: true
       ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
       ## If "ClientIP", consecutive client requests will be directed to the same Pod
@@ -111,7 +119,11 @@ deploy:
       ##
       type: NodePort
 
-      name: '{{ printf "%s-worker-%d" (include "xl-deploy.fullname" $) .podNumber }}'
+      name: '{{ printf "%s-worker-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
+      ## Possible values: SingleHostname (IncrementPort, MultiService), SinglePort (IncrementHostname, MultiService), MultiService (IncrementHostname, IncrementPort), SingleService (IncrementHostname, SinglePort)
+      serviceMode: MultiService
+      overrideHostnameSuffix: '.{{.Release.Namespace}}.svc.cluster.local'
+      overrideHostname: '{{ printf "%s-worker-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
 
       ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
       ##
@@ -151,14 +163,17 @@ deploy:
       ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
       ##
       externalTrafficPolicy: Local
-      ## @param service.loadBalancerIP Set the LoadBalancerIP
-      ##
-      loadBalancerIP: ""
-      ## @param service.clusterIP Kubernetes service Cluster IP
+      ## @param service.clusterIPs Kubernetes service Cluster IP
       ## e.g.:
-      ## clusterIP: None
+      ## clusterIPs: [ None ]
       ##
-      clusterIP: ""
+      clusterIPs: [ ]
+      ## @param service.annotations Service annotations. Evaluated as a template
+      ## Example:
+      ## annotations:
+      ##   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+      ##
+      annotations: { }
       publishNotReadyAddresses: true
       ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
       ## If "ClientIP", consecutive client requests will be directed to the same Pod

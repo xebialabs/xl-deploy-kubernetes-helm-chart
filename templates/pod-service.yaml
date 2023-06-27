@@ -1,6 +1,10 @@
 {{- $serviceTemplate := .Values.deploy.master.podServiceTemplate }}
 {{- if $serviceTemplate.enabled }}
-{{- range $podNumber := untilStep 0 (int .Values.XldMasterCount) 1 }}
+{{- $maxServices := 1 }}
+{{- if ne $serviceTemplate.serviceMode "SingleService" }}
+{{- $maxServices = int .Values.XldMasterCount }}
+{{- end }}
+{{- range $podNumber := untilStep 0 $maxServices 1 }}
 {{- $newValues := merge (dict "podNumber" $podNumber) $ }}
 apiVersion: v1
 kind: Service
@@ -12,18 +16,19 @@ metadata:
     chart: {{ template "xl-deploy.chart" $ }}
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
+  annotations:
+    {{- if $serviceTemplate.annotations }}
+    {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.annotations "context" $newValues) | nindent 4 }}
+    {{- end }}
 spec:
   type: {{ $serviceTemplate.type }}
-  {{- if and $serviceTemplate.clusterIP (eq $serviceTemplate.type "ClusterIP") }}
-  clusterIP: {{ $serviceTemplate.clusterIP }}
+  {{- if and $serviceTemplate.clusterIPs (eq $serviceTemplate.type "ClusterIP") }}
+  clusterIP: {{ index $serviceTemplate.clusterIPs $podNumber }}
   {{- end }}
   {{- if $serviceTemplate.publishNotReadyAddresses }}
   publishNotReadyAddresses: {{ $serviceTemplate.publishNotReadyAddresses }}
   {{- end }}
   {{- if eq $serviceTemplate.type "LoadBalancer" }}
-  {{- if not (empty $serviceTemplate.loadBalancerIP) }}
-  loadBalancerIP: {{ $serviceTemplate.loadBalancerIP }}
-  {{- end }}
   {{- if $serviceTemplate.loadBalancerSourceRanges }}
   loadBalancerSourceRanges: {{- toYaml $serviceTemplate.loadBalancerSourceRanges | nindent 4 }}
   {{- end }}
@@ -41,14 +46,28 @@ spec:
   externalIPs: {{- toYaml $serviceTemplate.externalIPs | nindent 4 }}
   {{- end }}
   ports:
+    {{- if not (and $serviceTemplate.enabled (eq $serviceTemplate.serviceMode "SingleService")) }}
+    - name: akka-cluster
+      port: 25520
+      targetPort: 25520
+      protocol: TCP
+    {{- end }}
     {{- if $serviceTemplate.portEnabled }}
     - name: {{ $serviceTemplate.portNames.deployAkka }}
-      port: {{ add $serviceTemplate.ports.deployAkka $podNumber }}
+      {{- $akkaPort := $serviceTemplate.ports.deployAkka }}
+      {{- if contains $serviceTemplate.serviceMode "SingleHostname;MultiService" }}
+      {{- $akkaPort = add $akkaPort $podNumber }}
+      {{- end }}
+      port: {{ $akkaPort }}
       targetPort: {{ $serviceTemplate.portNames.deployAkka }}
       {{- if (eq $serviceTemplate.type "ClusterIP") }}
       nodePort: null
       {{- else if and (or (eq $serviceTemplate.type "NodePort") (eq $serviceTemplate.type "LoadBalancer")) (not (empty $serviceTemplate.nodePorts.deployAkka)) }}
-      nodePort: {{ add $serviceTemplate.nodePorts.deployAkka $podNumber }}
+      {{- $nodePort := $serviceTemplate.nodePorts.deployAkka }}
+      {{- if contains $serviceTemplate.serviceMode "SingleHostname;MultiService" }}
+      {{- $nodePort = add $nodePort $podNumber }}
+      {{- end }}
+      nodePort: {{ $nodePort }}
       {{- end }}
     {{- end }}
     {{- if $serviceTemplate.extraPorts }}
@@ -58,7 +77,9 @@ spec:
     app: {{ template "xl-deploy.name" $ }}
     component: {{ template "xl-deploy.name" $ }}-master
     release: {{ $.Release.Name }}
+    {{- if $serviceTemplate.podLabels }}
   {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.podLabels "context" $newValues) | nindent 4 }}
+    {{- end }}
 ---
 {{- end }}
 {{- end }}
@@ -67,7 +88,11 @@ spec:
 
 {{- $serviceTemplate := .Values.deploy.worker.podServiceTemplate }}
 {{- if $serviceTemplate.enabled }}
-{{- range $podNumber := untilStep 0 (int .Values.XldWorkerCount) 1 }}
+{{- $maxServices := 1 }}
+{{- if ne $serviceTemplate.serviceMode "SingleService" }}
+{{- $maxServices = int .Values.XldWorkerCount }}
+{{- end }}
+{{- range $podNumber := untilStep 0 $maxServices 1 }}
 {{- $newValues := merge (dict "podNumber" $podNumber) $ }}
 apiVersion: v1
 kind: Service
@@ -79,18 +104,19 @@ metadata:
     chart: {{ template "xl-deploy.chart" $ }}
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
+  annotations:
+    {{- if $serviceTemplate.annotations }}
+    {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.annotations "context" $newValues) | nindent 4 }}
+    {{- end }}
 spec:
   type: {{ $serviceTemplate.type }}
-  {{- if and $serviceTemplate.clusterIP (eq $serviceTemplate.type "ClusterIP") }}
-  clusterIP: {{ $serviceTemplate.clusterIP }}
+  {{- if and $serviceTemplate.clusterIPs (eq $serviceTemplate.type "ClusterIP") }}
+  clusterIP: {{ index $serviceTemplate.clusterIPs $podNumber }}
   {{- end }}
   {{- if $serviceTemplate.publishNotReadyAddresses }}
   publishNotReadyAddresses: {{ $serviceTemplate.publishNotReadyAddresses }}
   {{- end }}
   {{- if eq $serviceTemplate.type "LoadBalancer" }}
-  {{- if not (empty $serviceTemplate.loadBalancerIP) }}
-  loadBalancerIP: {{ $serviceTemplate.loadBalancerIP }}
-  {{- end }}
   {{- if $serviceTemplate.loadBalancerSourceRanges }}
   loadBalancerSourceRanges: {{- toYaml $serviceTemplate.loadBalancerSourceRanges | nindent 4 }}
   {{- end }}
@@ -110,12 +136,20 @@ spec:
   ports:
     {{- if $serviceTemplate.portEnabled }}
     - name: {{ $serviceTemplate.portNames.deployAkka }}
-      port: {{ add $serviceTemplate.ports.deployAkka $podNumber }}
+      {{- $akkaPort := $serviceTemplate.ports.deployAkka }}
+      {{- if contains $serviceTemplate.serviceMode "SingleHostname;MultiService" }}
+      {{- $akkaPort = add $akkaPort $podNumber }}
+      {{- end }}
+      port: {{ $akkaPort }}
       targetPort: {{ $serviceTemplate.portNames.deployAkka }}
       {{- if (eq $serviceTemplate.type "ClusterIP") }}
       nodePort: null
       {{- else if and (or (eq $serviceTemplate.type "NodePort") (eq $serviceTemplate.type "LoadBalancer")) (not (empty $serviceTemplate.nodePorts.deployAkka)) }}
-      nodePort: {{ add $serviceTemplate.nodePorts.deployAkka $podNumber }}
+      {{- $nodePort := $serviceTemplate.nodePorts.deployAkka }}
+      {{- if contains $serviceTemplate.serviceMode "SingleHostname;MultiService" }}
+      {{- $nodePort = add $nodePort $podNumber }}
+      {{- end }}
+      nodePort: {{ $nodePort }}
       {{- end }}
     {{- end }}
     {{- if $serviceTemplate.extraPorts }}
@@ -125,7 +159,9 @@ spec:
     app: {{ template "xl-deploy.name" $ }}
     component: {{ template "xl-deploy.name" $ }}-worker
     release: {{ $.Release.Name }}
+    {{- if $serviceTemplate.podLabels }}
   {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.podLabels "context" $newValues) | nindent 4 }}
+    {{- end }}
 ---
 {{- end }}
 {{- end }}

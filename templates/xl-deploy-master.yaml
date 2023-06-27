@@ -16,7 +16,11 @@ spec:
       app: {{ template "xl-deploy.name" . }}
       component: {{ template "xl-deploy.name" . }}-master
       release: {{ .Release.Name }}
+  {{- if and .Values.deploy.master.podServiceTemplate.enabled (eq .Values.deploy.master.podServiceTemplate.serviceMode "SingleService") }}
+  serviceName: "{{- include "common.tplvalues.render" (dict "value" .Values.deploy.master.podServiceTemplate.name "context" $) }}"
+  {{- else }}
   serviceName: {{ template "xl-deploy.fullname" . }}-master
+  {{- end }}
   template:
     metadata:
       labels:
@@ -105,6 +109,8 @@ spec:
               containerPort: 9100
             - name: akka
               containerPort: 8180
+            - name: cluster-akka
+              containerPort: 25520
           {{- if .Values.deploy.configurationManagement.master.configuration.enabled }}
           command:
             - sh
@@ -270,16 +276,15 @@ spec:
               value: "true"
             - name: CENTRAL_CONFIG_URL
               value: "http://{{ template "xl-deploy.fullname" . }}-cc-server.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
-            {{- if .Values.deploy.master.podServiceTemplate.enabled }}
             - name: HOSTNAME_SUFFIX
-              value: .{{.Release.Namespace}}.svc.cluster.local
+              value: {{ include "deploy.masterHostnameSuffix" . }}
+            {{- if .Values.deploy.master.podServiceTemplate.enabled }}
             - name: SERVER_PORT
               value: {{ .Values.deploy.master.podServiceTemplate.ports.deployAkka | quote }}
             - name: CLUSTER_NODE_HOSTNAME_SUFFIX
-              value: ".{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local"
-            {{- else }}
-            - name: HOSTNAME_SUFFIX
-              value: ".{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local"
+              value: "{{- include "common.tplvalues.render" (dict "value" .Values.deploy.master.clusterNodeHostnameSuffix "context" $) }}"
+            - name: CLUSTER_NODE_PORT
+              value: "25520"
             {{- end }}
             {{- if .Values.deploy.configurationManagement.master.environment.enabled }}
             {{- range $key, $val := .Values.deploy.configurationManagement.master.environment.variables }}

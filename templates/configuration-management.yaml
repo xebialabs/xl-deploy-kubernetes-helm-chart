@@ -12,10 +12,12 @@ data:
     rm -fv /opt/xebialabs/central-configuration-server/conf/{{ . }};
     {{- end }}
     echo "Finished reset of the conf files";
+
     {{- range $.Values.deploy.configurationManagement.centralConfiguration.configuration.resetCcFiles }}
     rm -fv /opt/xebialabs/central-configuration-server/centralConfiguration/{{ . }};
     {{- end }}
     echo "Finished reset of the centralConfiguration files";
+
     mkdir /opt/xebialabs/central-configuration-server/xld-configuration-management/;
     ORIGINAL_PWD=$(pwd);
     cd /opt/xebialabs/central-configuration-server/xld-configuration-management/; 
@@ -23,10 +25,12 @@ data:
     [ -x ./op-configuration-management.sh ] && ./op-configuration-management.sh;
     cd $ORIGINAL_PWD;
     echo "Finished central configuration server configuration management";
+
     exec /opt/xebialabs/central-configuration-server/bin/run-in-container.sh
 
   op-configuration-management.sh: |-
     {{- .Values.deploy.configurationManagement.centralConfiguration.configuration.script | default "echo \"Nothing to execute.\"" | nindent 4 }}
+  
   {{- range $key, $val := .Values.deploy.configurationManagement.centralConfiguration.configuration.scriptData }}
   {{ $key }}: |-
     {{- $val | nindent 4 }}
@@ -46,6 +50,7 @@ data:
     rm -fv /opt/xebialabs/xl-deploy-server/conf/{{ . }};
     {{- end }}
     echo "Finished reset of the conf files"; 
+
     mkdir /opt/xebialabs/xl-deploy-server/xld-configuration-management/; 
     ORIGINAL_PWD=$(pwd);
     cd /opt/xebialabs/xl-deploy-server/xld-configuration-management/; 
@@ -54,16 +59,25 @@ data:
     cd $ORIGINAL_PWD;
 
     {{- if .Values.deploy.master.podServiceTemplate.enabled }}
-    POD_POSITION=$(echo $POD_NAME | grep -Eo "[0-9]+$")
-    export SERVER_PORT=$(echo $SERVER_PORT+$POD_POSITION | bc)
+    POD_NUMBER=$(echo $POD_NAME | grep -Eo "[0-9]+$")
+    {{- if contains .Values.deploy.master.podServiceTemplate.serviceMode "SingleHostname;MultiService" }}
+    export SERVER_PORT=$(echo $SERVER_PORT+$POD_NUMBER | bc)
+    {{- end }}
+    {{- if .Values.deploy.master.podServiceTemplate.overrideHostname }}
+    {{- $newValues := merge (dict "podNumber" "${POD_NUMBER}") $ }}
+    {{- $masterHostname := include "common.tplvalues.render" (dict "value" .Values.deploy.master.podServiceTemplate.overrideHostname "context" $newValues) }}
+    export OVERRIDE_HOSTNAME=$(echo {{ $masterHostname }})
+    echo "Using master hostname: $OVERRIDE_HOSTNAME"
+    {{- end }}
     echo "Using master port: $SERVER_PORT"
     {{- end }}
-    
     echo "Finished deploy master server configuration management";
+
     exec /opt/xebialabs/xl-deploy-server/bin/run-in-container.sh
 
   op-configuration-management.sh: |-
     {{- .Values.deploy.configurationManagement.master.configuration.script | default "echo \"Nothing to execute.\"" | nindent 4 }}
+  
   {{- range $key, $val := .Values.deploy.configurationManagement.master.configuration.scriptData }}
   {{ $key }}: |-
   {{- $val | nindent 4 }}
@@ -82,7 +96,8 @@ data:
     {{- range $.Values.deploy.configurationManagement.worker.configuration.resetFiles }}
     rm -fv /opt/xebialabs/deploy-task-engine/conf/{{ . }};
     {{- end }}
-    echo "Finished reset of the conf files"; 
+    echo "Finished reset of the conf files";
+    
     mkdir /opt/xebialabs/deploy-task-engine/xld-configuration-management/; 
     ORIGINAL_PWD=$(pwd);
     cd /opt/xebialabs/deploy-task-engine/xld-configuration-management/; 
@@ -91,26 +106,40 @@ data:
     cd $ORIGINAL_PWD;
     echo "Finished deploy worker configuration management";
 
-    {{- if .Values.deploy.master.podServiceTemplate.enabled }}
-    POD_POSITION=$(echo $POD_NAME | grep -Eo "[0-9]+$")
-    export SERVER_PORT=$(echo $SERVER_PORT+$POD_POSITION | bc)
+    {{- if .Values.deploy.worker.podServiceTemplate.enabled }}
+    
+    POD_NUMBER=$(echo $POD_NAME | grep -Eo "[0-9]+$")
+    {{- if contains .Values.deploy.master.podServiceTemplate.serviceMode "SingleHostname;MultiService" }}
+    export SERVER_PORT=$(echo $SERVER_PORT+$POD_NUMBER | bc)
+    {{- end }}
+    {{- if .Values.deploy.worker.podServiceTemplate.overrideHostname }}
+    {{- $newValues := merge (dict "podNumber" "${POD_NUMBER}") $ }}
+    {{- $workerHostname := include "common.tplvalues.render" (dict "value" .Values.deploy.worker.podServiceTemplate.overrideHostname "context" $newValues) }}
+    export OVERRIDE_HOSTNAME=$(echo {{$workerHostname}})
+    echo "Using worker hostname: $OVERRIDE_HOSTNAME"
+    {{- end }}
     echo "Using worker port: $SERVER_PORT"
-    exec /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh \ 
-      {{- range $podNumber := untilStep 0 (int .Values.XldMasterCount) 1 }}
-      {{- $newValues := merge (dict "podNumber" $podNumber) $ }}
-      -master "{{ template "xl-deploy.fullname" $ }}-master-{{$podNumber}}.{{$.Release.Namespace}}.svc.cluster.local:{{ add $.Values.deploy.master.podServiceTemplate.nodePorts.deployAkka $podNumber }}" \
-      {{- end }}
+    exec /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh \
+      {{- include "deploy.workerMasters" $ }}
+      {{- if .Values.deploy.worker.podServiceTemplate.overrideHostname }}
+      -hostname "$OVERRIDE_HOSTNAME$HOSTNAME_SUFFIX" \
+      {{- else }}
       -hostname "$POD_NAME$HOSTNAME_SUFFIX" \
-      -api "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/" 
+      {{- end }}
+      -api "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
+    
     {{- else }}
-    exec /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh \ 
-      -master "{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local:8180" \
+
+    exec /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh \
+      {{- include "deploy.workerMasters" $ }}
       -api "http://{{ template "xl-deploy.fullname" . }}-lb.{{ .Release.Namespace }}.svc.cluster.local:4516/"
     {{- end }}
 
   op-configuration-management.sh: |-
     {{- .Values.deploy.configurationManagement.worker.configuration.script | default "echo \"Nothing to execute.\"" | nindent 4 }}
+  
   {{- range $key, $val := .Values.deploy.configurationManagement.worker.configuration.scriptData }}
   {{ $key }}: |-
   {{- $val | nindent 4 }}
   {{- end }}
+    
