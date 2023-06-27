@@ -37,10 +37,14 @@ deploy:
       ##
       type: NodePort
 
+      ## @param service.name the name of the service, the service name is composed of release version name, fix part '-master-' and the order number of the service, the helm is passing the `.podNumber` value
       name: '{{ printf "%s-master-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
-      ## Possible values: SingleHostname (IncrementPort, MultiService), SinglePort (IncrementHostname, MultiService), MultiService (IncrementHostname, IncrementPort), SingleService (IncrementHostname, SinglePort)
+      ## @param service.serviceMode Possible values are: SingleHostname (IncrementPort, MultiService), SinglePort (IncrementHostname, MultiService), MultiService (IncrementHostname, IncrementPort), SingleService (IncrementHostname, SinglePort)
+      ## it defines the number of hostnames, ports and services
       serviceMode: MultiService
+      ## @param service.overrideHostnameSuffix together with overrideHostname composes full hostname of the exposed master pod
       overrideHostnameSuffix: '.{{.Release.Namespace}}.svc.cluster.local'
+      ## @param service.overrideHostname  together with overrideHostnameSuffix composes full hostname of the exposed master pod
       overrideHostname: '{{ printf "%s-master-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
 
       ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
@@ -119,10 +123,14 @@ deploy:
       ##
       type: NodePort
 
+      ## @param service.name the name of the service, the service name is composed of release version name, fix part '-worker-' and the order number of the service, the helm is passing the `.podNumber` value
       name: '{{ printf "%s-worker-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
-      ## Possible values: SingleHostname (IncrementPort, MultiService), SinglePort (IncrementHostname, MultiService), MultiService (IncrementHostname, IncrementPort), SingleService (IncrementHostname, SinglePort)
+      ## @param service.serviceMode Possible values are: SingleHostname (IncrementPort, MultiService), SinglePort (IncrementHostname, MultiService), MultiService (IncrementHostname, IncrementPort), SingleService (IncrementHostname, SinglePort)
+      ## it defines the number of hostnames, ports and services
       serviceMode: MultiService
+      ## @param service.overrideHostnameSuffix together with overrideHostname composes full hostname of the exposed worker pod
       overrideHostnameSuffix: '.{{.Release.Namespace}}.svc.cluster.local'
+      ## @param service.overrideHostname  together with overrideHostnameSuffix composes full hostname of the exposed worker pod
       overrideHostname: '{{ printf "%s-worker-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
 
       ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
@@ -202,7 +210,7 @@ deploy:
         resetCcFiles:
           - deploy-server.yaml
         script: |-
-          cp /opt/xebialabs/central-configuration-server/xld-configuration-management/deploy-server.yaml.template /opt/xebialabs/central-configuration-server/central-conf/deploy-server.yaml.template && echo "Copy central-conf/deploy-server.yaml.template"; 
+          cp /opt/xebialabs/central-configuration-server/xld-configuration-management/deploy-server.yaml.template /opt/xebialabs/central-configuration-server/central-conf/deploy-server.yaml.template && echo "Copy central-conf/deploy-server.yaml.template";
         scriptData: ## Add here files that will be used by the configurationScript
           deploy-server.yaml.template: |-
             deploy.server:
