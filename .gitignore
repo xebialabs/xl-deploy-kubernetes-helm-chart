@@ -4,3 +4,4 @@
 charts
 build
 Chart.lock
+values-*test*.yaml

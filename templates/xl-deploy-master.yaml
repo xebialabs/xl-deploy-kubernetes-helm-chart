@@ -7,6 +7,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
+  podManagementPolicy: OrderedReady
   replicas: {{ .Values.XldMasterCount }}
   updateStrategy:
     type: RollingUpdate
@@ -15,7 +16,11 @@ spec:
       app: {{ template "xl-deploy.name" . }}
       component: {{ template "xl-deploy.name" . }}-master
       release: {{ .Release.Name }}
+  {{- if and .Values.deploy.master.podServiceTemplate.enabled (eq .Values.deploy.master.podServiceTemplate.serviceMode "SingleService") }}
+  serviceName: "{{- include "common.tplvalues.render" (dict "value" .Values.deploy.master.podServiceTemplate.name "context" $) }}"
+  {{- else }}
   serviceName: {{ template "xl-deploy.fullname" . }}-master
+  {{- end }}
   template:
     metadata:
       labels:
@@ -71,10 +76,10 @@ spec:
                 sleep 2;
               done;
           env:
-           - name: RABBITMQ_SVC
-             value: {{ .Release.Name }}-rabbitmq
-           - name: RABBITMQ_PORT
-             value: "5672"
+            - name: RABBITMQ_SVC
+              value: {{ .Release.Name }}-rabbitmq
+            - name: RABBITMQ_PORT
+              value: "5672"
         {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -92,6 +97,8 @@ spec:
               containerPort: 9100
             - name: akka
               containerPort: 8180
+            - name: cluster-akka
+              containerPort: 25520
           {{- if .Values.deploy.configurationManagement.master.configuration.enabled }}
           command:
             - sh
@@ -121,6 +128,9 @@ spec:
               mountPath: /opt/xebialabs/xl-deploy-server/ext
               subPath: ext
             - name: data-dir
+              mountPath: /opt/xebialabs/xl-deploy-server/log
+              subPath: log
+            - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/hotfix/lib
               subPath: lib
             - name: data-dir
@@ -129,9 +139,6 @@ spec:
             - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/hotfix/satellite-lib
               subPath: satellite-lib
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/log
-              subPath: log
             {{- if .Values.deploy.configurationManagement.master.volumeMounts.enabled }}
             {{- range $key, $val := .Values.deploy.configurationManagement.master.volumeMounts.paths }}
             - name: data-dir
@@ -160,6 +167,10 @@ spec:
             failureThreshold: {{ .Values.HealthProbeFailureThreshold }}
           {{- end }}
           env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -201,8 +212,6 @@ spec:
               value: "true"
             - name: XLD_IN_PROCESS
               value: "false"
-            - name: HOSTNAME_SUFFIX
-              value: ".{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local"
             {{- if .Values.rabbitmq.install }}
             - name: XLD_TASK_QUEUE_USERNAME
               value: {{ .Values.rabbitmq.auth.username }}
@@ -230,24 +239,22 @@ spec:
               value: {{ .Values.UseExistingMQ.XLD_TASK_QUEUE_DRIVER_CLASS_NAME }}
             {{- end }}
             {{- end }}
-            {{- if .Values.RepositoryKeystore }}
             - name: REPOSITORY_KEYSTORE
               valueFrom:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: repositoryKeystore
-            {{- end }}
-            {{- if .Values.KeystorePassphrase }}
             - name: REPOSITORY_KEYSTORE_PASSPHRASE
               valueFrom:
                 secretKeyRef:
                   name: {{ include "xl-deploy.fullname" . }}
                   key: keystorePassphrase
-            {{- end }}
             {{- if .Values.satellite.Enabled }}
             - name: ENABLE_SATELLITE
               value: {{ .Values.satellite.Enabled | quote }}
             {{- end }}
+            - name: USE_IP_AS_HOSTNAME
+              value: {{.Values.deploy.master.useIpAsHostname | quote}}
             - name: CENTRAL_CONFIG_ENCRYPT_KEY
               valueFrom:
                 secretKeyRef:
@@ -255,10 +262,18 @@ spec:
                   key: centralConfigEncryptKey
             - name: USE_EXTERNAL_CENTRAL_CONFIG
               value: "true"
-            - name: USE_IP_AS_HOSTNAME
-              value: {{.Values.deploy.master.useIpAsHostname | quote}}
             - name: CENTRAL_CONFIG_URL
               value: "http://{{ template "xl-deploy.fullname" . }}-cc-server.{{ .Release.Namespace }}.svc.cluster.local:8888/centralConfiguration"
+            - name: HOSTNAME_SUFFIX
+              value: {{ include "deploy.masterHostnameSuffix" . }}
+            {{- if .Values.deploy.master.podServiceTemplate.enabled }}
+            - name: SERVER_PORT
+              value: {{ .Values.deploy.master.podServiceTemplate.ports.deployAkka | quote }}
+            - name: CLUSTER_NODE_HOSTNAME_SUFFIX
+              value: "{{- include "common.tplvalues.render" (dict "value" .Values.deploy.master.clusterNodeHostnameSuffix "context" $) }}"
+            - name: CLUSTER_NODE_PORT
+              value: "25520"
+            {{- end }}
             {{- if .Values.deploy.configurationManagement.master.environment.enabled }}
             {{- range $key, $val := .Values.deploy.configurationManagement.master.environment.variables }}
             - name: {{ $key }}
@@ -272,7 +287,7 @@ spec:
       volumes:
         {{- if not .Values.Persistence.Enabled }}
         - name: data-dir
-          emptyDir: { }
+          emptyDir: {}
         {{- end }}
         {{- if .Values.oidc.enabled }}
         - name: deploy-server
@@ -288,7 +303,7 @@ spec:
             name: xld-master-configuration-management-script
             defaultMode: 0777
         {{- end }}
-  {{- end }}
+      {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
@@ -320,7 +335,7 @@ spec:
     - metadata:
         name: data-dir
       spec:
-        accessModes: [ {{ .Values.Persistence.AccessMode }} ]
+        accessModes: [ {{.Values.Persistence.AccessMode}} ]
       {{- if .Values.Persistence.StorageClass }}
       {{- if (eq "-" .Values.Persistence.StorageClass) }}
         storageClassName: ""
