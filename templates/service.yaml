@@ -41,10 +41,12 @@ spec:
       targetPort: 8180
       protocol: TCP
     {{- end }}
+    {{- if .Values.deploy.master.podServiceTemplate.enabled }}
     - name: akka-cluster
       port: 25520
       targetPort: 25520
       protocol: TCP
+    {{- end }}
   selector:
     app: {{ template "xl-deploy.name" . }}
     component: {{ template "xl-deploy.name" . }}-master

@@ -46,7 +46,7 @@ spec:
   externalIPs: {{- toYaml $serviceTemplate.externalIPs | nindent 4 }}
   {{- end }}
   ports:
-    {{- if not (and $serviceTemplate.enabled (eq $serviceTemplate.serviceMode "SingleService")) }}
+    {{- if eq $serviceTemplate.serviceMode "SingleService" }}
     - name: akka-cluster
       port: 25520
       targetPort: 25520
