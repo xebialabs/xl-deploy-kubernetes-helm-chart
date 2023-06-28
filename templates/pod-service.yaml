@@ -10,7 +10,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: "{{- include "common.tplvalues.render" (dict "value" $serviceTemplate.name "context" $newValues) }}"
-  labels: 
+  labels:
     app: {{ template "xl-deploy.name" $ }}
     component: {{ template "xl-deploy.name" $ }}-master
     chart: {{ template "xl-deploy.chart" $ }}
@@ -46,7 +46,7 @@ spec:
   externalIPs: {{- toYaml $serviceTemplate.externalIPs | nindent 4 }}
   {{- end }}
   ports:
-    {{- if not (and $serviceTemplate.enabled (eq $serviceTemplate.serviceMode "SingleService")) }}
+    {{- if eq $serviceTemplate.serviceMode "SingleService" }}
     - name: akka-cluster
       port: 25520
       targetPort: 25520
@@ -98,7 +98,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: "{{- include "common.tplvalues.render" (dict "value" $serviceTemplate.name "context" $newValues) }}"
-  labels: 
+  labels:
     app: {{ template "xl-deploy.name" $ }}
     component: {{ template "xl-deploy.name" $ }}-master
     chart: {{ template "xl-deploy.chart" $ }}
