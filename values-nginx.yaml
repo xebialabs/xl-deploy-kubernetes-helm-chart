@@ -53,6 +53,7 @@ deploy:
       overrideHostnameSuffix: '.{{.Release.Namespace}}.svc.cluster.local'
       ## @param service.overrideHostname  together with overrideHostnameSuffix composes full hostname of the exposed master pod
       overrideHostname: '{{ printf "%s-master-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
+      overrideHostnames: []
 
       ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
       ##
@@ -139,6 +140,7 @@ deploy:
       overrideHostnameSuffix: '.{{.Release.Namespace}}.svc.cluster.local'
       ## @param service.overrideHostname  together with overrideHostnameSuffix composes full hostname of the exposed worker pod
       overrideHostname: '{{ printf "%s-worker-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
+      overrideHostnames: []
 
       ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
       ##

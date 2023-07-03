@@ -63,10 +63,15 @@ data:
     {{- if contains .Values.deploy.master.podServiceTemplate.serviceMode "SingleHostname;MultiService" }}
     export SERVER_PORT=$(echo $SERVER_PORT+$POD_NUMBER | bc)
     {{- end }}
-    {{- if .Values.deploy.master.podServiceTemplate.overrideHostname }}
-    {{- $newValues := merge (dict "podNumber" "${POD_NUMBER}") $ }}
-    {{- $masterHostname := include "common.tplvalues.render" (dict "value" .Values.deploy.master.podServiceTemplate.overrideHostname "context" $newValues) }}
-    export OVERRIDE_HOSTNAME=$(echo {{ $masterHostname }})
+    {{- if or .Values.deploy.master.podServiceTemplate.overrideHostname .Values.deploy.master.podServiceTemplate.overrideHostnames }}
+    allMasters=(
+    {{- range $podNumber := untilStep 0 (int .Values.XldMasterCount) 1 }}
+    {{- $newValues := merge (dict "podNumber" $podNumber) $ }}
+    {{- $masterHostname := include "deploy.masterHostname" $newValues }}
+    "{{ $masterHostname }}"
+    {{- end }}
+    )
+    export OVERRIDE_HOSTNAME=$(echo ${allMasters[$POD_NUMBER]})
     echo "Using master hostname: $OVERRIDE_HOSTNAME"
     {{- end }}
     echo "Using master port: $SERVER_PORT"
@@ -109,19 +114,24 @@ data:
     {{- if .Values.deploy.worker.podServiceTemplate.enabled }}
 
     POD_NUMBER=$(echo $POD_NAME | grep -Eo "[0-9]+$")
-    {{- if contains .Values.deploy.master.podServiceTemplate.serviceMode "SingleHostname;MultiService" }}
+    {{- if contains .Values.deploy.worker.podServiceTemplate.serviceMode "SingleHostname;MultiService" }}
     export SERVER_PORT=$(echo $SERVER_PORT+$POD_NUMBER | bc)
     {{- end }}
-    {{- if .Values.deploy.worker.podServiceTemplate.overrideHostname }}
-    {{- $newValues := merge (dict "podNumber" "${POD_NUMBER}") $ }}
-    {{- $workerHostname := include "common.tplvalues.render" (dict "value" .Values.deploy.worker.podServiceTemplate.overrideHostname "context" $newValues) }}
-    export OVERRIDE_HOSTNAME=$(echo {{$workerHostname}})
+    {{- if or .Values.deploy.worker.podServiceTemplate.overrideHostname .Values.deploy.worker.podServiceTemplate.overrideHostnames }}
+    allWorkers=(
+    {{- range $podNumber := untilStep 0 (int .Values.XldWorkerCount) 1 }}
+    {{- $newValues := merge (dict "podNumber" $podNumber) $ }}
+    {{- $workerHostname := include "deploy.workerHostname" $newValues }}
+    "{{ $workerHostname }}"
+    {{- end }}
+    )
+    export OVERRIDE_HOSTNAME=$(echo ${allWorkers[$POD_NUMBER]})
     echo "Using worker hostname: $OVERRIDE_HOSTNAME"
     {{- end }}
     echo "Using worker port: $SERVER_PORT"
     exec /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh \
       {{- include "deploy.workerMasters" $ }}
-      {{- if .Values.deploy.worker.podServiceTemplate.overrideHostname }}
+      {{- if or .Values.deploy.worker.podServiceTemplate.overrideHostname .Values.deploy.worker.podServiceTemplate.overrideHostnames }}
       -hostname "$OVERRIDE_HOSTNAME$HOSTNAME_SUFFIX" \
       {{- else }}
       -hostname "$POD_NAME$HOSTNAME_SUFFIX" \

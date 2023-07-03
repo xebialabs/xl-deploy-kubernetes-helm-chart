@@ -76,7 +76,12 @@ Get the Deploy Master hostname suffix
 {{- end -}}
 
 {{- define "deploy.masterHostname" -}}
+{{- if .Values.deploy.master.podServiceTemplate.overrideHostnames }}
+{{- $overrideHostname := index .Values.deploy.master.podServiceTemplate.overrideHostnames .podNumber }}
+{{- include "common.tplvalues.render" (dict "value" $overrideHostname "context" .) }}
+{{- else }}
 {{- include "common.tplvalues.render" (dict "value" .Values.deploy.master.podServiceTemplate.overrideHostname "context" .) }}
+{{- end }}
 {{- end -}}
 
 {{/*
@@ -91,7 +96,12 @@ Get the Deploy Worker hostname suffix
 {{- end -}}
 
 {{- define "deploy.workerHostname" -}}
+{{- if .Values.deploy.worker.podServiceTemplate.overrideHostnames }}
+{{- $overrideHostname := index .Values.deploy.worker.podServiceTemplate.overrideHostnames .podNumber }}
+{{- include "common.tplvalues.render" (dict "value" $overrideHostname "context" .) }}
+{{- else }}
 {{- include "common.tplvalues.render" (dict "value" .Values.deploy.worker.podServiceTemplate.overrideHostname "context" .) }}
+{{- end }}
 {{- end -}}
 
 {{/*
