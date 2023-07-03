@@ -4,6 +4,10 @@ metadata:
   name: {{ template "xl-deploy.name" . }}-sa
   namespace: {{ .Release.Namespace }}
 ---
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: {{ .Release.Name }}-privileged
 allowHostNetwork: false
 allowHostPID: false
 allowHostDirVolumePlugin: false
@@ -12,15 +16,11 @@ allowHostPorts: false
 allowPrivilegeEscalation: true
 allowPrivilegedContainer: true
 allowedCapabilities: []
-apiVersion: security.openshift.io/v1
 defaultAddCapabilities: []
 fsGroup:
   type: RunAsAny
 groups: []
-kind: SecurityContextConstraints
-metadata:
-  name: {{ .Release.Name }}-privileged
-priority: 0
+priority: 100
 readOnlyRootFilesystem: false
 requiredDropCapabilities: []
 runAsUser:
@@ -51,7 +51,7 @@ defaultAddCapabilities: null
 fsGroup:
   type: RunAsAny
 groups: []
-priority: 0
+priority: 100
 readOnlyRootFilesystem: false
 requiredDropCapabilities:
 - MKNOD
@@ -63,6 +63,44 @@ supplementalGroups:
   type: RunAsAny
 users:
 - system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-rabbitmq
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- persistentVolumeClaim
+- projected
+- secret
+{{- end }}
+{{- if .Values.postgresql.install }}
+---
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: {{ .Release.Name }}-postgresql
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegeEscalation: true
+allowPrivilegedContainer: false
+allowedCapabilities: null
+defaultAddCapabilities: null
+fsGroup:
+  type: RunAsAny
+groups: []
+priority: 100
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+- MKNOD
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  type: RunAsAny
+users:
+- system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-postgresql
 volumes:
 - configMap
 - downwardAPI
