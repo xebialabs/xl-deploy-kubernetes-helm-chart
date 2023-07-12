@@ -16,7 +16,6 @@ ServerImageRepository: "xebialabs/xl-deploy"
 WorkerImageRepository: "xebialabs/deploy-task-engine"
 ImageTag: "22.2"
 
-
 ## xebialabs/tiny-tools image version
 ## Ref: https://hub.docker.com/r/xebialabs/tiny-tools/tags
 TinyToolsImageRepository: "xebialabs/tiny-tools"
@@ -33,14 +32,179 @@ deploy:
   clusterMode: full
   master:
     useIpAsHostname: false
+    clusterNodeHostnameSuffix: '.{{ template "xl-deploy.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local'
     terminationGracePeriodSeconds: 200
     image:
       tag: ""
+    ## Kubernetes service type that is created for each master Pod in StatefulSet
+    ##
+    podServiceTemplate:
+      enabled: false
+      ## @param service.type Kubernetes Service type
+      ##
+      type: NodePort
+
+      ## @param service.name the name of the service, the service name is composed of release version name, fix part '-master-' and the order number of the service, the helm is passing the `.podNumber` value
+      name: '{{ printf "%s-master-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
+      ## @param service.serviceMode Possible values are: SingleHostname (IncrementPort, MultiService), SinglePort (IncrementHostname, MultiService), MultiService (IncrementHostname, IncrementPort), SingleService (IncrementHostname, SinglePort)
+      ## it defines the number of hostnames, ports and services
+      serviceMode: MultiService
+      ## @param service.overrideHostnameSuffix together with overrideHostname composes full hostname of the exposed master pod
+      overrideHostnameSuffix: '.{{.Release.Namespace}}.svc.cluster.local'
+      ## @param service.overrideHostname  together with overrideHostnameSuffix composes full hostname of the exposed master pod
+      overrideHostname: '{{ printf "%s-master-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
+      overrideHostnames: []
+
+      ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
+      ##
+      portEnabled: true
+      ## Service ports
+      ##
+      ports:
+        deployAkka: 32180
+      ## Service ports name
+      ##
+      portNames:
+        deployAkka: "akka"
+
+      ## Node ports to expose
+      ##
+      nodePorts:
+        deployAkka: 32180
+      ## @param service.extraPorts Extra ports to expose in the service
+      ## E.g.:
+      ## extraPorts:
+      ## - name: new_svc_name
+      ##   port: 1234
+      ##   targetPort: 1234
+      ##
+      extraPorts: [ ]
+      ## @param service.loadBalancerSourceRanges Address(es) that are allowed when service is `LoadBalancer`
+      ## https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+      ## e.g:
+      ## loadBalancerSourceRanges:
+      ## - 10.10.10.0/24
+      ##
+      loadBalancerSourceRanges: [ ]
+      ## @param service.externalIPs Set the ExternalIPs
+      ##
+      externalIPs: [ ]
+      ## @param service.externalTrafficPolicy Enable client source IP preservation
+      ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+      ##
+      externalTrafficPolicy: Local
+      ## @param service.clusterIPs Kubernetes service Cluster IP
+      ## e.g.:
+      ## clusterIP: [ None ]
+      ##
+      clusterIPs: [ ]
+      ## @param service.annotations Service annotations. Evaluated as a template
+      ## Example:
+      ## annotations:
+      ##   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+      ##
+      annotations: { }
+      publishNotReadyAddresses: true
+      ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
+      ## If "ClientIP", consecutive client requests will be directed to the same Pod
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+      ##
+      sessionAffinity: None
+      ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
+      ## sessionAffinityConfig:
+      ##   clientIP:
+      ##     timeoutSeconds: 300
+      ##
+      sessionAffinityConfig: { }
+      podLabels:
+        statefulset.kubernetes.io/pod-name: '{{ printf "%s-master-%d" (include "xl-deploy.fullname" $) .podNumber }}'
   worker:
     useIpAsHostname: false
     terminationGracePeriodSeconds: 200
     image:
       tag: ""
+    ## Kubernetes service type that is created for each worker Pod in StatefulSet
+    ##
+    podServiceTemplate:
+      enabled: false
+      ## @param service.type Kubernetes Service type
+      ##
+      type: NodePort
+
+      ## @param service.name the name of the service, the service name is composed of release version name, fix part '-worker-' and the order number of the service, the helm is passing the `.podNumber` value
+      name: '{{ printf "%s-worker-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
+      ## @param service.serviceMode Possible values are: SingleHostname (IncrementPort, MultiService), SinglePort (IncrementHostname, MultiService), MultiService (IncrementHostname, IncrementPort), SingleService (IncrementHostname, SinglePort)
+      ## it defines the number of hostnames, ports and services
+      serviceMode: MultiService
+      ## @param service.overrideHostnameSuffix together with overrideHostname composes full hostname of the exposed worker pod
+      overrideHostnameSuffix: '.{{.Release.Namespace}}.svc.cluster.local'
+      ## @param service.overrideHostname  together with overrideHostnameSuffix composes full hostname of the exposed worker pod
+      overrideHostname: '{{ printf "%s-worker-" (include "xl-deploy.fullname" $) }}{{ .podNumber }}'
+      overrideHostnames: []
+
+      ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
+      ##
+      portEnabled: true
+      ## Service ports
+      ##
+      ports:
+        deployAkka: 32185
+      ## Service ports name
+      ##
+      portNames:
+        deployAkka: "akka"
+
+      ## Node ports to expose
+      ##
+      nodePorts:
+        deployAkka: 32185
+      ## @param service.extraPorts Extra ports to expose in the service
+      ## E.g.:
+      ## extraPorts:
+      ## - name: new_svc_name
+      ##   port: 1234
+      ##   targetPort: 1234
+      ##
+      extraPorts: [ ]
+      ## @param service.loadBalancerSourceRanges Address(es) that are allowed when service is `LoadBalancer`
+      ## https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+      ## e.g:
+      ## loadBalancerSourceRanges:
+      ## - 10.10.10.0/24
+      ##
+      loadBalancerSourceRanges: [ ]
+      ## @param service.externalIPs Set the ExternalIPs
+      ##
+      externalIPs: [ ]
+      ## @param service.externalTrafficPolicy Enable client source IP preservation
+      ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+      ##
+      externalTrafficPolicy: Local
+      ## @param service.clusterIPs Kubernetes service Cluster IP
+      ## e.g.:
+      ## clusterIPs: [ None ]
+      ##
+      clusterIPs: [ ]
+      ## @param service.annotations Service annotations. Evaluated as a template
+      ## Example:
+      ## annotations:
+      ##   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+      ##
+      annotations: { }
+      publishNotReadyAddresses: true
+      ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
+      ## If "ClientIP", consecutive client requests will be directed to the same Pod
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+      ##
+      sessionAffinity: None
+      ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
+      ## sessionAffinityConfig:
+      ##   clientIP:
+      ##     timeoutSeconds: 300
+      ##
+      sessionAffinityConfig: { }
+      podLabels:
+        statefulset.kubernetes.io/pod-name: '{{ printf "%s-worker-%d" (include "xl-deploy.fullname" $) .podNumber }}'
   centralConfiguration:
     useIpAsHostname: false
     terminationGracePeriodSeconds: 30
@@ -54,10 +218,14 @@ deploy:
         resetCcFiles:
           - deploy-server.yaml
         script: |-
-          cat example.txt && echo ""; # Add here commands to be executed before centralConfiguration server start
+          cp /opt/xebialabs/central-configuration-server/xld-configuration-management/deploy-server.yaml.template /opt/xebialabs/central-configuration-server/central-conf/deploy-server.yaml.template && echo "Copy central-conf/deploy-server.yaml.template";
         scriptData: ## Add here files that will be used by the configurationScript
-          example.txt: |-
-            Nothing to manage at this point.
+          deploy-server.yaml.template: |-
+            deploy.server:
+              bind-hostname: 0.0.0.0
+              bind-port: 8180
+              license:
+                daysBeforeWarning: 10
       environment:
         enabled: true
         variables: {}

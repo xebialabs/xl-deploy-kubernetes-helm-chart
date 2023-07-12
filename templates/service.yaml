@@ -19,6 +19,7 @@ spec:
     app: {{ template "xl-deploy.name" . }}
     component: {{ template "xl-deploy.name" . }}-master
     release: {{ .Release.Name }}
+{{- if not (and .Values.deploy.worker.podServiceTemplate.enabled (eq .Values.deploy.worker.podServiceTemplate.serviceMode "SingleService")) }}
 ---
 apiVersion: v1
 kind: Service
@@ -34,13 +35,24 @@ spec:
   clusterIP: None
   publishNotReadyAddresses: true
   ports:
+    {{- if not .Values.deploy.master.podServiceTemplate.enabled }}
     - name: akka
       port: 8180
+      targetPort: 8180
       protocol: TCP
+    {{- end }}
+    {{- if .Values.deploy.master.podServiceTemplate.enabled }}
+    - name: akka-cluster
+      port: 25520
+      targetPort: 25520
+      protocol: TCP
+    {{- end }}
   selector:
     app: {{ template "xl-deploy.name" . }}
     component: {{ template "xl-deploy.name" . }}-master
     release: {{ .Release.Name }}
+{{- end }}
+{{- if not .Values.deploy.worker.podServiceTemplate.enabled }}
 ---
 apiVersion: v1
 kind: Service
@@ -58,8 +70,10 @@ spec:
   ports:
     - name: akka
       port: 8180
+      targetPort: 8180
       protocol: TCP
   selector:
     app: {{ template "xl-deploy.name" . }}
     component: {{ template "xl-deploy.name" . }}-worker
     release: {{ .Release.Name }}
+{{- end }}
