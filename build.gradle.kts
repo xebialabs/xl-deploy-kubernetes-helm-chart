@@ -35,10 +35,11 @@ plugins {
     id("maven-publish")
 }
 
-apply(plugin = "ai.digital.gradle-commit")
 apply(plugin = "integration.server")
+apply(plugin = "ai.digital.gradle-commit")
 apply(plugin = "com.xebialabs.dependency")
 
+apply(from = "$rootDir/integration-tests/core/base-test-configuration.gradle")
 group = "ai.digital.deploy.helm"
 project.defaultTasks = listOf("build")
 
@@ -152,55 +153,14 @@ tasks {
         kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-    register<Copy>("prepareHelmPackage") {
-        dependsOn("dumpVersion")
-        from(layout.projectDirectory)
-        exclude(
-            layout.buildDirectory.get().asFile.name,
-            "buildSrc/",
-            "docs/",
-            "documentation/",
-            "gradle/",
-            "*gradle*",
-            ".*/",
-            "*.iml",
-            "*.sh"
-        )
-        into(buildXldOperatorDir)
-    }
-
-    register<Copy>("prepareValuesYaml") {
-        dependsOn("prepareHelmPackage")
-        from(buildXldOperatorDir)
-        include("values-nginx.yaml")
-        into(buildXldOperatorDir)
-        rename("values-nginx.yaml", "values.yaml")
-        doLast {
-            exec {
-                workingDir(buildXldOperatorDir)
-                commandLine("rm", "-f", "values-haproxy.yaml")
-            }
-            exec {
-                workingDir(buildXldOperatorDir)
-                commandLine("rm", "-f", "values-nginx.yaml")
-            }
-        }
-    }
-
     register<Exec>("prepareHelmDeps") {
-        dependsOn("prepareValuesYaml")
-        workingDir(buildXldOperatorDir)
+        dependsOn("dumpVersion")
+        workingDir(layout.projectDirectory)
         commandLine("helm", "dependency", "update", ".")
 
         standardOutput = ByteArrayOutputStream()
         errorOutput = ByteArrayOutputStream()
 
-        doLast {
-            exec {
-                workingDir(buildXldOperatorDir)
-                commandLine("rm", "-f", "Chart.lock")
-            }
-        }
         doLast {
             logger.lifecycle(standardOutput.toString())
             logger.error(errorOutput.toString())
@@ -210,8 +170,8 @@ tasks {
 
     register<Exec>("buildHelmPackage") {
         dependsOn("prepareHelmDeps")
-        workingDir(buildXldDir)
-        commandLine("helm", "package", "--app-version=$releasedVersion", project.name)
+        workingDir(layout.projectDirectory)
+        commandLine("helm", "package", "--version=$releasedVersion", "--app-version=$releasedVersion", "--destination", buildXldDir.get(), ".")
 
         standardOutput = ByteArrayOutputStream()
         errorOutput = ByteArrayOutputStream()
@@ -262,7 +222,7 @@ tasks {
     register<Exec>("publishToDockerHub") {
         dependsOn("buildOperatorImage")
         workingDir(buildXldDir)
-        val imageUrl = "docker.io/$dockerHubRepository/deploy-operator:$releasedVersion"
+        val imageUrl = "docker.io/$dockerHubRepository/deploy-operator:${releasedVersion}"
         commandLine("make", "docker-build", "docker-push", "IMG=$imageUrl")
 
         standardOutput = ByteArrayOutputStream()

@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "deploy.masterLbName" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.master.services.lb.labels }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.master.services.lb.labels "context" $) | nindent 4 }}
+    {{- end }}
+  {{- if or (.Values.master.services.lb.annotations) (.Values.commonAnnotations) }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.commonAnnotations "context" $) | nindent 4 }}
+    {{- end -}}
+    {{- if .Values.master.services.lb.annotations }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.master.services.lb.annotations "context" $) | nindent 4 }}
+    {{- end -}}
+  {{- end }}
+spec:
+  type: {{ .Values.master.services.lb.type }}
+  {{- if and .Values.master.services.lb.clusterIP (eq .Values.master.services.lb.type "ClusterIP") }}
+  clusterIP: {{ .Values.master.services.lb.clusterIP }}
+  {{- end }}
+  {{- if .Values.master.services.lb.publishNotReadyAddresses }}
+  publishNotReadyAddresses: {{ .Values.master.services.lb.publishNotReadyAddresses }}
+  {{- end }}
+  {{- if eq .Values.master.services.lb.type "LoadBalancer" }}
+  {{- if not (empty .Values.master.services.lb.loadBalancerIP) }}
+  loadBalancerIP: {{ .Values.master.services.lb.loadBalancerIP }}
+  {{- end }}
+  {{- if .Values.master.services.lb.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{- toYaml .Values.master.services.lb.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  {{- if or (eq .Values.master.services.lb.type "LoadBalancer") (eq .Values.master.services.lb.type "NodePort") }}
+  externalTrafficPolicy: {{ .Values.master.services.lb.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if .Values.master.services.lb.sessionAffinity }}
+  sessionAffinity: {{ .Values.master.services.lb.sessionAffinity }}
+  {{- end }}
+  {{- if .Values.master.services.lb.sessionAffinityConfig }}
+  sessionAffinityConfig: {{- include "common.tplvalues.render" (dict "value" .Values.master.services.lb.sessionAffinityConfig "context" $) | nindent 4 }}
+  {{- end }}
+  {{- if .Values.master.services.lb.externalIPs }}
+  externalIPs: {{- toYaml .Values.master.services.lb.externalIPs | nindent 4 }}
+  {{- end }}
+  ports:
+    {{- if .Values.master.services.lb.portEnabled }}
+    - name: {{ .Values.master.services.lb.portNames.deployHttp }}
+      port: {{ .Values.master.services.lb.ports.deployHttp }}
+      targetPort: {{ .Values.master.services.lb.portNames.deployHttp }}
+      {{- if (eq .Values.master.services.lb.type "ClusterIP") }}
+      nodePort: null
+      {{- else if and (or (eq .Values.master.services.lb.type "NodePort") (eq .Values.master.services.lb.type "LoadBalancer")) (not (empty .Values.master.services.lb.nodePorts.deployHttp)) }}
+      nodePort: {{ .Values.master.services.lb.nodePorts.deployHttp }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.master.services.lb.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.master.services.lb.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  selector: {{ include "common.labels.matchLabels" . | nindent 4 }}
+  {{- if .Values.master.podLabels }}
+  {{- include "common.tplvalues.render" (dict "value" .Values.master.podLabels "context" $) | nindent 4 }}
+  {{- end }}

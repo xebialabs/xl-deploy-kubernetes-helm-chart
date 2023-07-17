@@ -1,0 +1,71 @@
+{{- if not .Values.worker.podServiceTemplate.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "deploy.names.worker" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.worker.services.akka.labels }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.worker.services.akka.labels "context" $) | nindent 4 }}
+    {{- end }}
+  {{- if or (.Values.worker.services.akka.annotations) (.Values.commonAnnotations) }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.commonAnnotations "context" $) | nindent 4 }}
+    {{- end -}}
+    {{- if .Values.worker.services.akka.annotations }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.worker.services.akka.annotations "context" $) | nindent 4 }}
+    {{- end -}}
+  {{- end }}
+spec:
+  type: {{ .Values.worker.services.akka.type }}
+  {{- if and .Values.worker.services.akka.clusterIP (eq .Values.worker.services.akka.type "ClusterIP") }}
+  clusterIP: {{ .Values.worker.services.akka.clusterIP }}
+  {{- end }}
+  {{- if .Values.worker.services.akka.publishNotReadyAddresses }}
+  publishNotReadyAddresses: {{ .Values.worker.services.akka.publishNotReadyAddresses }}
+  {{- end }}
+  {{- if eq .Values.worker.services.akka.type "LoadBalancer" }}
+  {{- if not (empty .Values.worker.services.akka.loadBalancerIP) }}
+  loadBalancerIP: {{ .Values.worker.services.akka.loadBalancerIP }}
+  {{- end }}
+  {{- if .Values.worker.services.akka.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{- toYaml .Values.worker.services.akka.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  {{- if or (eq .Values.worker.services.akka.type "LoadBalancer") (eq .Values.worker.services.akka.type "NodePort") }}
+  externalTrafficPolicy: {{ .Values.worker.services.akka.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if .Values.worker.services.akka.sessionAffinity }}
+  sessionAffinity: {{ .Values.worker.services.akka.sessionAffinity }}
+  {{- end }}
+  {{- if .Values.worker.services.akka.sessionAffinityConfig }}
+  sessionAffinityConfig: {{- include "common.tplvalues.render" (dict "value" .Values.worker.services.akka.sessionAffinityConfig "context" $) | nindent 4 }}
+  {{- end }}
+  {{- if .Values.worker.services.akka.externalIPs }}
+  externalIPs: {{- toYaml .Values.worker.services.akka.externalIPs | nindent 4 }}
+  {{- end }}
+  ports:
+    {{- if .Values.worker.services.akka.portEnabled }}
+    {{- if not .Values.worker.podServiceTemplate.enabled }}
+    - name: {{ .Values.worker.services.akka.portNames.deployAkka }}
+      port: {{ .Values.worker.services.akka.ports.deployAkka }}
+      targetPort: {{ .Values.worker.services.akka.portNames.deployAkka }}
+      {{- if (eq .Values.worker.services.akka.type "ClusterIP") }}
+      nodePort: null
+      {{- else if and (or (eq .Values.worker.services.akka.type "NodePort") (eq .Values.worker.services.akka.type "LoadBalancer")) (not (empty .Values.worker.services.akka.nodePorts.deployAkka)) }}
+      nodePort: {{ .Values.worker.services.akka.nodePorts.deployAkka }}
+      {{- end }}
+    {{- end }}
+    {{- end }}
+    {{- if .Values.worker.services.akka.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.worker.services.akka.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  selector: {{ include "common.labels.matchLabels" . | nindent 4 }}
+  {{- if .Values.worker.podLabels }}
+  {{- include "common.tplvalues.render" (dict "value" .Values.worker.podLabels "context" $) | nindent 4 }}
+  {{- end }}
+{{- end }}

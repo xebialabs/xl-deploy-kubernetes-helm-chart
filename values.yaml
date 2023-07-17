@@ -1,0 +1,2183 @@
+## @section Global parameters
+## Global Docker image parameters
+## Please, note that this will override the image parameters, including dependencies, configured to use the global value
+## Current available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass
+##
+
+## @param global.imageRegistry Global Docker image registry
+## @param global.imagePullSecrets Global Docker registry secret names as an array
+## @param global.storageClass Global StorageClass for Persistent Volume(s)
+##
+global:
+  imageRegistry: ""
+  ## E.g.
+  ## imagePullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  imagePullSecrets: []
+  storageClass: ""
+
+k8sSetup:
+  platform: PlainK8s
+  validateValues: true
+
+## @section App parameters
+##
+
+# Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 -w 0 ) and put the output here
+license: ""
+licenseAcceptEula: false
+generateXlConfig: true
+externalCentralConfig: true
+xldInProcess: false
+usaCache: false
+
+## deploy Authentication parameters
+##
+auth:
+  adminPassword: ""
+
+external:
+  db:
+    enabled: false
+    main:
+      url: ""
+      username: ""
+      password: ""
+      maxPoolSize: ""
+    report:
+      url: ""
+      username: ""
+      password: ""
+      maxPoolSize: ""
+
+  mq:
+    enabled: false
+    url: ""
+    queueName: ""
+    username: ""
+    password: ""
+    driverClassName: ""
+
+clusterMode: full
+
+keystore:
+  # Set passphrase for the keystore
+  passphrase: ""
+  # https://docs.xebialabs.com/v.9.8/deploy/how-to/update-the-xl-deploy-digital-certificate/#view-the-certificate
+  # Convert repository-keystore.jceks files content to base64
+  # ( cat repository-keystore.jceks | base64 -w 0 ) and put the output here
+  # if empty during initial run, the default keystore will be generated with provided "passphrase"
+  keystore: ""
+
+satellite:
+  enabled: false
+
+centralConfiguration:
+  overrideName: ""
+  useIpAsHostname: false
+  terminationGracePeriodSeconds: 10
+  # spring cloud config encryption key
+  encryptKey:
+  migrateFromEmbedded: false
+
+  ## @param replicaCount Number of deploy replicas to deploy
+  ##
+  replicaCount: 1
+
+  ## @section deploy Image parameters
+  ## deploy image version
+  ## ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags/
+  ## @param image.registry deploy image registry
+  ## @param image.repository deploy image repository
+  ## @param image.tag deploy image tag (immutable tags are recommended)
+  ## @param image.pullPolicy deploy image pull policy
+  ## @param image.pullSecrets Specify docker-registry secret names as an array
+  ## @param image.debug Set to true if you would like to see extra information on logs
+  ##
+  image:
+    registry: docker.io
+    repository: xebialabsunsupported/central-configuration
+    tag: "{{ .Chart.AppVersion }}"
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets (secrets must be manually created in the namespace)
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## Example:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+
+  ## Enable diagnostic mode in the deployment
+  ##
+  diagnosticMode:
+    ## @param diagnosticMode.enabled Enable diagnostic mode (all probes will be disabled and the command will be overridden)
+    ##
+    enabled: false
+    ## @param diagnosticMode.command Command to override all containers in the deployment
+    ##
+    command:
+      - /opt/xebialabs/tini
+    ## @param diagnosticMode.args Args to override all containers in the deployment
+    ##
+    args:
+      - --
+      - sleep
+      - infinity
+  ## @param hostAliases Deployment pod host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: [ ]
+  ## @param dnsPolicy DNS Policy for pod
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+  ## E.g.
+  ## dnsPolicy: ClusterFirst
+  dnsPolicy: ""
+  ## @param dnsConfig DNS Configuration pod
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+  ## E.g.
+  ## dnsConfig:
+  ##   options:
+  ##   - name: ndots
+  ##     value: "4"
+  dnsConfig: { }
+
+  ## deploy containers' resource requests and limits
+  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+  ## We usually recommend not to specify default resources and to leave this as a conscious
+  ## choice for the user. This also increases chances charts run on environments with little
+  ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+  ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  ## @param resources.limits The resources limits for deploy containers
+  ## @param resources.requests The requested resources for deploy containers
+  ##
+  resources:
+    ## Example:
+    ## limits:
+    ##    cpu: 1000m
+    ##    memory: 2Gi
+    ##
+    limits: { }
+    ## Examples:
+    ## requests:
+    ##    cpu: 1000m
+    ##    memory: 2Gi
+    ##
+    requests: { }
+
+  health:
+    enabled: true
+    periodScans: 10
+    probeFailureThreshold: 12
+    probes: true
+    probesLivenessTimeout: 20
+    probesReadinessTimeout: 20
+
+
+  ## @param schedulerName Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## deploy should be initialized one by one when building cluster.
+  ## Therefore, the default value of podManagementPolicy is 'OrderedReady'
+  ## @param podManagementPolicy Pod management policy
+  ##
+  podManagementPolicy: OrderedReady
+  ## @param podLabels deploy Pod labels. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels:
+    "app.kubernetes.io/component": centralConfiguration
+  ## @param podAnnotations deploy Pod annotations. Evaluated as a template
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
+  ## @param updateStrategy.type Update strategy type for deploy statefulset
+  ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+  ##
+  updateStrategy:
+    ## StrategyType
+    ## Can be set to RollingUpdate or OnDelete
+    ##
+    type: RollingUpdate
+  ## @param statefulsetLabels deploy statefulset labels. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  statefulsetLabels:
+    "app.kubernetes.io/component": centralConfiguration
+  statefulsetAnnotations: {}
+  ## @param priorityClassName Name of the priority class to be used by deploy pods, priority class needs to be created beforehand
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+  ##
+  priorityClassName: ""
+  ## @param podAffinityPreset Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param podAntiAffinityPreset Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+  ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node affinity preset
+  ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param nodeAffinityPreset.type Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param nodeAffinityPreset.key Node label key to match Ignored if `affinity` is set.
+    ## E.g.
+    ## key: "kubernetes.io/e2e-az-name"
+    ##
+    key: ""
+    ## @param nodeAffinityPreset.values Node label values to match. Ignored if `affinity` is set.
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+
+  ## @param affinity Affinity for pod assignment. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## Note: podAffinityPreset, podAntiAffinityPreset, and  nodeAffinityPreset will be ignored when it's set
+  ##
+  affinity: { }
+  ## @param nodeSelector Node labels for pod assignment. Evaluated as a template
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: { }
+  ## @param tolerations Tolerations for pod assignment. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: [ ]
+  ## @param topologySpreadConstraints Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
+  ##
+  topologySpreadConstraints: [ ]
+
+  ## deploy pods' Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param podSecurityContext.enabled Enable deploy pods' Security Context
+  ## @param podSecurityContext.fsGroup Set deploy pod's Security Context fsGroup
+  ##
+  podSecurityContext:
+    enabled: true
+    fsGroup: 10001
+
+  ## @param containerSecurityContext.enabled Enabled deploy containers' Security Context
+  ## @param containerSecurityContext.runAsUser Set deploy containers' Security Context runAsUser
+  ## @param containerSecurityContext.runAsNonRoot Set deploy container's Security Context runAsNonRoot
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+  ## Example:
+  ##   containerSecurityContext:
+  ##     capabilities:
+  ##       drop: ["NET_RAW"]
+  ##     readOnlyRootFilesystem: true
+  ##
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    runAsNonRoot: true
+
+  ## @param initContainers Add init containers to the deploy pod
+  ## Example:
+  ## initContainers:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  initContainers: []
+  ## @param sidecars Add sidecar containers to the deploy pod
+  ## Example:
+  ## sidecars:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  sidecars: []
+
+  ## Pod Disruption Budget configuration
+  ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+  ##
+  pdb:
+    ## @param pdb.create Enable/disable a Pod Disruption Budget creation
+    ##
+    create: false
+    ## @param pdb.minAvailable Minimum number/percentage of pods that should remain scheduled
+    ##
+    minAvailable: 1
+    ## @param pdb.maxUnavailable Maximum number/percentage of pods that may be made unavailable
+    ##
+    maxUnavailable: ""
+
+  ## @section Persistence parameters
+  ##
+
+  persistence:
+    ## @param persistence.enabled Enable deploy data persistence using PVC
+    ##
+    enabled: true
+    ## @param persistence.single Enable deploy data to use single PVC
+    ##
+    single: false
+    ## @param persistence.storageClass PVC Storage Class for deploy data volume
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    storageClass: ""
+    ## @param persistence.selector Selector to match an existing Persistent Volume
+    ## selector:
+    ##   matchLabels:
+    ##     app: my-app
+    ##
+    selector: { }
+    ## @param persistence.accessModes PVC Access Modes for deploy data volume
+    ##
+    accessModes:
+      - ReadWriteOnce
+    ## @param persistence.existingClaim Provide an existing PersistentVolumeClaims
+    ## The value is evaluated as a template
+    ## So, for example, the name can depend on .Release or .Chart
+    ##
+    existingClaim: ""
+    ## @param persistence.size PVC Storage Request for deploy data volume
+    ##
+    size: 500Mi
+    ## @param persistence.annotations Persistence annotations. Evaluated as a template
+    ## Example:
+    ## annotations:
+    ##   example.io/disk-volume-type: SSD
+    ##
+    annotations:
+      helm.sh/resource-policy: "keep"
+
+  ## @param command Override default container command (useful when using custom images)
+  ##
+  command:
+    - /opt/xebialabs/tini
+  ## @param args Override default container args (useful when using custom images)
+  ##
+  args:
+    - --
+    - /opt/xebialabs/central-configuration-server/bin/run-in-container.sh
+  ## @param lifecycleHooks Overwrite livecycle for the deploy container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: { }
+  ## @param extraEnvVars Extra environment variables to add to deploy pods
+  ## E.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: BAR
+  ##
+  extraEnvVars: [ ]
+  ## @param extraEnvVarsCM Name of existing ConfigMap containing extra environment variables
+  ##
+  extraEnvVarsCM: ""
+  ## @param extraEnvVarsSecret Name of existing Secret containing extra environment variables (in case of sensitive data)
+  ##
+  extraEnvVarsSecret: ""
+
+  ## Container Ports
+  containerPorts:
+    ccHttp: 8888
+
+  ## @param extraContainerPorts Extra ports to be included in container spec, primarily informational
+  ## E.g:
+  ## extraContainerPorts:
+  ## - name: new_port_name
+  ##   containerPort: 1234
+  ##
+  extraContainerPorts: [ ]
+
+  ## @param configuration [string] deploy Configuration file content: required cluster configuration
+  ## Do not override unless you know what you are doing.
+  ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
+  ##
+  configuration:
+    "central-conf_deploy-server.yaml.template":
+      path: "central-conf/deploy-server.yaml.template"
+      content: |
+        deploy.server:
+          bind-hostname: 0.0.0.0
+          bind-port: {{ .Values.master.containerPorts.deployAkka }}
+          license:
+            daysBeforeWarning: 10
+
+  ## @param extraConfiguration [string] Configuration file content: extra configuration to be appended to deploy configuration
+  ## Use this instead of `configuration` to add more configuration
+  ##
+  extraConfiguration: {}
+
+  ## @param extraVolumeMounts Optionally specify extra list of additional volumeMounts
+  ## Examples:
+  ## extraVolumeMounts:
+  ##   - name: extras
+  ##     mountPath: /usr/share/extras
+  ##     readOnly: true
+  ##
+  extraVolumeMounts: [ ]
+  ## @param extraVolumes Optionally specify extra list of additional volumes .
+  ## Example:
+  ## extraVolumes:
+  ##   - name: extras
+  ##     emptyDir: {}
+  ##
+  extraVolumes: [ ]
+  ## @param extraSecrets Optionally specify extra secrets to be created by the chart.
+  ## This can be useful when combined with load_definitions to automatically create the secret containing the definitions to be loaded.
+  ## Example:
+  ## extraSecrets:
+  ##   load-definition:
+  ##     load_definition.json: |
+  ##       {
+  ##         ...
+  ##       }
+  ##
+  extraSecrets: { }
+  ## @param extraSecretsPrependReleaseName Set this flag to true if extraSecrets should be created with <release-name> prepended.
+  ##
+  extraSecretsPrependReleaseName: false
+
+  ## @section Exposure parameters
+  ##
+
+  ## Kubernetes service type
+  ##
+  service:
+    ## @param service.type Kubernetes Service type
+    ##
+    type: ClusterIP
+
+    ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
+    ##
+    portEnabled: true
+    ## Service ports
+    ##
+    ports:
+      ccHttp: 8888
+    ## Service ports name
+    ##
+    portNames:
+      ccHttp: "deploy-cc"
+
+    ## Node ports to expose
+    ##
+    nodePorts:
+      ccHttp: ""
+    ## @param service.extraPorts Extra ports to expose in the service
+    ## E.g.:
+    ## extraPorts:
+    ## - name: new_svc_name
+    ##   port: 1234
+    ##   targetPort: 1234
+    ##
+    extraPorts: [ ]
+    ## @param service.loadBalancerSourceRanges Address(es) that are allowed when service is `LoadBalancer`
+    ## https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+    ## e.g:
+    ## loadBalancerSourceRanges:
+    ## - 10.10.10.0/24
+    ##
+    loadBalancerSourceRanges: [ ]
+    ## @param service.externalIPs Set the ExternalIPs
+    ##
+    externalIPs: [ ]
+    ## @param service.externalTrafficPolicy Enable client source IP preservation
+    ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+    ##
+    externalTrafficPolicy: Cluster
+    ## @param service.loadBalancerIP Set the LoadBalancerIP
+    ##
+    loadBalancerIP: ""
+    ## @param service.clusterIP Kubernetes service Cluster IP
+    ## e.g.:
+    ## clusterIP: None
+    ##
+    clusterIP: ""
+    ## @param service.labels Service labels. Evaluated as a template
+    ##
+    labels:
+      "app.kubernetes.io/component": centralConfiguration
+    ## @param service.annotations Service annotations. Evaluated as a template
+    ## Example:
+    ## annotations:
+    ##   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+    ##
+    annotations: { }
+    ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
+    ## If "ClientIP", consecutive client requests will be directed to the same Pod
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+    ##
+    sessionAffinity: None
+    ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
+    ## sessionAffinityConfig:
+    ##   clientIP:
+    ##     timeoutSeconds: 300
+    ##
+    sessionAffinityConfig: { }
+
+master:
+  overrideName: ""
+  useIpAsHostname: false
+  clusterNodeHostnameSuffix: '.{{ include "deploy.names.master" $ }}.{{ include "common.names.namespace" . }}.svc.cluster.local'
+  terminationGracePeriodSeconds: 90
+  forceUpgrade: true
+
+  ## @param replicaCount Number of deploy replicas to deploy
+  ##
+  replicaCount: 3
+
+  ## @section deploy Image parameters
+  ## deploy image version
+  ## ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags/
+  ## @param image.registry deploy image registry
+  ## @param image.repository deploy image repository
+  ## @param image.tag deploy image tag (immutable tags are recommended)
+  ## @param image.pullPolicy deploy image pull policy
+  ## @param image.pullSecrets Specify docker-registry secret names as an array
+  ## @param image.debug Set to true if you would like to see extra information on logs
+  ##
+  image:
+    registry: docker.io
+    repository: xebialabsunsupported/xl-deploy
+    tag: "{{ .Chart.AppVersion }}"
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets (secrets must be manually created in the namespace)
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## Example:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+
+  ## Enable diagnostic mode in the deployment
+  ##
+  diagnosticMode:
+    ## @param diagnosticMode.enabled Enable diagnostic mode (all probes will be disabled and the command will be overridden)
+    ##
+    enabled: false
+    ## @param diagnosticMode.command Command to override all containers in the deployment
+    ##
+    command:
+      - /opt/xebialabs/tini
+    ## @param diagnosticMode.args Args to override all containers in the deployment
+    ##
+    args:
+      - --
+      - sleep
+      - infinity
+  ## @param hostAliases Deployment pod host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: [ ]
+  ## @param dnsPolicy DNS Policy for pod
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+  ## E.g.
+  ## dnsPolicy: ClusterFirst
+  dnsPolicy: ""
+  ## @param dnsConfig DNS Configuration pod
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+  ## E.g.
+  ## dnsConfig:
+  ##   options:
+  ##   - name: ndots
+  ##     value: "4"
+  dnsConfig: { }
+
+  ## deploy containers' resource requests and limits
+  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+  ## We usually recommend not to specify default resources and to leave this as a conscious
+  ## choice for the user. This also increases chances charts run on environments with little
+  ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+  ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  ## @param resources.limits The resources limits for deploy containers
+  ## @param resources.requests The requested resources for deploy containers
+  ##
+  resources:
+    ## Example:
+    ## limits:
+    ##    cpu: 1000m
+    ##    memory: 2Gi
+    ##
+    limits: { }
+    ## Examples:
+    ## requests:
+    ##    cpu: 1000m
+    ##    memory: 2Gi
+    ##
+    requests: { }
+
+  health:
+    enabled: true
+    periodScans: 10
+    probeFailureThreshold: 12
+    probes: true
+    probesLivenessTimeout: 60
+    probesReadinessTimeout: 60
+
+
+  ## @param schedulerName Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## deploy should be initialized one by one when building cluster.
+  ## Therefore, the default value of podManagementPolicy is 'OrderedReady'
+  ## @param podManagementPolicy Pod management policy
+  ##
+  podManagementPolicy: OrderedReady
+  ## @param podLabels deploy Pod labels. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels:
+    "app.kubernetes.io/component": master
+  ## @param podAnnotations deploy Pod annotations. Evaluated as a template
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
+  ## @param updateStrategy.type Update strategy type for deploy statefulset
+  ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+  ##
+  updateStrategy:
+    ## StrategyType
+    ## Can be set to RollingUpdate or OnDelete
+    ##
+    type: RollingUpdate
+  ## @param statefulsetLabels deploy statefulset labels. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  statefulsetLabels:
+    "app.kubernetes.io/component": master
+  statefulsetAnnotations: {}
+  ## @param priorityClassName Name of the priority class to be used by deploy pods, priority class needs to be created beforehand
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+  ##
+  priorityClassName: ""
+  ## @param podAffinityPreset Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param podAntiAffinityPreset Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+  ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node affinity preset
+  ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param nodeAffinityPreset.type Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param nodeAffinityPreset.key Node label key to match Ignored if `affinity` is set.
+    ## E.g.
+    ## key: "kubernetes.io/e2e-az-name"
+    ##
+    key: ""
+    ## @param nodeAffinityPreset.values Node label values to match. Ignored if `affinity` is set.
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+
+  ## @param affinity Affinity for pod assignment. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## Note: podAffinityPreset, podAntiAffinityPreset, and  nodeAffinityPreset will be ignored when it's set
+  ##
+  affinity: { }
+  ## @param nodeSelector Node labels for pod assignment. Evaluated as a template
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: { }
+  ## @param tolerations Tolerations for pod assignment. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: [ ]
+  ## @param topologySpreadConstraints Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
+  ##
+  topologySpreadConstraints: [ ]
+
+  ## deploy pods' Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param podSecurityContext.enabled Enable deploy pods' Security Context
+  ## @param podSecurityContext.fsGroup Set deploy pod's Security Context fsGroup
+  ##
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1001
+
+  ## @param containerSecurityContext.enabled Enabled deploy containers' Security Context
+  ## @param containerSecurityContext.runAsUser Set deploy containers' Security Context runAsUser
+  ## @param containerSecurityContext.runAsNonRoot Set deploy container's Security Context runAsNonRoot
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+  ## Example:
+  ##   containerSecurityContext:
+  ##     capabilities:
+  ##       drop: ["NET_RAW"]
+  ##     readOnlyRootFilesystem: true
+  ##
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    runAsNonRoot: true
+
+  ## @param initContainers Add init containers to the deploy pod
+  ## Example:
+  ## initContainers:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  initContainers: []
+  ## @param sidecars Add sidecar containers to the deploy pod
+  ## Example:
+  ## sidecars:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  sidecars: []
+
+  ## Pod Disruption Budget configuration
+  ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+  ##
+  pdb:
+    ## @param pdb.create Enable/disable a Pod Disruption Budget creation
+    ##
+    create: false
+    ## @param pdb.minAvailable Minimum number/percentage of pods that should remain scheduled
+    ##
+    minAvailable: 1
+    ## @param pdb.maxUnavailable Maximum number/percentage of pods that may be made unavailable
+    ##
+    maxUnavailable: ""
+
+  ## @section Persistence parameters
+  ##
+
+  persistence:
+    ## @param persistence.enabled Enable deploy data persistence using PVC
+    ##
+    enabled: true
+    ## @param persistence.single Enable deploy data to use single PVC
+    ##
+    single: false
+    ## @param persistence.storageClass PVC Storage Class for deploy data volume
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    storageClass: ""
+    ## @param persistence.selector Selector to match an existing Persistent Volume
+    ## selector:
+    ##   matchLabels:
+    ##     app: my-app
+    ##
+    selector: { }
+    ## @param persistence.accessModes PVC Access Modes for deploy data volume
+    ##
+    accessModes:
+      - ReadWriteOnce
+    ## @param persistence.existingClaim Provide an existing PersistentVolumeClaims
+    ## The value is evaluated as a template
+    ## So, for example, the name can depend on .Release or .Chart
+    ##
+    existingClaim: ""
+    ## @param persistence.size PVC Storage Request for deploy data volume
+    ##
+    size: 8Gi
+    ## @param persistence.annotations Persistence annotations. Evaluated as a template
+    ## Example:
+    ## annotations:
+    ##   example.io/disk-volume-type: SSD
+    ##
+    annotations:
+      helm.sh/resource-policy: "keep"
+
+  ## @param command Override default container command (useful when using custom images)
+  ##
+  command:
+    - /opt/xebialabs/tini
+  ## @param args Override default container args (useful when using custom images)
+  ##
+  args:
+    - --
+    - /opt/xebialabs/xl-deploy-server/bin/run-in-operator.sh
+  ## @param lifecycleHooks Overwrite livecycle for the deploy container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: { }
+  ## @param extraEnvVars Extra environment variables to add to deploy pods
+  ## E.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: BAR
+  ##
+  extraEnvVars: [ ]
+  ## @param extraEnvVarsCM Name of existing ConfigMap containing extra environment variables
+  ##
+  extraEnvVarsCM: ""
+  ## @param extraEnvVarsSecret Name of existing Secret containing extra environment variables (in case of sensitive data)
+  ##
+  extraEnvVarsSecret: ""
+
+  ## Container Ports
+  containerPorts:
+    deployHttp: 4516
+    deployAkka: 8180
+    deployClusterAkka: 25520
+    deployJmxExporter: 9100
+
+  ## @param extraContainerPorts Extra ports to be included in container spec, primarily informational
+  ## E.g:
+  ## extraContainerPorts:
+  ## - name: new_port_name
+  ##   containerPort: 1234
+  ##
+  extraContainerPorts: [ ]
+
+  ## @param configuration [string] deploy Configuration file content: required cluster configuration
+  ## Do not override unless you know what you are doing.
+  ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
+  ##
+  configuration: 
+    "bin_run-in-operator.sh":
+      path: "bin/run-in-operator.sh"
+      mode: 0755
+      content: |
+        {{- if .Values.master.podServiceTemplate.enabled }}
+        POD_NUMBER=$(echo $POD_NAME | grep -Eo "[0-9]+$")
+        {{- if contains .Values.master.podServiceTemplate.serviceMode "SingleHostname;MultiService" }}
+        export SERVER_PORT=$(echo $SERVER_PORT+$POD_NUMBER | bc)
+        {{- end }}
+        {{- if or .Values.master.podServiceTemplate.overrideHostname .Values.master.podServiceTemplate.overrideHostnames }}
+        allMasters=(
+        {{- range $podNumber := untilStep 0 (int .Values.master.replicaCount) 1 }}
+        {{- $newValues := merge (dict "podNumber" $podNumber) $ }}
+        {{- $masterHostname := include "deploy.masterHostname" $newValues }}
+        "{{ $masterHostname }}"
+        {{- end }}
+        )
+        export OVERRIDE_HOSTNAME=$(echo ${allMasters[$POD_NUMBER]})
+        echo "Using master hostname: $OVERRIDE_HOSTNAME"
+        {{- end }}
+        {{- end }}
+        echo "Using master port: $SERVER_PORT"
+        exec /opt/xebialabs/xl-deploy-server/bin/run-in-container.sh $@
+
+  ## @param extraConfiguration [string] Configuration file content: extra configuration to be appended to deploy configuration
+  ## Use this instead of `configuration` to add more configuration
+  ##
+  extraConfiguration: {}
+
+  ## @param extraVolumeMounts Optionally specify extra list of additional volumeMounts
+  ## Examples:
+  ## extraVolumeMounts:
+  ##   - name: extras
+  ##     mountPath: /usr/share/extras
+  ##     readOnly: true
+  ##
+  extraVolumeMounts: [ ]
+  ## @param extraVolumes Optionally specify extra list of additional volumes .
+  ## Example:
+  ## extraVolumes:
+  ##   - name: extras
+  ##     emptyDir: {}
+  ##
+  extraVolumes: [ ]
+  ## @param extraSecrets Optionally specify extra secrets to be created by the chart.
+  ## This can be useful when combined with load_definitions to automatically create the secret containing the definitions to be loaded.
+  ## Example:
+  ## extraSecrets:
+  ##   load-definition:
+  ##     load_definition.json: |
+  ##       {
+  ##         ...
+  ##       }
+  ##
+  extraSecrets: { }
+  ## @param extraSecretsPrependReleaseName Set this flag to true if extraSecrets should be created with <release-name> prepended.
+  ##
+  extraSecretsPrependReleaseName: false
+
+  ## Kubernetes service type
+  ##
+  services:
+    lb:
+      ## @param service.type Kubernetes Service type
+      ##
+      type: ClusterIP
+
+      ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
+      ##
+      portEnabled: true
+      ## Service ports
+      ##
+      ports:
+        deployHttp: 80
+      ## Service ports name
+      ##
+      portNames:
+        deployHttp: "deploy-http"
+
+      ## Node ports to expose
+      ##
+      nodePorts:
+        deployHttp: ""
+      ## @param service.extraPorts Extra ports to expose in the service
+      ## E.g.:
+      ## extraPorts:
+      ## - name: new_svc_name
+      ##   port: 1234
+      ##   targetPort: 1234
+      ##
+      extraPorts: [ ]
+      ## @param service.loadBalancerSourceRanges Address(es) that are allowed when service is `LoadBalancer`
+      ## https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+      ## e.g:
+      ## loadBalancerSourceRanges:
+      ## - 10.10.10.0/24
+      ##
+      loadBalancerSourceRanges: [ ]
+      ## @param service.externalIPs Set the ExternalIPs
+      ##
+      externalIPs: [ ]
+      ## @param service.externalTrafficPolicy Enable client source IP preservation
+      ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+      ##
+      externalTrafficPolicy: Cluster
+      ## @param service.loadBalancerIP Set the LoadBalancerIP
+      ##
+      loadBalancerIP: ""
+      ## @param service.clusterIP Kubernetes service Cluster IP
+      ## e.g.:
+      ## clusterIP: None
+      ##
+      clusterIP: ""
+      ## @param service.labels Service labels. Evaluated as a template
+      ##
+      labels:
+        "app.kubernetes.io/component": master
+      ## @param service.annotations Service annotations. Evaluated as a template
+      ## Example:
+      ## annotations:
+      ##   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+      ##
+      annotations: { }
+      ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
+      ## If "ClientIP", consecutive client requests will be directed to the same Pod
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+      ##
+      publishNotReadyAddresses: true
+      sessionAffinity: None
+      ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
+      ## sessionAffinityConfig:
+      ##   clientIP:
+      ##     timeoutSeconds: 300
+      ##
+      sessionAffinityConfig: { }
+    akka:
+      ## @param service.type Kubernetes Service type
+      ##
+      type: ClusterIP
+
+      ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
+      ##
+      portEnabled: true
+      ## Service ports
+      ##
+      ports:
+        deployAkka: 8180
+        deployClusterAkka: 25520
+      ## Service ports name
+      ##
+      portNames:
+        deployAkka: "deploy-akka"
+        deployJmxExporter: "deploy-jmx"
+        deployClusterAkka: "cluster-akka"
+
+      ## Node ports to expose
+      ##
+      nodePorts:
+        deployAkka: ""
+        deployClusterAkka: ""
+      ## @param service.extraPorts Extra ports to expose in the service
+      ## E.g.:
+      ## extraPorts:
+      ## - name: new_svc_name
+      ##   port: 1234
+      ##   targetPort: 1234
+      ##
+      extraPorts: [ ]
+      ## @param service.loadBalancerSourceRanges Address(es) that are allowed when service is `LoadBalancer`
+      ## https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+      ## e.g:
+      ## loadBalancerSourceRanges:
+      ## - 10.10.10.0/24
+      ##
+      loadBalancerSourceRanges: [ ]
+      ## @param service.externalIPs Set the ExternalIPs
+      ##
+      externalIPs: [ ]
+      ## @param service.externalTrafficPolicy Enable client source IP preservation
+      ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+      ##
+      externalTrafficPolicy: Cluster
+      ## @param service.loadBalancerIP Set the LoadBalancerIP
+      ##
+      loadBalancerIP: ""
+      ## @param service.clusterIP Kubernetes service Cluster IP
+      ## e.g.:
+      ## clusterIP: None
+      ##
+      clusterIP: None
+      ## @param service.labels Service labels. Evaluated as a template
+      ##
+      labels:
+        "app.kubernetes.io/component": master
+      ## @param service.annotations Service annotations. Evaluated as a template
+      ## Example:
+      ## annotations:
+      ##   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+      ##
+      annotations: { }
+      publishNotReadyAddresses: true
+      ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
+      ## If "ClientIP", consecutive client requests will be directed to the same Pod
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+      ##
+      sessionAffinity: None
+      ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
+      ## sessionAffinityConfig:
+      ##   clientIP:
+      ##     timeoutSeconds: 300
+      ##
+      sessionAffinityConfig: { }
+
+  ## Kubernetes service type that is created for each master Pod in StatefulSet
+  ##
+  podServiceTemplate:
+    enabled: false
+    ## @param service.type Kubernetes Service type
+    ##
+    type: NodePort
+
+    name: '{{ printf "%s-%d" (include "deploy.names.master" $) .podNumber }}'
+    ## @param service.serviceMode Possible values are: SingleHostname (IncrementPort, MultiService), SinglePort (IncrementHostname, MultiService), MultiService (IncrementHostname, IncrementPort), SingleService (IncrementHostname, SinglePort)
+    ## it defines the number of hostnames, ports and services
+    serviceMode: MultiService
+    ## @param service.overrideHostnameSuffix together with overrideHostname composes full hostname of the exposed worker pod
+    overrideHostnameSuffix: '.{{ include "common.names.namespace" . }}.svc.cluster.local'    
+    ## @param service.overrideHostname  together with overrideHostnameSuffix composes full hostname of the exposed worker pod
+    overrideHostname: '{{ include "deploy.names.master" . }}-{{ .podNumber }}'
+    overrideHostnames: []    
+    ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
+    ##
+    portEnabled: true
+    ## Service ports
+    ##
+    ports:
+      deployAkka: 32180
+    ## Service ports name
+    ##
+    portNames:
+      deployAkka: "deploy-akka"
+
+    ## Node ports to expose
+    ##
+    nodePorts:
+      deployAkka: 32180
+    ## @param service.extraPorts Extra ports to expose in the service
+    ## E.g.:
+    ## extraPorts:
+    ## - name: new_svc_name
+    ##   port: 1234
+    ##   targetPort: 1234
+    ##
+    extraPorts: [ ]
+    ## @param service.loadBalancerSourceRanges Address(es) that are allowed when service is `LoadBalancer`
+    ## https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+    ## e.g:
+    ## loadBalancerSourceRanges:
+    ## - 10.10.10.0/24
+    ##
+    loadBalancerSourceRanges: [ ]
+    ## @param service.externalIPs Set the ExternalIPs
+    ##
+    externalIPs: [ ]
+    ## @param service.externalTrafficPolicy Enable client source IP preservation
+    ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+    ##
+    externalTrafficPolicy: Local
+    ## @param service.loadBalancerIP Set the LoadBalancerIP
+    ##
+    loadBalancerIP: ""
+    ## @param service.clusterIP Kubernetes service Cluster IP
+    ## e.g.:
+    ## clusterIP: None
+    ##
+    clusterIPs: [ ]
+    ## @param service.labels Service labels. Evaluated as a template
+    ##
+    labels:
+      "app.kubernetes.io/component": master
+    ## @param service.annotations Service annotations. Evaluated as a template
+    ## Example:
+    ## annotations:
+    ##   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+    ##
+    annotations: { }
+    publishNotReadyAddresses: true
+    ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
+    ## If "ClientIP", consecutive client requests will be directed to the same Pod
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+    ##
+    sessionAffinity: None
+    ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
+    ## sessionAffinityConfig:
+    ##   clientIP:
+    ##     timeoutSeconds: 300
+    ##
+    sessionAffinityConfig: { }
+    podLabels:
+      statefulset.kubernetes.io/pod-name: '{{ printf "%s-%d" (include "deploy.names.master" $) .podNumber }}'
+
+worker:
+  overrideName: ""
+  useIpAsHostname: false
+  terminationGracePeriodSeconds: 90
+
+  ## @param replicaCount Number of deploy replicas to deploy
+  ##
+  replicaCount: 3
+
+  ## @section deploy Image parameters
+  ## deploy image version
+  ## ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags/
+  ## @param image.registry deploy image registry
+  ## @param image.repository deploy image repository
+  ## @param image.tag deploy image tag (immutable tags are recommended)
+  ## @param image.pullPolicy deploy image pull policy
+  ## @param image.pullSecrets Specify docker-registry secret names as an array
+  ## @param image.debug Set to true if you would like to see extra information on logs
+  ##
+  image:
+    registry: docker.io
+    repository: xebialabsunsupported/deploy-task-engine
+    tag: "{{ .Chart.AppVersion }}"
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets (secrets must be manually created in the namespace)
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## Example:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+
+  ## Enable diagnostic mode in the deployment
+  ##
+  diagnosticMode:
+    ## @param diagnosticMode.enabled Enable diagnostic mode (all probes will be disabled and the command will be overridden)
+    ##
+    enabled: false
+    ## @param diagnosticMode.command Command to override all containers in the deployment
+    ##
+    command:
+      - /opt/xebialabs/tini
+    ## @param diagnosticMode.args Args to override all containers in the deployment
+    ##
+    args:
+      - --
+      - sleep
+      - infinity
+  ## @param hostAliases Deployment pod host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: [ ]
+  ## @param dnsPolicy DNS Policy for pod
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+  ## E.g.
+  ## dnsPolicy: ClusterFirst
+  dnsPolicy: ""
+  ## @param dnsConfig DNS Configuration pod
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+  ## E.g.
+  ## dnsConfig:
+  ##   options:
+  ##   - name: ndots
+  ##     value: "4"
+  dnsConfig: { }
+
+  ## deploy containers' resource requests and limits
+  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+  ## We usually recommend not to specify default resources and to leave this as a conscious
+  ## choice for the user. This also increases chances charts run on environments with little
+  ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+  ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  ## @param resources.limits The resources limits for deploy containers
+  ## @param resources.requests The requested resources for deploy containers
+  ##
+  resources:
+    ## Example:
+    ## limits:
+    ##    cpu: 1000m
+    ##    memory: 2Gi
+    ##
+    limits: { }
+    ## Examples:
+    ## requests:
+    ##    cpu: 1000m
+    ##    memory: 2Gi
+    ##
+    requests: { }
+
+  health:
+    enabled: true
+    periodScans: 10
+    probeFailureThreshold: 12
+    probes: true
+    probesLivenessTimeout: 60
+    probesReadinessTimeout: 60
+
+  ## @param schedulerName Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## deploy should be initialized one by one when building cluster.
+  ## Therefore, the default value of podManagementPolicy is 'OrderedReady'
+  ## @param podManagementPolicy Pod management policy
+  ##
+  podManagementPolicy: OrderedReady
+  ## @param podLabels deploy Pod labels. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels:
+    "app.kubernetes.io/component": worker
+  ## @param podAnnotations deploy Pod annotations. Evaluated as a template
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
+  ## @param updateStrategy.type Update strategy type for deploy statefulset
+  ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+  ##
+  updateStrategy:
+    ## StrategyType
+    ## Can be set to RollingUpdate or OnDelete
+    ##
+    type: RollingUpdate
+  ## @param statefulsetLabels deploy statefulset labels. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  statefulsetLabels:
+    "app.kubernetes.io/component": worker
+  statefulsetAnnotations: {}
+  ## @param priorityClassName Name of the priority class to be used by deploy pods, priority class needs to be created beforehand
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+  ##
+  priorityClassName: ""
+  ## @param podAffinityPreset Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param podAntiAffinityPreset Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+  ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node affinity preset
+  ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param nodeAffinityPreset.type Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param nodeAffinityPreset.key Node label key to match Ignored if `affinity` is set.
+    ## E.g.
+    ## key: "kubernetes.io/e2e-az-name"
+    ##
+    key: ""
+    ## @param nodeAffinityPreset.values Node label values to match. Ignored if `affinity` is set.
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+
+  ## @param affinity Affinity for pod assignment. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## Note: podAffinityPreset, podAntiAffinityPreset, and  nodeAffinityPreset will be ignored when it's set
+  ##
+  affinity: { }
+  ## @param nodeSelector Node labels for pod assignment. Evaluated as a template
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: { }
+  ## @param tolerations Tolerations for pod assignment. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: [ ]
+  ## @param topologySpreadConstraints Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
+  ##
+  topologySpreadConstraints: [ ]
+
+  ## deploy pods' Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param podSecurityContext.enabled Enable deploy pods' Security Context
+  ## @param podSecurityContext.fsGroup Set deploy pod's Security Context fsGroup
+  ##
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1001
+
+  ## @param containerSecurityContext.enabled Enabled deploy containers' Security Context
+  ## @param containerSecurityContext.runAsUser Set deploy containers' Security Context runAsUser
+  ## @param containerSecurityContext.runAsNonRoot Set deploy container's Security Context runAsNonRoot
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+  ## Example:
+  ##   containerSecurityContext:
+  ##     capabilities:
+  ##       drop: ["NET_RAW"]
+  ##     readOnlyRootFilesystem: true
+  ##
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    runAsNonRoot: true
+
+  ## @param initContainers Add init containers to the deploy pod
+  ## Example:
+  ## initContainers:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  initContainers: []
+  ## @param sidecars Add sidecar containers to the deploy pod
+  ## Example:
+  ## sidecars:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  sidecars: []
+
+  ## Pod Disruption Budget configuration
+  ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+  ##
+  pdb:
+    ## @param pdb.create Enable/disable a Pod Disruption Budget creation
+    ##
+    create: false
+    ## @param pdb.minAvailable Minimum number/percentage of pods that should remain scheduled
+    ##
+    minAvailable: 1
+    ## @param pdb.maxUnavailable Maximum number/percentage of pods that may be made unavailable
+    ##
+    maxUnavailable: ""
+
+  ## @section Persistence parameters
+  ##
+
+  persistence:
+    ## @param persistence.enabled Enable deploy data persistence using PVC
+    ##
+    enabled: true
+    ## @param persistence.single Enable deploy data to use single PVC
+    ##
+    single: false
+    ## @param persistence.storageClass PVC Storage Class for deploy data volume
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    storageClass: ""
+    ## @param persistence.selector Selector to match an existing Persistent Volume
+    ## selector:
+    ##   matchLabels:
+    ##     app: my-app
+    ##
+    selector: { }
+    ## @param persistence.accessModes PVC Access Modes for deploy data volume
+    ##
+    accessModes:
+      - ReadWriteOnce
+    ## @param persistence.existingClaim Provide an existing PersistentVolumeClaims
+    ## The value is evaluated as a template
+    ## So, for example, the name can depend on .Release or .Chart
+    ##
+    existingClaim: ""
+    ## @param persistence.size PVC Storage Request for deploy data volume
+    ##
+    size: 8Gi
+    ## @param persistence.annotations Persistence annotations. Evaluated as a template
+    ## Example:
+    ## annotations:
+    ##   example.io/disk-volume-type: SSD
+    ##
+    annotations:
+      helm.sh/resource-policy: "keep"
+
+  ## @param command Override default container command (useful when using custom images)
+  ##
+  command:
+    - /opt/xebialabs/tini
+  ## @param args Override default container args (useful when using custom images)
+  ##
+  args: |-
+    - --
+    - /opt/xebialabs/deploy-task-engine/bin/run-in-operator.sh
+
+  ## @param lifecycleHooks Overwrite livecycle for the deploy container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: { }
+  ## @param extraEnvVars Extra environment variables to add to deploy pods
+  ## E.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: BAR
+  ##
+  extraEnvVars: [ ]
+  ## @param extraEnvVarsCM Name of existing ConfigMap containing extra environment variables
+  ##
+  extraEnvVarsCM: ""
+  ## @param extraEnvVarsSecret Name of existing Secret containing extra environment variables (in case of sensitive data)
+  ##
+  extraEnvVarsSecret: ""
+
+  ## Container Ports
+  containerPorts:
+    deployAkka: 8180
+    deployJmxExporter: 9100
+
+  ## @param extraContainerPorts Extra ports to be included in container spec, primarily informational
+  ## E.g:
+  ## extraContainerPorts:
+  ## - name: new_port_name
+  ##   containerPort: 1234
+  ##
+  extraContainerPorts: [ ]
+
+  ## @param configuration [string] deploy Configuration file content: required cluster configuration
+  ## Do not override unless you know what you are doing.
+  ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
+  ##
+  configuration: 
+    "bin_run-in-operator.sh":
+      path: "bin/run-in-operator.sh"
+      mode: 0755
+      content: |
+        {{- if .Values.worker.podServiceTemplate.enabled }}
+        POD_NUMBER=$(echo $POD_NAME | grep -Eo "[0-9]+$")
+        {{- if contains .Values.worker.podServiceTemplate.serviceMode "SingleHostname;MultiService" }}
+        export SERVER_PORT=$(echo $SERVER_PORT+$POD_NUMBER | bc)
+        {{- end }}
+        {{- if or .Values.worker.podServiceTemplate.overrideHostname .Values.worker.podServiceTemplate.overrideHostnames }}
+        allWorkers=(
+        {{- range $podNumber := untilStep 0 (int .Values.worker.replicaCount) 1 }}
+        {{- $newValues := merge (dict "podNumber" $podNumber) $ }}
+        {{- $workerHostname := include "deploy.workerHostname" $newValues }}
+        "{{ $workerHostname }}"
+        {{- end }}
+        )
+        export OVERRIDE_HOSTNAME=$(echo ${allWorkers[$POD_NUMBER]})
+        echo "Using worker hostname: $OVERRIDE_HOSTNAME"
+        {{- end }}
+        {{- end }}
+        echo "Using worker port: $SERVER_PORT"
+        exec /opt/xebialabs/deploy-task-engine/bin/run-in-container.sh \
+          -name "$POD_NAME" \
+          {{- if .Values.worker.podServiceTemplate.enabled }}
+          {{- if or .Values.worker.podServiceTemplate.overrideHostname .Values.worker.podServiceTemplate.overrideHostnames }}
+          -hostname "$OVERRIDE_HOSTNAME$HOSTNAME_SUFFIX" \
+          {{- else }}
+          -hostname "$POD_NAME$HOSTNAME_SUFFIX" \
+          {{- end }}
+          {{- end }}
+          {{- include "deploy.workerMasters" $ }}
+          -api "{{ include "deploy.masterLbUrl" . }}" \
+          $@
+
+  ## @param extraConfiguration [string] Configuration file content: extra configuration to be appended to deploy configuration
+  ## Use this instead of `configuration` to add more configuration
+  ##
+  extraConfiguration: {}
+
+  ## @param extraVolumeMounts Optionally specify extra list of additional volumeMounts
+  ## Examples:
+  ## extraVolumeMounts:
+  ##   - name: extras
+  ##     mountPath: /usr/share/extras
+  ##     readOnly: true
+  ##
+  extraVolumeMounts: [ ]
+  ## @param extraVolumes Optionally specify extra list of additional volumes .
+  ## Example:
+  ## extraVolumes:
+  ##   - name: extras
+  ##     emptyDir: {}
+  ##
+  extraVolumes: [ ]
+  ## @param extraSecrets Optionally specify extra secrets to be created by the chart.
+  ## This can be useful when combined with load_definitions to automatically create the secret containing the definitions to be loaded.
+  ## Example:
+  ## extraSecrets:
+  ##   load-definition:
+  ##     load_definition.json: |
+  ##       {
+  ##         ...
+  ##       }
+  ##
+  extraSecrets: { }
+  ## @param extraSecretsPrependReleaseName Set this flag to true if extraSecrets should be created with <release-name> prepended.
+  ##
+  extraSecretsPrependReleaseName: false
+
+  ## Kubernetes service type
+  ##
+  services:
+    akka:
+      ## @param service.type Kubernetes Service type
+      ##
+      type: ClusterIP
+
+      ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
+      ##
+      portEnabled: true
+      ## Service ports
+      ##
+      ports:
+        deployAkka: 8180
+      ## Service ports name
+      ##
+      portNames:
+        deployAkka: "deploy-akka"
+        deployJmxExporter: "deploy-jmx"
+
+      ## Node ports to expose
+      ##
+      nodePorts:
+        deployAkka: ""
+      ## @param service.extraPorts Extra ports to expose in the service
+      ## E.g.:
+      ## extraPorts:
+      ## - name: new_svc_name
+      ##   port: 1234
+      ##   targetPort: 1234
+      ##
+      extraPorts: [ ]
+      ## @param service.loadBalancerSourceRanges Address(es) that are allowed when service is `LoadBalancer`
+      ## https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+      ## e.g:
+      ## loadBalancerSourceRanges:
+      ## - 10.10.10.0/24
+      ##
+      loadBalancerSourceRanges: [ ]
+      ## @param service.externalIPs Set the ExternalIPs
+      ##
+      externalIPs: [ ]
+      ## @param service.externalTrafficPolicy Enable client source IP preservation
+      ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+      ##
+      externalTrafficPolicy: Cluster
+      ## @param service.loadBalancerIP Set the LoadBalancerIP
+      ##
+      loadBalancerIP: ""
+      ## @param service.clusterIP Kubernetes service Cluster IP
+      ## e.g.:
+      ## clusterIP: None
+      ##
+      clusterIP: None
+      ## @param service.labels Service labels. Evaluated as a template
+      ##
+      labels:
+        "app.kubernetes.io/component": worker
+      ## @param service.annotations Service annotations. Evaluated as a template
+      ## Example:
+      ## annotations:
+      ##   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+      ##
+      annotations: { }
+      publishNotReadyAddresses: true
+      ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
+      ## If "ClientIP", consecutive client requests will be directed to the same Pod
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+      ##
+      sessionAffinity: None
+      ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
+      ## sessionAffinityConfig:
+      ##   clientIP:
+      ##     timeoutSeconds: 300
+      ##
+      sessionAffinityConfig: { }
+
+  ## Kubernetes service type that is created for each worker Pod in StatefulSet
+  ##
+  podServiceTemplate:
+    enabled: false
+    ## @param service.type Kubernetes Service type
+    ##
+    type: NodePort
+
+    name: '{{ printf "%s-%d" (include "deploy.names.worker" $) .podNumber }}'
+    ## @param service.serviceMode Possible values are: SingleHostname (IncrementPort, MultiService), SinglePort (IncrementHostname, MultiService), MultiService (IncrementHostname, IncrementPort), SingleService (IncrementHostname, SinglePort)
+    ## it defines the number of hostnames, ports and services
+    serviceMode: MultiService
+    ## @param service.overrideHostnameSuffix together with overrideHostname composes full hostname of the exposed worker pod
+    overrideHostnameSuffix: '.{{ include "common.names.namespace" . }}.svc.cluster.local'
+    ## @param service.overrideHostname  together with overrideHostnameSuffix composes full hostname of the exposed worker pod
+    overrideHostname: '{{ include "deploy.names.worker" . }}-{{ .podNumber }}'
+    overrideHostnames: []    
+    ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
+    ##
+    portEnabled: true
+    ## Service ports
+    ##
+    ports:
+      deployAkka: 32185
+    ## Service ports name
+    ##
+    portNames:
+      deployAkka: "deploy-akka"
+
+    ## Node ports to expose
+    ##
+    nodePorts:
+      deployAkka: 32185
+    ## @param service.extraPorts Extra ports to expose in the service
+    ## E.g.:
+    ## extraPorts:
+    ## - name: new_svc_name
+    ##   port: 1234
+    ##   targetPort: 1234
+    ##
+    extraPorts: [ ]
+    ## @param service.loadBalancerSourceRanges Address(es) that are allowed when service is `LoadBalancer`
+    ## https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+    ## e.g:
+    ## loadBalancerSourceRanges:
+    ## - 10.10.10.0/24
+    ##
+    loadBalancerSourceRanges: [ ]
+    ## @param service.externalIPs Set the ExternalIPs
+    ##
+    externalIPs: [ ]
+    ## @param service.externalTrafficPolicy Enable client source IP preservation
+    ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+    ##
+    externalTrafficPolicy: Local
+    ## @param service.loadBalancerIP Set the LoadBalancerIP
+    ##
+    loadBalancerIP: ""
+    ## @param service.clusterIP Kubernetes service Cluster IP
+    ## e.g.:
+    ## clusterIP: None
+    ##
+    clusterIPs: [ ]
+    ## @param service.labels Service labels. Evaluated as a template
+    ##
+    labels:
+      "app.kubernetes.io/component": worker
+    ## @param service.annotations Service annotations. Evaluated as a template
+    ## Example:
+    ## annotations:
+    ##   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+    ##
+    annotations: { }
+    publishNotReadyAddresses: true
+    ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
+    ## If "ClientIP", consecutive client requests will be directed to the same Pod
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+    ##
+    sessionAffinity: None
+    ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
+    ## sessionAffinityConfig:
+    ##   clientIP:
+    ##     timeoutSeconds: 300
+    ##
+    sessionAffinityConfig: { }
+    podLabels:
+      statefulset.kubernetes.io/pod-name: '{{ printf "%s-%d" (include "deploy.names.worker" $) .podNumber }}'
+
+## Network Policy configuration
+## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+##
+networkPolicy:
+  ## @param networkPolicy.enabled Enable creation of NetworkPolicy resources
+  ##
+  enabled: false
+  ## @param networkPolicy.allowExternal Don't require client label for connections
+  ## The Policy model to apply. When set to false, only pods with the correct
+  ## client label will have network access to the port deploy is listening
+  ## on. When true, deploy will accept connections from any source
+  ## (with the correct destination port).
+  ##
+  allowExternal: true
+  ## @param networkPolicy.additionalRules Additional NetworkPolicy Ingress "from" rules to set. Note that all rules are OR-ed.
+  ## e.g:
+  ## additionalRules:
+  ##  - matchLabels:
+  ##    - role: frontend
+  ##  - matchExpressions:
+  ##    - key: role
+  ##      operator: In
+  ##      values:
+  ##        - frontend
+  ##
+  additionalRules: []
+
+metrics:
+  enabled: false
+
+oidc:
+  accessToken:
+    audience:
+    enable: false
+    issuer:
+    jwsAlg:
+    keyRetrievalUri:
+    secretKey:
+  accessTokenUri:
+  clientAuthJwt:
+    enable: false
+    jwsAlg:
+    keyStore:
+      enable: false
+      path:
+      password:
+      type:
+    key:
+      alias:
+      enable: false
+      password:
+    tokenKeyId:
+  clientAuthMethod:
+  clientId:
+  clientSecret:
+  emailClaim:
+  enabled: false
+  external: false
+  externalIdClaim:
+  fullNameClaim:
+  idTokenJWSAlg:
+  issuer:
+  keyRetrievalUri:
+  logoutUri:
+  postLogoutRedirectUri:
+  proxyHost:
+  proxyPort:
+  redirectUri:
+  rolesClaim:
+  scopes: [ "openid" ]
+  userAuthorizationUri:
+  userNameClaim:
+
+## @section Common parameters
+##
+
+## @param nameOverride String to partially override deploy.fullname template (will maintain the deploy name)
+##
+nameOverride: ""
+## @param fullnameOverride String to fully override deploy.fullname template
+##
+fullnameOverride: ""
+## @param namespaceOverride String to fully override common.names.namespace
+##
+namespaceOverride: ""
+## @param kubeVersion Force target Kubernetes version (using Helm capabilities if not set)
+##
+kubeVersion: ""
+## @param clusterDomain Kubernetes Cluster Domain
+##
+clusterDomain: cluster.local
+## @param extraDeploy Array of extra objects to deploy with the deploy
+##
+extraDeploy: [ ]
+## @param commonAnnotations Annotations to add to all deployed objects
+##
+commonAnnotations: { }
+
+## @param commonLabels Labels to add to all deployed objects
+##
+commonLabels:
+  app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+
+  ## Configure the ingress resource that allows you to access the
+  ## deploy installation. Set up the URL
+  ## ref: https://kubernetes.io/docs/user-guide/ingress/
+  ##
+ingress:
+  ## @param ingress.enabled Enable ingress resource for Management console
+  ##
+  enabled: false
+
+  ## @param ingress.path Path for the default host. You may need to set this to '/*' in order to use this with ALB ingress controllers.
+  ##
+  path: /
+
+  ## @param ingress.pathType Ingress path type
+  ##
+  pathType: ImplementationSpecific
+  ## @param ingress.hostname Default host for the ingress resource
+  ##
+  hostname: ""
+  ## @param ingress.annotations Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
+  ## For a full list of possible ingress annotations, please see
+  ## ref: https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/annotations.md
+  ## Use this parameter to set the required annotations for cert-manager, see
+  ## ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
+  ##
+  ## e.g:
+  ## annotations:
+  ##   kubernetes.io/ingress.class: nginx
+  ##   cert-manager.io/cluster-issuer: cluster-issuer-name
+  ##
+  annotations:
+    # ingress.kubernetes.io/tls-acme: "true"
+
+    ## nginx
+    #kubernetes.io/ingress.class: "nginx-daid"
+    #nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    #nginx.ingress.kubernetes.io/rewrite-target: /
+    #nginx.ingress.kubernetes.io/affinity: cookie
+    #nginx.ingress.kubernetes.io/session-cookie-name: JSESSIONID
+    #nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    #nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    #nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    #
+    ## haproxy
+    #kubernetes.io/ingress.class: "haproxy-daid"
+    #ingress.kubernetes.io/rewrite-target: /
+    #ingress.kubernetes.io/affinity: cookie
+    #ingress.kubernetes.io/session-cookie-name: JSESSIONID
+    #ingress.kubernetes.io/session-cookie-strategy: prefix
+    #ingress.kubernetes.io/config-backend: |
+    #  option httpchk GET /ha/health HTTP/1.0
+
+  ## @param ingress.tls Enable TLS configuration for the hostname defined at `ingress.hostname` parameter
+  ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.ingress.hostname }}
+  ## You can:
+  ##   - Use the `ingress.secrets` parameter to create this TLS secret
+  ##   - Relay on cert-manager to create it by setting the corresponding annotations
+  ##   - Relay on Helm to create self-signed certificates by setting `ingress.selfSigned=true`
+  ##
+  tls: false
+  ## @param ingress.selfSigned Set this to true in order to create a TLS secret for this ingress record
+  ## using self-signed certificates generated by Helm
+  ##
+  selfSigned: false
+  ## @param ingress.extraHosts The list of additional hostnames to be covered with this ingress record.
+  ## Most likely the hostname above will be enough, but in the event more hosts are needed, this is an array
+  ## e.g:
+  ## extraHosts:
+  ##   - name: release.local
+  ##     path: /
+  ##
+  extraHosts: []
+  ## @param ingress.extraPaths An array with additional arbitrary paths that may need to be added to the ingress under the main host
+  ## e.g:
+  ## extraPaths:
+  ## - path: /*
+  ##   backend:
+  ##     serviceName: ssl-redirect
+  ##     servicePort: use-annotation
+  ##
+  extraPaths: []
+  ## @param ingress.extraRules The list of additional rules to be added to this ingress record. Evaluated as a template
+  ## Useful when looking for additional customization, such as using different backend
+  ##
+  extraRules: []
+  ## @param ingress.extraTls The tls configuration for additional hostnames to be covered with this ingress record.
+  ## see: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+  ## e.g:
+  ## extraTls:
+  ##   - hosts:
+  ##       - release.local
+  ##     secretName: release.local-tls
+  ##
+  extraTls: []
+  ## @param ingress.secrets Custom TLS certificates as secrets
+  ## NOTE: 'key' and 'certificate' are expected in PEM format
+  ## NOTE: 'name' should line up with a 'secretName' set further up
+  ## If it is not set and you're using cert-manager, this is unneeded, as it will create a secret for you with valid certificates
+  ## If it is not set and you're NOT using cert-manager either, self-signed certificates will be created valid for 365 days
+  ## It is also possible to create and manage the certificates outside of this helm chart
+  ## Please see README.md for more information
+  ## e.g:
+  ## secrets:
+  ##   - name: release.local-tls
+  ##     key: |-
+  ##       -----BEGIN RSA PRIVATE KEY-----
+  ##       ...
+  ##       -----END RSA PRIVATE KEY-----
+  ##     certificate: |-
+  ##       -----BEGIN CERTIFICATE-----
+  ##       ...
+  ##       -----END CERTIFICATE-----
+  ##
+  secrets: []
+  ## @param ingress.ingressClassName IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
+  ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
+  ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+  ##
+  ingressClassName: ""
+
+route:
+  ## @param route.enabled Enable route resource
+  ##
+  enabled: false
+  ## @param route.path Path for the default host.
+  ##
+  path: /
+  ## @param route.hostname Default host for the route resource
+  ##
+  hostname: ""
+  ## @param route.annotations Additional annotations for the route resource.
+  annotations:
+    haproxy.router.openshift.io/cookie_name: JSESSIONID
+    haproxy.router.openshift.io/disable_cookies: "false"
+    haproxy.router.openshift.io/rewrite-target: /
+  tls:
+    enabled: false
+    key: ""
+    certificate: ""
+    caCertificate: ""
+    insecureEdgeTerminationPolicy: ""
+    termination: edge
+
+## @section RBAC parameters
+##
+
+## deploy pods ServiceAccount
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+##
+serviceAccount:
+  ## @param serviceAccount.create Enable creation of ServiceAccount for deploy pods
+  ##
+  create: true
+  ## @param serviceAccount.name Name of the created serviceAccount
+  ## If not set and create is true, a name is generated using the deploy.fullname template
+  ##
+  name: ""
+  ## @param serviceAccount.automountServiceAccountToken Auto-mount the service account token in the pod
+  ##
+  automountServiceAccountToken: true
+  ## @param serviceAccount.annotations Annotations for service account. Evaluated as a template. Only used if `create` is `true`.
+  ##
+  annotations: { }
+## Role Based Access
+## ref: https://kubernetes.io/docs/admin/authorization/rbac/
+##
+rbac:
+  ## @param rbac.create Whether RBAC rules should be created
+  ## binding deploy ServiceAccount to a role
+  ## that allows deploy pods querying the K8s API
+  ##
+  create: true
+
+
+busyBox:
+  image:
+    registry: docker.io
+    repository: library/busybox
+    tag: stable
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets (secrets must be manually created in the namespace)
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## Example:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+
+## Install haproxy subchart. If you have haproxy already installed, set 'install' to 'false'.
+## If you have any other ingress controller installed, you can set the 'install' to 'false'.
+haproxy-ingress:
+  install: false
+  controller:
+    kind: Deployment
+    ingressClass: haproxy-daid
+    service:
+      type: LoadBalancer
+
+## Ref: https://github.com/codecentric/helm-charts/blob/master/charts/keycloak/README.md
+## Install keycloak chart. If need to use it, set 'install' to 'true'.
+keycloak:
+  install: false
+  extraEnv: |
+    - name: PROXY_ADDRESS_FORWARDING
+      value: "true"
+    - name: KEYCLOAK_USER
+      value: admin
+    - name: KEYCLOAK_PASSWORD
+      value: admin
+    - name: JGROUPS_DISCOVERY_PROTOCOL
+      value: dns.DNS_PING
+    - name: JGROUPS_DISCOVERY_PROPERTIES
+      value: 'dns_query={{ include "keycloak.serviceDnsName" . }}'
+    - name: CACHE_OWNERS_COUNT
+      value: "2"
+    - name: CACHE_OWNERS_AUTH_SESSIONS_COUNT
+      value: "2"
+    - name: JAVA_OPTS
+      value: >-
+        -XX:+UseContainerSupport
+        -XX:MaxRAMPercentage=50.0
+        -Djava.net.preferIPv4Stack=true
+        -Djboss.modules.system.pkgs=$JBOSS_MODULES_SYSTEM_PKGS
+        -Djava.awt.headless=true
+    - name: DB_VENDOR
+      value: postgres
+    - name: DB_ADDR
+      value: {{ include "postgresql.subchart" . }}
+    - name: DB_PORT
+      value: "5432"
+    - name: DB_DATABASE
+      value: keycloak
+    - name: DB_USER
+      value: keycloak
+    - name: DB_PASSWORD
+      value: keycloak
+    - name: KEYCLOAK_IMPORT
+      value: /realm/digitalai-platform-realm.json
+  extraVolumes: |
+    - name: realm-config
+      configMap:
+        name: {{ include "common.names.fullname" . }}-deploy-keycloak
+  extraVolumeMounts: |
+    - name: realm-config
+      mountPath: "/realm/"
+      readOnly: true
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: "nginx-daid"
+      nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    rules:
+      - host: ""
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  postgresql:
+    enabled: false
+  service:
+    type: LoadBalancer
+
+## Install nginx subchart. If you have nginx already installed, set 'install' to 'false'.
+## If you have any other ingress controller installed, you can set the 'install' to 'false'.
+## Ref: https://github.com/bitnami/charts/blob/master/bitnami/nginx-ingress-controller/README.md
+nginx-ingress-controller:
+  install: false
+  extraArgs:
+    ingress-class: "nginx-daid"
+  ingressClassResource:
+    controllerClass: "k8s.io/ingress-nginx-daid"
+    name: "nginx-daid"
+  replicaCount: 1
+  resources:
+    limits: {}
+    #   cpu: 100m
+    #   memory: 128Mi
+    requests: {}
+    #   cpu: 100m
+    #   memory: 128Mi
+  service:
+    type: LoadBalancer
+
+## Ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/README.md
+## Install postgresql chart. If you have an existing database deployment, set 'install' to 'false'.
+postgresql:
+  install: true
+  primary:
+    initdb:
+      scriptsSecret: '{{ include "postgresql.primary.fullname" . }}-deploy'
+    extendedConfiguration: |
+      max_connections = 300
+    persistence:
+      enabled: true
+      accessMode: ReadWriteOnce
+      storageClass: ""
+      size: 8Gi
+      existingClaim: ""
+  auth:
+    enablePostgresUser: true
+    postgresPassword: postgres
+  service:
+    port: 5432
+    type: ClusterIP
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+  volumePermissions:
+    enabled: true
+
+## Install rabbitmq chart. If you have an existing message queue deployment, set 'install' to 'false'.
+## ref: https://github.com/bitnami/charts/blob/master/bitnami/rabbitmq/README.md
+rabbitmq:
+  install: true
+  forceBoot: true
+  replicaCount: 3
+  auth:
+    username: guest
+    password: guest
+    erlangCookie: DEPLOYRABBITMQCLUSTER
+  extraPlugins: 'rabbitmq_jms_topic_exchange'
+  loadDefinition:
+    enabled: true
+    file: /app/deploy_load_definition.json
+    existingSecret: '{{ include "common.names.fullname" . }}-deploy'
+  extraConfiguration: |
+    raft.wal_max_size_bytes = 1048576
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    storageClass: ""
+    size: 8Gi
+  service:
+    type: ClusterIP
+  volumePermissions:
+    enabled: true
