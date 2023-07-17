@@ -1,0 +1,52 @@
+satellite:
+  enabled: true
+centralConfiguration:
+  useIpAsHostname: true
+master:
+  hostAliases:
+    - ip: "10.43.156.90"
+      hostnames:
+      - "master-0.test123"
+    - ip: "10.43.156.91"
+      hostnames:
+      - "master-1.test123"
+    - ip: "10.43.156.95"
+      hostnames:
+      - "worker-0.test123"
+    - ip: "10.43.156.96"
+      hostnames:
+      - "worker-1.test123"
+  podServiceTemplate:
+    enabled: true
+    serviceMode: SinglePort
+    type: ClusterIP
+    name: 'master-{{ .podNumber }}'
+    overrideHostnameSuffix: .test123
+    overrideHostname: 'master-{{ .podNumber }}'
+    clusterIPs:
+      - "10.43.156.90"
+      - "10.43.156.91"
+worker:
+  hostAliases:
+    - ip: "10.43.156.90"
+      hostnames:
+      - "master-0.test123"
+    - ip: "10.43.156.91"
+      hostnames:
+      - "master-1.test123"
+    - ip: "10.43.156.95"
+      hostnames:
+      - "worker-0.test123"
+    - ip: "10.43.156.96"
+      hostnames:
+      - "worker-1.test123"
+  podServiceTemplate:
+    enabled: true
+    serviceMode: SinglePort
+    type: ClusterIP
+    name: 'worker-{{ .podNumber }}'
+    overrideHostnameSuffix: .test123
+    overrideHostname: 'worker-{{ .podNumber }}'
+    clusterIPs:
+      - "10.43.156.95"
+      - "10.43.156.96"

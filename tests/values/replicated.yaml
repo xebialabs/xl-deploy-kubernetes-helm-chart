@@ -3,6 +3,6 @@ centralConfiguration:
 master:
   replicaCount: 2
 worker:
-  replicaCount: 1
+  replicaCount: 2
 rabbitmq:
   replicaCount: 1

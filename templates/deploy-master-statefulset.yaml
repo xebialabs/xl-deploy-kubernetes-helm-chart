@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "common.names.fullname" . }}-master
+  name: {{ include "deploy.names.master" . }}
   namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     {{- if .Values.master.statefulsetLabels }}
@@ -17,7 +17,11 @@ metadata:
   {{- end }}
   {{- end }}
 spec:
-  serviceName: {{ printf "%s-master" (include "common.names.fullname" .) }}
+  {{- if and .Values.master.podServiceTemplate.enabled (eq .Values.master.podServiceTemplate.serviceMode "SingleService") }}
+  serviceName: "{{- include "common.tplvalues.render" (dict "value" .Values.master.podServiceTemplate.name "context" $) }}"
+  {{- else }}
+  serviceName: {{ include "deploy.names.master" . }}
+  {{- end }}
   podManagementPolicy: {{ .Values.master.podManagementPolicy }}
   replicas: {{ .Values.master.replicaCount }}
   {{- if .Values.master.updateStrategy }}
@@ -38,9 +42,16 @@ spec:
         {{- if .Values.commonAnnotations }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 8 }}
         {{- end }}
-        checksum/config: {{ include (print $.Template.BasePath "/configuration.yaml") . | sha256sum }}
-        {{- if or (not .Values.auth.adminPassword) .Values.master.extraSecrets }}
+        checksum/centralconfiguration-config: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-configuration.yaml") . | sha256sum }}
+        checksum/master-config: {{ include (print $.Template.BasePath "/deploy-master-configuration.yaml") . | sha256sum }}
+        {{- if or (not .Values.auth.adminPassword)  .Values.extraSecrets }}
         checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- end }}
+        {{- if .Values.centralConfiguration.extraSecrets }}
+        checksum/centralconfiguration-secret: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-secrets.yaml") . | sha256sum }}
+        {{- end }}
+        {{- if .Values.master.extraSecrets }}
+        checksum/master-secret: {{ include (print $.Template.BasePath "/deploy-master-secrets.yaml") . | sha256sum }}
         {{- end }}
         {{- if .Values.master.podAnnotations }}
         {{- include "common.tplvalues.render" (dict "value" .Values.master.podAnnotations "context" $) | nindent 8 }}
@@ -102,10 +113,9 @@ spec:
               done;
           env:
             - name: CENTRAL_CONFIGURATION_SVC
-              value: {{ include "common.names.fullname" . }}-cc-server
+              value: {{ include "deploy.names.centralConfiguration" . }}
             - name: CENTRAL_CONFIGURATION_PORT
-{{/*              TODO   */}}
-              value: "8888"
+              value: {{ .Values.centralConfiguration.service.ports.ccHttp | quote }}
         {{- if and (not .Values.external.db.enabled) .Values.postgresql.install }}
         - name: wait-for-postgresql
           image: {{ include "deploy.busyBox.image" . }}
@@ -168,13 +178,16 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.master.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: ACCEPT_EULA
               {{- if .Values.licenseAcceptEula }}
               value: "y"
               {{- else }}
               value: "n"
               {{- end }}
-{{/*              TODO */}}
             - name: APP_PORT
               value: {{ .Values.master.containerPorts.deployHttp | quote }}
             - name: ADMIN_PASSWORD
@@ -214,11 +227,26 @@ spec:
             - name: CENTRAL_CONFIG_ENCRYPT_KEY
               {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
             - name: CENTRAL_CONFIG_URL
-              value: "http://{{ include "common.names.fullname" . }}-cc-server:{{ .Values.centralConfiguration.service.ports.ccHttp }}/centralConfiguration"
+              value: "http://{{ include "deploy.names.centralConfiguration" . }}:{{ .Values.centralConfiguration.service.ports.ccHttp }}/centralConfiguration"
             - name: USE_EXTERNAL_CENTRAL_CONFIG
               value: {{ .Values.externalCentralConfig | quote }}
             - name: HOSTNAME_SUFFIX
-              value: ".{{ include "common.names.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local"
+              value: {{ include "deploy.masterHostnameSuffix" . }}
+            {{- if .Values.master.podServiceTemplate.enabled }}
+            - name: SERVER_PORT
+              value: {{ .Values.master.podServiceTemplate.ports.deployAkka | quote }}
+            - name: CLUSTER_NODE_HOSTNAME_SUFFIX
+              value: "{{- include "common.tplvalues.render" (dict "value" .Values.master.clusterNodeHostnameSuffix "context" $) }}"
+            - name: CLUSTER_NODE_PORT
+              value: {{ .Values.master.services.akka.ports.deployClusterAkka | quote }}
+            {{- else }}
+            - name: SERVER_PORT
+              value: {{ .Values.master.services.akka.ports.deployAkka | quote }}
+            - name: CLUSTER_NODE_HOSTNAME_SUFFIX
+              value: {{ include "deploy.clusterMasterHostnameSuffix" . }}
+            - name: CLUSTER_NODE_PORT
+              value: {{ .Values.master.services.akka.ports.deployClusterAkka | quote }}
+            {{- end }}
             {{- if .Values.master.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.master.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
@@ -265,8 +293,13 @@ spec:
           volumeMounts:
             {{- range $k, $v := .Values.master.configuration }}
             - name: configuration
-              mountPath: /opt/xebialabs/xl-deploy-server/default-conf/{{ $k }}
-              subPath: {{ $k }}
+              mountPath: /opt/xebialabs/xl-deploy-server/{{ $v.path }}
+              subPath: {{ $v.path }}
+            {{- end }}
+            {{- range $k, $v := .Values.master.extraConfiguration }}
+            - name: configuration-extra
+              mountPath: /opt/xebialabs/xl-deploy-server/{{ $v.path }}
+              subPath: {{ $v.path }}
             {{- end }}
             - name: data
               mountPath: /opt/xebialabs/xl-deploy-server/conf
@@ -299,11 +332,27 @@ spec:
         {{- if .Values.master.configuration }}
         - name: configuration
           configMap:
-            name: {{ printf "%s-config" (include "common.names.fullname" .) }}
+            name: {{ printf "%s-master-config" (include "common.names.fullname" .) }}
             items:
               {{- range $k, $v := .Values.master.configuration }}
               - key: {{ $k }}
-                path: {{ $k }}
+                path: {{ $v.path }}
+                {{- if $v.mode}}
+                mode: {{ $v.mode }}
+                {{- end }}
+              {{- end }}
+        {{- end }}
+        {{- if .Values.master.extraConfiguration }}
+        - name: configuration-extra
+          configMap:
+            name: {{ printf "%s-master-config" (include "common.names.fullname" .) }}-extra
+            items:
+              {{- range $k, $v := .Values.master.extraConfiguration }}
+              - key: {{ $k }}
+                path: {{ $v.path }}
+                {{- if $v.mode}}
+                mode: {{ $v.mode }}
+                {{- end }}
               {{- end }}
         {{- end }}
         {{- if .Values.master.extraVolumes }}

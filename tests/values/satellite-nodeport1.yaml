@@ -1,0 +1,8 @@
+satellite:
+  enabled: true
+master:
+  podServiceTemplate:
+    enabled: true
+worker:
+  podServiceTemplate:
+    enabled: true

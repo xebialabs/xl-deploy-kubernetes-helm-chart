@@ -1,7 +1,8 @@
+{{- if not .Values.worker.podServiceTemplate.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "common.names.fullname" . }}-worker
+  name: {{ include "deploy.names.worker" . }}
   namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     {{- if .Values.commonLabels }}
@@ -49,6 +50,7 @@ spec:
   {{- end }}
   ports:
     {{- if .Values.worker.services.akka.portEnabled }}
+    {{- if not .Values.worker.podServiceTemplate.enabled }}
     - name: {{ .Values.worker.services.akka.portNames.deployAkka }}
       port: {{ .Values.worker.services.akka.ports.deployAkka }}
       targetPort: {{ .Values.worker.services.akka.portNames.deployAkka }}
@@ -58,6 +60,7 @@ spec:
       nodePort: {{ .Values.worker.services.akka.nodePorts.deployAkka }}
       {{- end }}
     {{- end }}
+    {{- end }}
     {{- if .Values.worker.services.akka.extraPorts }}
     {{- include "common.tplvalues.render" (dict "value" .Values.worker.services.akka.extraPorts "context" $) | nindent 4 }}
     {{- end }}
@@ -65,3 +68,4 @@ spec:
   {{- if .Values.worker.podLabels }}
   {{- include "common.tplvalues.render" (dict "value" .Values.worker.podLabels "context" $) | nindent 4 }}
   {{- end }}
+{{- end }}

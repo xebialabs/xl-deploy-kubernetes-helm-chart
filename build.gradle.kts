@@ -39,7 +39,7 @@ apply(plugin = "integration.server")
 apply(plugin = "ai.digital.gradle-commit")
 apply(plugin = "com.xebialabs.dependency")
 
-apply(from = "$rootDir/integration-tests/base-test-configuration.gradle")
+apply(from = "$rootDir/integration-tests/core/base-test-configuration.gradle")
 group = "ai.digital.deploy.helm"
 project.defaultTasks = listOf("build")
 

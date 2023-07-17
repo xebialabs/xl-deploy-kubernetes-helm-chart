@@ -1,5 +1,40 @@
 {{/* vim: set filetype=mustache: */}}
 
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+{{ include "deploy.names.customname" ( dict "overrideName" .Values.path.to.the.overrideName "suffix" "suffixValue" ) }}
+*/}}
+{{- define "deploy.names.customname" -}}
+{{- if .overrideName -}}
+{{- .overrideName | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- if .context.Values.fullnameOverride -}}
+{{- printf "%s%s" .Values.fullnameOverride .suffix | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .context.Chart.Name .context.Values.nameOverride -}}
+{{- if contains $name .context.Release.Name -}}
+{{- printf "%s%s" .context.Release.Name .suffix | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s%s" .context.Release.Name $name .suffix | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "deploy.names.centralConfiguration" -}}
+{{ include "deploy.names.customname" (dict "overrideName" .Values.centralConfiguration.overrideName "suffix" "-cc-server" "context" .) }}
+{{- end -}}
+
+{{- define "deploy.names.master" -}}
+{{ include "deploy.names.customname" (dict "overrideName" .Values.master.overrideName "suffix" "-master" "context" .) }}
+{{- end -}}
+
+{{- define "deploy.names.worker" -}}
+{{ include "deploy.names.customname" (dict "overrideName" .Values.worker.overrideName "suffix" "-worker" "context" .) }}
+{{- end -}}
+
 {{- define "postgresql.subchart" -}}
 {{ include "postgresql.primary.fullname" (merge .Subcharts.postgresql (dict "nameOverride" "postgresql")) }}
 {{- end -}}
@@ -10,7 +45,7 @@
 
 {{/*
 Return the proper image name
-{{ include "common.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" .Values.global "context" .) }}
+{{ include "deploy.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" .Values.global "context" .) }}
 */}}
 {{- define "deploy.images.image" -}}
 {{- $registryName := .imageRoot.registry -}}
@@ -60,7 +95,9 @@ Get the password secret.
     {{- if .Values.auth.adminPassword -}}
         {{ .Values.auth.adminPassword }}
     {{- else -}}
-        {{ randAlphaNum 10 }}
+        {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace (include "common.names.fullname" .)) | default dict }}
+        {{- $secretData := (get $secretObj "data") | default dict }}
+        {{- (get $secretData "deployPassword") | b64dec | default (randAlphaNum 10) }}
     {{- end -}}
 {{- end -}}
 
@@ -140,6 +177,100 @@ Get the main db URL
             jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ .Values.postgresql.service.port }}/xld-db
         {{- end -}}
     {{- end -}}
+{{- end -}}
+
+{{/*
+Get the Deploy LB service name
+*/}}
+{{- define "deploy.masterLbName" -}}
+{{ include "common.names.fullname" . }}-lb
+{{- end -}}
+
+{{/*
+Get the Deploy LB service URL
+*/}}
+{{- define "deploy.masterLbUrl" -}}
+http://{{ include "deploy.masterLbName" . }}:{{ .Values.master.services.lb.ports.deployHttp }}/
+{{- end -}}
+
+{{/*
+Get the Deploy Master hostname suffix
+*/}}
+{{- define "deploy.masterHostnameSuffix" -}}
+{{- if .Values.master.podServiceTemplate.enabled -}}
+{{- include "common.tplvalues.render" (dict "value" .Values.master.podServiceTemplate.overrideHostnameSuffix "context" $) }}
+{{- else -}}
+.{{ include "deploy.names.master" . }}.{{ include "common.names.namespace" . }}.svc.cluster.local
+{{- end -}}
+{{- end -}}
+
+{{- define "deploy.clusterMasterHostnameSuffix" -}}
+{{- if .Values.master.podServiceTemplate.enabled -}}
+{{- if .Values.deploy.master.clusterNodeHostnameSuffix -}}
+{{- include "common.tplvalues.render" (dict "value" .Values.deploy.master.clusterNodeHostnameSuffix "context" $) }}
+{{- else -}}
+{{- include "common.tplvalues.render" (dict "value" .Values.master.podServiceTemplate.overrideHostnameSuffix "context" $) }}
+{{- end -}}
+{{- else -}}
+.{{ include "deploy.names.master" . }}.{{ include "common.names.namespace" . }}.svc.cluster.local
+{{- end -}}
+{{- end -}}
+
+{{- define "deploy.masterHostname" -}}
+{{- if .Values.master.podServiceTemplate.enabled -}}
+{{- if .Values.master.podServiceTemplate.overrideHostnames }}
+{{- $overrideHostname := index .Values.master.podServiceTemplate.overrideHostnames .podNumber }}
+{{- include "common.tplvalues.render" (dict "value" $overrideHostname "context" .) }}
+{{- else }}
+{{- include "common.tplvalues.render" (dict "value" .Values.master.podServiceTemplate.overrideHostname "context" .) }}
+{{- end }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the Deploy Worker hostname suffix
+*/}}
+{{- define "deploy.workerHostnameSuffix" -}}
+{{- if .Values.worker.podServiceTemplate.enabled -}}
+{{- include "common.tplvalues.render" (dict "value" .Values.worker.podServiceTemplate.overrideHostnameSuffix "context" $) }}
+{{- else -}}
+.{{ include "deploy.names.worker" . }}.{{ include "common.names.namespace" . }}.svc.cluster.local
+{{- end -}}
+{{- end -}}
+
+{{- define "deploy.workerHostname" -}}
+{{- if .Values.worker.podServiceTemplate.enabled -}}
+{{- if .Values.worker.podServiceTemplate.overrideHostnames }}
+{{- $overrideHostname := index .Values.worker.podServiceTemplate.overrideHostnames .podNumber }}
+{{- include "common.tplvalues.render" (dict "value" $overrideHostname "context" .) }}
+{{- else }}
+{{- include "common.tplvalues.render" (dict "value" .Values.worker.podServiceTemplate.overrideHostname "context" .) }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Get the Deploy Worker hostname suffix
+*/}}
+{{- define "deploy.workerMasters" -}}
+{{- $serviceTemplate := .Values.master.podServiceTemplate }}
+{{- if $serviceTemplate.enabled }}
+{{- $maxServices := 1 }}
+{{- if or (ne $serviceTemplate.serviceMode "SingleService") (and (eq $serviceTemplate.type "ClusterIP") (has "None" $serviceTemplate.clusterIPs)) }}
+{{- $maxServices = int .Values.master.replicaCount }}
+{{- end }}
+{{- range $podNumber := untilStep 0 $maxServices 1 }}
+{{- $newValues := merge (dict "podNumber" $podNumber) $ }}
+{{- $masterHostname := include "deploy.masterHostname" $newValues }}
+{{- $masterPort := $serviceTemplate.nodePorts.deployAkka }}
+{{- if contains $serviceTemplate.serviceMode "SingleHostname;MultiService" }}
+{{- $masterPort = add $masterPort $podNumber }}
+{{- end }}
+  -master "{{ $masterHostname }}{{ include "deploy.masterHostnameSuffix" $newValues }}:{{ $masterPort }}" \
+{{- end }}
+{{- else }}
+  -master "{{ include "deploy.names.master" . }}.{{ include "common.names.namespace" . }}.svc.cluster.local:{{ .Values.master.services.akka.ports.deployAkka }}" \
+{{- end }}
 {{- end -}}
 
 {{/*
@@ -370,18 +501,18 @@ Params:
   {{- if .value -}}
     {{- if kindIs "string" .value -}}
 valueFrom:
-    secretKeyRef:
-        name: {{ .defaultName }}
-        key: {{ .defaultKey }}
+  secretKeyRef:
+    name: {{ .defaultName }}
+    key: {{ .defaultKey }}
     {{- else -}}
         {{- tpl (.value | toYaml) .context }}
     {{- end -}}
   {{- else -}}
     {{- if .default -}}
 valueFrom:
-    secretKeyRef:
-        name: {{ .defaultName }}
-        key: {{ .defaultKey }}
+  secretKeyRef:
+    name: {{ .defaultName }}
+    key: {{ .defaultKey }}
     {{- end -}}
   {{- end -}}
 {{- end -}}

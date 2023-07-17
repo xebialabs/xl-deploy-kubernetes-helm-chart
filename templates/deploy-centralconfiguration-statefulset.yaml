@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "common.names.fullname" . }}-cc-server
+  name: {{ include "deploy.names.centralConfiguration" . }}
   namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     {{- if .Values.centralConfiguration.statefulsetLabels }}
@@ -17,7 +17,7 @@ metadata:
     {{- end }}
   {{- end }}
 spec:
-  serviceName: {{ printf "%s-cc-server" (include "common.names.fullname" .) }}
+  serviceName: {{ include "deploy.names.centralConfiguration" . }}
   podManagementPolicy: {{ .Values.centralConfiguration.podManagementPolicy }}
   replicas: {{ .Values.centralConfiguration.replicaCount }}
   {{- if .Values.centralConfiguration.updateStrategy }}
@@ -38,9 +38,12 @@ spec:
         {{- if .Values.commonAnnotations }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 8 }}
         {{- end }}
-        checksum/config: {{ include (print $.Template.BasePath "/configuration.yaml") . | sha256sum }}
-        {{- if or (not .Values.auth.adminPassword) .Values.centralConfiguration.extraSecrets }}
+        checksum/config: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-configuration.yaml") . | sha256sum }}
+        {{- if or (not .Values.auth.adminPassword)  .Values.extraSecrets }}
         checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- end }}
+        {{- if .Values.centralConfiguration.extraSecrets }}
+        checksum/centralconfiguration-secret: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-secrets.yaml") . | sha256sum }}
         {{- end }}
         {{- if .Values.centralConfiguration.podAnnotations }}
         {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.podAnnotations "context" $) | nindent 8 }}
@@ -126,7 +129,6 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           env:
-{{/*              TODO */}}
             - name: APP_PORT
               value: {{ .Values.centralConfiguration.containerPorts.ccHttp | quote }}
             - name: XL_CLUSTER_MODE
@@ -140,10 +142,8 @@ spec:
               {{- include "render.value-secret" (dict  "value" (include "deploy.mainUsername" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "mainDatabaseUsername" "context" $ ) | nindent 14 }}
             - name: XL_DB_PASSWORD
               {{- include "render.value-secret" (dict  "value" (include "deploy.mainPassword" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "mainDatabasePassword" "context" $ ) | nindent 14 }}
-{{/*             TODO  report db */}}
             - name: XL_DB_MAX_POOL_SIZE
               value: {{ default 10 .Values.external.db.main.maxPoolSize | quote }}
-              {{/*              TODO */}}
             - name: XL_REPORT_DB_URL
               value: {{ include "deploy.reportDbUrl" . }}
             - name: XL_REPORT_DB_USERNAME
@@ -175,9 +175,9 @@ spec:
             {{- end }}
             - name: XL_METRICS_ENABLED
               value: {{ .Values.metrics.enabled | quote }}
-            {{- if .Values.satellite.Enabled }}
+            {{- if .Values.satellite.enabled }}
             - name: ENABLE_SATELLITE
-              value: {{ .Values.satellite.Enabled | quote }}
+              value: {{ .Values.satellite.enabled | quote }}
             {{- end }}
             - name: GENERATE_XL_CONFIG
               value: {{ .Values.generateXlConfig | quote }}
@@ -187,8 +187,6 @@ spec:
               value: {{ .Values.usaCache | quote }}
             - name: CENTRAL_CONFIG_ENCRYPT_KEY
               {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
-            - name: HOSTNAME_SUFFIX
-              value: ".{{ include "common.names.fullname" . }}-master.{{.Release.Namespace}}.svc.cluster.local"
 {{/*              TODO oidc */}}
             {{- if .Values.oidc.external }}
             - name: OIDC_CLIENT_ID
@@ -252,8 +250,13 @@ spec:
           volumeMounts:
             {{- range $k, $v := .Values.centralConfiguration.configuration }}
             - name: configuration
-              mountPath: /opt/xebialabs/central-configuration-server/central-conf/{{ $k }}
-              subPath: {{ $k }}
+              mountPath: /opt/xebialabs/central-configuration-server/{{ $v.path }}
+              subPath: {{ $v.path }}
+            {{- end }}
+            {{- range $k, $v := .Values.centralConfiguration.extraConfiguration }}
+            - name: configuration-extra
+              mountPath: /opt/xebialabs/central-configuration-server/{{ $v.path }}
+              subPath: {{ $v.path }}
             {{- end }}
             - name: data
               mountPath: /opt/xebialabs/central-configuration-server/centralConfiguration
@@ -271,11 +274,27 @@ spec:
         {{- if .Values.centralConfiguration.configuration }}
         - name: configuration
           configMap:
-            name: {{ printf "%s-config" (include "common.names.fullname" .) }}
+            name: {{ printf "%s-cc-server-config" (include "common.names.fullname" .) }}
             items:
               {{- range $k, $v := .Values.centralConfiguration.configuration }}
               - key: {{ $k }}
-                path: {{ $k }}
+                path: {{ $v.path }}
+                {{- if $v.mode}}
+                mode: {{ $v.mode }}
+                {{- end }}
+              {{- end }}
+        {{- end }}
+        {{- if .Values.centralConfiguration.extraConfiguration }}
+        - name: configuration-extra
+          configMap:
+            name: {{ printf "%s-cc-server-config" (include "common.names.fullname" .) }}-extra
+            items:
+              {{- range $k, $v := .Values.centralConfiguration.extraConfiguration }}
+              - key: {{ $k }}
+                path: {{ $v.path }}
+                {{- if $v.mode}}
+                mode: {{ $v.mode }}
+                {{- end }}
               {{- end }}
         {{- end }}
         {{- if .Values.centralConfiguration.extraVolumes }}

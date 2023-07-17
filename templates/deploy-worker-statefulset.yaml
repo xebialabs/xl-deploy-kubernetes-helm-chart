@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "common.names.fullname" . }}-worker
+  name: {{ include "deploy.names.worker" . }}
   namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     {{- if .Values.worker.statefulsetLabels }}
@@ -10,14 +10,18 @@ metadata:
     {{- if .Values.commonLabels }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
     {{- end }}
-  {{- if .Values.commonAnnotations }}
+  {{- if or .Values.commonAnnotations  .Values.worker.statefulsetAnnotations }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- if .Values.worker.statefulsetAnnotations }}
   {{- include "common.tplvalues.render" (dict "value" .Values.worker.statefulsetAnnotations "context" $) | nindent 4 }}
   {{- end }}
   {{- end }}
 spec:
-  serviceName: {{ printf "%s-worker" (include "common.names.fullname" .) }}
+  {{- if and .Values.worker.podServiceTemplate.enabled (eq .Values.worker.podServiceTemplate.serviceMode "SingleService") }}
+  serviceName: "{{- include "common.tplvalues.render" (dict "value" .Values.worker.podServiceTemplate.name "context" $) }}"
+  {{- else }}
+  serviceName: {{ include "deploy.names.worker" . }}
+  {{- end }}
   podManagementPolicy: {{ .Values.worker.podManagementPolicy }}
   replicas: {{ .Values.worker.replicaCount }}
   {{- if .Values.worker.updateStrategy }}
@@ -38,9 +42,20 @@ spec:
         {{- if .Values.commonAnnotations }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 8 }}
         {{- end }}
-        checksum/config: {{ include (print $.Template.BasePath "/configuration.yaml") . | sha256sum }}
-        {{- if or (not .Values.auth.adminPassword) .Values.worker.extraSecrets }}
+        checksum/centralconfiguration-config: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-configuration.yaml") . | sha256sum }}
+        checksum/master-config: {{ include (print $.Template.BasePath "/deploy-master-configuration.yaml") . | sha256sum }}
+        checksum/worker-config: {{ include (print $.Template.BasePath "/deploy-worker-configuration.yaml") . | sha256sum }}
+        {{- if or (not .Values.auth.adminPassword)  .Values.extraSecrets }}
         checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- end }}
+        {{- if .Values.centralConfiguration.extraSecrets }}
+        checksum/centralconfiguration-secret: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-secrets.yaml") . | sha256sum }}
+        {{- end }}
+        {{- if .Values.master.extraSecrets }}
+        checksum/master-secret: {{ include (print $.Template.BasePath "/deploy-master-secrets.yaml") . | sha256sum }}
+        {{- end }}
+        {{- if .Values.worker.extraSecrets }}
+        checksum/worker-secret: {{ include (print $.Template.BasePath "/deploy-worker-secrets.yaml") . | sha256sum }}
         {{- end }}
         {{- if .Values.worker.podAnnotations }}
         {{- include "common.tplvalues.render" (dict "value" .Values.worker.podAnnotations "context" $) | nindent 8 }}
@@ -102,10 +117,9 @@ spec:
               done;
           env:
             - name: CENTRAL_CONFIGURATION_SVC
-              value: {{ include "common.names.fullname" . }}-cc-server
+              value: {{ include "deploy.names.centralConfiguration" . }}
             - name: CENTRAL_CONFIGURATION_PORT
-{{/*              TODO   */}}
-              value: "8888"
+              value: {{ .Values.centralConfiguration.service.ports.ccHttp | quote }}
         {{- if and (not .Values.external.db.enabled) .Values.postgresql.install }}
         - name: wait-for-postgresql
           image: {{ include "deploy.busyBox.image" . }}
@@ -155,7 +169,7 @@ spec:
               done;
           env:
             - name: MASTER_SVC
-              value: {{ include "common.names.fullname" . }}-lb
+              value: {{ include "deploy.masterLbName" . }}
             - name: MASTER_PORT
               value: {{ .Values.master.services.lb.ports.deployHttp | quote }}
         {{- end }}
@@ -184,18 +198,22 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.worker.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: ACCEPT_EULA
               {{- if .Values.licenseAcceptEula }}
               value: "y"
               {{- else }}
               value: "n"
               {{- end }}
+            - name: APP_PORT
+              value: {{ .Values.master.containerPorts.deployHttp | quote }}
             {{- if .Values.license }}
             - name: XL_LICENSE
               {{- include "render.value-secret" (dict  "value" (.Values.license) "defaultName" (include "common.names.fullname" .) "defaultKey" "deployLicense" "context" $ ) | nindent 14 }}
             {{- end }}
-            - name: USE_IP_AS_HOSTNAME
-              value: {{ .Values.master.useIpAsHostname | quote }}
             {{- if or .Values.external.db.enabled .Values.postgresql.install }}
             - name: XL_DB_URL
               value: {{ include "deploy.mainDbUrl" . }}
@@ -212,13 +230,23 @@ spec:
             - name: REPOSITORY_KEYSTORE_PASSPHRASE
               {{- include "render.value-secret" (dict  "value" (.Values.keystore.passphrase) "defaultName" (include "common.names.fullname" .) "defaultKey" "keystorePassphrase" "context" $ ) | nindent 14 }}
             {{- end }}
+            - name: USE_IP_AS_HOSTNAME
+              value: {{ .Values.worker.useIpAsHostname | quote }}            
             - name: CENTRAL_CONFIG_ENCRYPT_KEY
               {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
             - name: CENTRAL_CONFIG_URL
-{{/*              TODO port */}}
-              value: "http://{{ include "common.names.fullname" . }}-cc-server:8888/centralConfiguration"
+              value: "http://{{ include "deploy.names.centralConfiguration" . }}:{{ .Values.centralConfiguration.service.ports.ccHttp }}/centralConfiguration"
             - name: USE_EXTERNAL_CENTRAL_CONFIG
               value: {{ .Values.externalCentralConfig | quote }}
+            - name: HOSTNAME_SUFFIX
+              value: {{ include "deploy.workerHostnameSuffix" . }}
+            {{- if .Values.worker.podServiceTemplate.enabled }}
+            - name: SERVER_PORT
+              value: {{ .Values.worker.podServiceTemplate.ports.deployAkka | quote }}
+            {{- else }}
+            - name: SERVER_PORT
+              value: {{ .Values.worker.services.akka.ports.deployAkka | quote }}
+            {{- end }}
             {{- if .Values.worker.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.worker.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
@@ -261,8 +289,13 @@ spec:
           volumeMounts:
             {{- range $k, $v := .Values.worker.configuration }}
             - name: configuration
-              mountPath: /opt/xebialabs/deploy-task-engine/default-conf/{{ $k }}
-              subPath: {{ $k }}
+              mountPath: /opt/xebialabs/deploy-task-engine/{{ $v.path }}
+              subPath: {{ $v.path }}
+            {{- end }}
+            {{- range $k, $v := .Values.worker.extraConfiguration }}
+            - name: configuration-extra
+              mountPath: /opt/xebialabs/deploy-task-engine/{{ $v.path }}
+              subPath: {{ $v.path }}
             {{- end }}
             - name: data
               mountPath: /opt/xebialabs/deploy-task-engine/conf
@@ -295,11 +328,27 @@ spec:
         {{- if .Values.worker.configuration }}
         - name: configuration
           configMap:
-            name: {{ printf "%s-config" (include "common.names.fullname" .) }}
+            name: {{ printf "%s-worker-config" (include "common.names.fullname" .) }}
             items:
               {{- range $k, $v := .Values.worker.configuration }}
               - key: {{ $k }}
-                path: {{ $k }}
+                path: {{ $v.path }}
+                {{- if $v.mode}}
+                mode: {{ $v.mode }}
+                {{- end }}
+              {{- end }}
+        {{- end }}
+        {{- if .Values.worker.extraConfiguration }}
+        - name: configuration-extra
+          configMap:
+            name: {{ printf "%s-worker-config" (include "common.names.fullname" .) }}-extra
+            items:
+              {{- range $k, $v := .Values.worker.extraConfiguration }}
+              - key: {{ $k }}
+                path: {{ $v.path }}
+                {{- if $v.mode}}
+                mode: {{ $v.mode }}
+                {{- end }}
               {{- end }}
         {{- end }}
         {{- if .Values.worker.extraVolumes }}

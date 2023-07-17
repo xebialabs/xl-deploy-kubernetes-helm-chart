@@ -1,0 +1,89 @@
+{{- $serviceTemplate := .Values.worker.podServiceTemplate }}
+{{- if $serviceTemplate.enabled }}
+{{- $maxServices := 1 }}
+{{- if ne $serviceTemplate.serviceMode "SingleService" }}
+{{- $maxServices = int .Values.worker.replicaCount }}
+{{- end }}
+{{- range $podNumber := untilStep 0 $maxServices 1 }}
+{{- $newValues := merge (dict "podNumber" $podNumber) $ }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{- include "common.tplvalues.render" (dict "value" $serviceTemplate.name "context" $newValues) }}"
+  namespace: {{ include "common.names.namespace" $ | quote }}
+  labels: {{- include "common.labels.standard" $ | nindent 4 }}
+    {{- if $.Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" $.Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+    {{- if $serviceTemplate.labels }}
+    {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.labels "context" $) | nindent 4 }}
+    {{- end }}
+  {{- if or ($serviceTemplate.annotations) ($.Values.commonAnnotations) }}
+  annotations:
+    {{- if $.Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" (dict "value" $.Values.commonAnnotations "context" $) | nindent 4 }}
+    {{- end -}}
+    {{- if $serviceTemplate.annotations }}
+    {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.annotations "context" $) | nindent 4 }}
+    {{- end -}}
+  {{- end }}
+spec:
+  type: {{ $serviceTemplate.type }}
+  {{- if and $serviceTemplate.clusterIPs (eq $serviceTemplate.type "ClusterIP") }}
+  clusterIP: {{ index $serviceTemplate.clusterIPs $podNumber }}
+  {{- end }}
+  {{- if $serviceTemplate.publishNotReadyAddresses }}
+  publishNotReadyAddresses: {{ $serviceTemplate.publishNotReadyAddresses }}
+  {{- end }}
+  {{- if eq $serviceTemplate.type "LoadBalancer" }}
+  {{- if not (empty $serviceTemplate.loadBalancerIP) }}
+  loadBalancerIP: {{ $serviceTemplate.loadBalancerIP }}
+  {{- end }}
+  {{- if $serviceTemplate.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{- toYaml $serviceTemplate.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  {{- if or (eq $serviceTemplate.type "LoadBalancer") (eq $serviceTemplate.type "NodePort") }}
+  externalTrafficPolicy: {{ $serviceTemplate.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if $serviceTemplate.sessionAffinity }}
+  sessionAffinity: {{ $serviceTemplate.sessionAffinity }}
+  {{- end }}
+  {{- if $serviceTemplate.sessionAffinityConfig }}
+  sessionAffinityConfig: {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.sessionAffinityConfig "context" $) | nindent 4 }}
+  {{- end }}
+  {{- if $serviceTemplate.externalIPs }}
+  externalIPs: {{- toYaml $serviceTemplate.externalIPs | nindent 4 }}
+  {{- end }}
+  ports:
+    {{- if $serviceTemplate.portEnabled }}
+    - name: {{ $serviceTemplate.portNames.deployAkka }}
+      {{- $akkaPort := $serviceTemplate.ports.deployAkka }}
+      {{- if contains $serviceTemplate.serviceMode "SingleHostname;MultiService" }}
+      {{- $akkaPort = add $akkaPort $podNumber }}
+      {{- end }}
+      port: {{ $akkaPort }}
+      targetPort: {{ $serviceTemplate.portNames.deployAkka }}
+      {{- if (eq $serviceTemplate.type "ClusterIP") }}
+      nodePort: null
+      {{- else if and (or (eq $serviceTemplate.type "NodePort") (eq $serviceTemplate.type "LoadBalancer")) (not (empty $serviceTemplate.nodePorts.deployAkka)) }}
+      {{- $nodePort := $serviceTemplate.nodePorts.deployAkka }}
+      {{- if contains $serviceTemplate.serviceMode "SingleHostname;MultiService" }}
+      {{- $nodePort = add $nodePort $podNumber }}
+      {{- end }}
+      nodePort: {{ $nodePort }}
+      {{- end }}
+    {{- end }}
+    {{- if $serviceTemplate.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  selector: {{ include "common.labels.matchLabels" $ | nindent 4 }}
+  {{- if $.Values.worker.podLabels }}
+  {{- include "common.tplvalues.render" (dict "value" $.Values.worker.podLabels "context" $) | nindent 4 }}
+  {{- end }}
+  {{- if $serviceTemplate.podLabels }}
+  {{- include "common.tplvalues.render" (dict "value" $serviceTemplate.podLabels "context" $newValues) | nindent 4 }}
+  {{- end }}
+---
+{{- end }}
+{{- end }}

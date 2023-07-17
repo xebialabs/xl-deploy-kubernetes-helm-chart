@@ -9,6 +9,16 @@ kubectl port-forward service/{{ include "common.names.fullname" . }} {{ .Values.
 ## To get the admin password for Digitalai Deploy, run:
 kubectl get secret --namespace {{ .Release.Namespace }} {{ include "common.names.fullname" . }} -o jsonpath="{.data.deployPassword}" | base64 --decode; echo
 
+{{- if .Values.master.podServiceTemplate.enabled }}
+## Access to the master's akka services is avalable via .Values.worker.podServiceTemplate.type services:
+{{- range $podNumber := untilStep 0 (int .Values.worker.replicaCount) 1 }}
+{{- $newValues := merge (dict "podNumber" $podNumber) $ }}
+## - "{{- include "common.tplvalues.render" (dict "value" $.Values.worker.podServiceTemplate.name "context" $newValues) }}"
+{{- end }}
+{{- else }}
+## Access to the master's services is avalable via headless service: "{{ include "deploy.names.master" . }}"
+{{- end }}
+
 {{- if or .Values.postgresql.install .Values.external.db.enabled }}
 ## To get the password for main database, run:
 kubectl get secret --namespace  {{ .Release.Namespace }} {{ include "common.names.fullname" . }} -o jsonpath="{.data.mainDatabasePassword}" | base64 --decode; echo
