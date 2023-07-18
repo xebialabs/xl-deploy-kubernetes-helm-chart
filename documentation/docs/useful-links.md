@@ -2,6 +2,8 @@
 sidebar_position: 12
 ---
 
+# Useful links
+
 :::caution
 This is internal documentation. This document can be used only if it was recommended by the Support Team.
 :::
@@ -9,8 +11,6 @@ This is internal documentation. This document can be used only if it was recomme
 :::caution
 From 10.2 version helm chart is not used directly. Use operator based installation instead.
 :::
-
-# Useful links
 
 - [`xebialabs/xl-deploy:<tagname>`](https://hub.docker.com/r/xebialabs/xl-deploy) – Docker Hub repository for Digital.ai Deploy
 - [`stable/rabbitmq-ha`](https://github.com/helm/charts/tree/master/stable/rabbitmq-ha) -  Github repository for RabbitMQ Helm Chart

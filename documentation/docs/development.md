@@ -2,6 +2,8 @@
 sidebar_position: 11
 ---
 
+# Development
+
 :::caution
 This is internal documentation. This document can be used only if it was recommended by the Support Team.
 :::
@@ -9,8 +11,6 @@ This is internal documentation. This document can be used only if it was recomme
 :::caution
 From 10.2 version helm chart is not used directly. Use operator based installation instead.
 :::
-
-# Development
 
 Let's have a look here about the easiest way to setup the cluster for a development on a local computer.
 
