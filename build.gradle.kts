@@ -27,11 +27,11 @@ buildscript {
 }
 
 plugins {
-    kotlin("jvm") version "1.4.20"
+    kotlin("jvm") version "1.8.10"
 
-    id("com.github.node-gradle.node") version "3.1.0"
+    id("com.github.node-gradle.node") version "4.0.0"
     id("idea")
-    id("nebula.release") version "15.3.1"
+    id("nebula.release") version (properties["nebulaReleasePluginVersion"] as String)
     id("maven-publish")
 }
 
@@ -43,7 +43,7 @@ group = "ai.digital.deploy.helm"
 project.defaultTasks = listOf("build")
 
 val dockerHubRepository = System.getenv()["DOCKER_HUB_REPOSITORY"] ?: "xebialabsunsupported"
-val releasedVersion = System.getenv()["RELEASE_EXPLICIT"] ?: "22.3.0-${
+val releasedVersion = System.getenv()["RELEASE_EXPLICIT"] ?: "23.3.0-${
     LocalDateTime.now().format(DateTimeFormatter.ofPattern("Mdd.Hmm"))
 }"
 project.extra.set("releasedVersion", releasedVersion)
@@ -88,22 +88,181 @@ tasks.named<Test>("test") {
     useJUnitPlatform()
 }
 
-val providers = listOf("aws-eks", "azure-aks", "gcp-gke", "onprem", "openshift")
-
 tasks.withType<AbstractPublishToMaven> {
     dependsOn("buildHelmPackage")
 }
 
 tasks {
 
+    compileKotlin {
+        kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
+    }
+
+    compileTestKotlin {
+        kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
+    }
+
     val buildXldDir = layout.buildDirectory.dir("xld")
     val buildXldOperatorDir = layout.buildDirectory.dir("xld/${project.name}")
 
+    register<Copy>("prepareHelmPackage") {
+        group = "helm"
+        dependsOn("dumpVersion", ":integration-tests:core:jar")
+        from(layout.projectDirectory)
+        exclude(
+            layout.buildDirectory.get().asFile.name,
+            "buildSrc/",
+            "docs/",
+            "documentation/",
+            "gradle/",
+            "*gradle*",
+            ".*/",
+            "*.iml",
+            "*.sh"
+        )
+        into(buildXldOperatorDir)
+    }
+
+    register<Copy>("prepareValuesYaml") {
+        group = "helm"
+        dependsOn("prepareHelmPackage")
+        from(buildXldOperatorDir)
+        include("values-nginx.yaml")
+        into(buildXldOperatorDir)
+        rename("values-nginx.yaml", "values.yaml")
+        doLast {
+            exec {
+                workingDir(buildXldOperatorDir)
+                commandLine("rm", "-f", "values-haproxy.yaml")
+            }
+            exec {
+                workingDir(buildXldOperatorDir)
+                commandLine("rm", "-f", "values-nginx.yaml")
+            }
+        }
+    }
+
+    register<Exec>("prepareHelmDeps") {
+        group = "helm"
+        dependsOn("prepareValuesYaml")
+        workingDir(buildXldOperatorDir)
+        commandLine("helm", "dependency", "update", ".")
+
+        standardOutput = ByteArrayOutputStream()
+        errorOutput = ByteArrayOutputStream()
+
+        doLast {
+            exec {
+                workingDir(buildXldOperatorDir)
+                commandLine("rm", "-f", "Chart.lock")
+            }
+        }
+        doLast {
+            logger.lifecycle(standardOutput.toString())
+            logger.error(errorOutput.toString())
+            logger.lifecycle("Prepare helm deps finished")
+        }
+    }
+
+    register<Exec>("buildHelmPackage") {
+        group = "helm"
+        dependsOn("prepareHelmDeps")
+        workingDir(buildXldDir)
+        commandLine("helm", "package", "--app-version=$releasedVersion", project.name)
+
+        standardOutput = ByteArrayOutputStream()
+        errorOutput = ByteArrayOutputStream()
+
+        doLast {
+            copy {
+                from(buildXldDir)
+                include("*.tgz")
+                into(buildXldDir)
+                rename("digitalai-deploy-.*.tgz", "xld.tgz")
+            }
+            logger.lifecycle(standardOutput.toString())
+            logger.error(errorOutput.toString())
+            logger.lifecycle("Helm package finished created ${buildDir}/xld/xld.tgz")
+        }
+    }
+
+    register<Exec>("prepareOperatorImage") {
+        group = "helm"
+        dependsOn("buildHelmPackage")
+        workingDir(buildXldDir)
+        commandLine("operator-sdk", "init", "--domain=digital.ai", "--plugins=helm")
+
+        standardOutput = ByteArrayOutputStream()
+        errorOutput = ByteArrayOutputStream()
+
+        doLast {
+            logger.lifecycle(standardOutput.toString())
+            logger.error(errorOutput.toString())
+            logger.lifecycle("Init operator image finished")
+        }
+    }
+
+    register<Exec>("buildOperatorImage") {
+        group = "operator"
+        dependsOn("prepareOperatorImage")
+        workingDir(buildXldDir)
+        commandLine("operator-sdk", "create", "api", "--group=xld", "--version=v1alpha1", "--helm-chart=xld.tgz")
+
+        standardOutput = ByteArrayOutputStream()
+        errorOutput = ByteArrayOutputStream()
+
+        doLast {
+            logger.lifecycle(standardOutput.toString())
+            logger.error(errorOutput.toString())
+            logger.lifecycle("Create operator image finished")
+        }
+    }
+
+    register<Exec>("publishToDockerHub") {
+        group = "operator"
+        dependsOn("buildOperatorImage")
+        workingDir(buildXldDir)
+        val imageUrl = "docker.io/$dockerHubRepository/deploy-operator:$releasedVersion"
+        commandLine("make", "docker-build", "docker-push", "IMG=$imageUrl")
+
+        standardOutput = ByteArrayOutputStream()
+        errorOutput = ByteArrayOutputStream()
+
+        doLast {
+            logger.lifecycle(standardOutput.toString())
+            logger.error(errorOutput.toString())
+            logger.lifecycle("Publish to DockerHub $imageUrl finished")
+        }
+    }
+
+    register("checkDependencyVersions") {
+        // a placeholder to unify with release in jenkins-job
+    }
+
+    register("uploadArchives") {
+        group = "upload"
+        dependsOn("dumpVersion", "publish")
+    }
+    register("uploadArchivesMavenRepository") {
+        group = "upload"
+        dependsOn("dumpVersion","publishAllPublicationsToMavenRepository")
+    }
+    register("uploadArchivesToMavenLocal") {
+        group = "upload"
+        dependsOn("dumpVersion", "publishToMavenLocal")
+    }
+
     register("dumpVersion") {
+        group = "release"
         doLast {
             file(buildDir).mkdirs()
             file("$buildDir/version.dump").writeText("version=${releasedVersion}")
         }
+    }
+
+    register<NebulaRelease>("nebulaRelease") {
+        group = "release"
+        dependsOn(named("updateDocs"))
     }
 
     named<YarnTask>("yarn_install") {
@@ -139,145 +298,14 @@ tasks {
     register<GenerateDocumentation>("updateDocs") {
         dependsOn(named("docBuild"))
     }
+}
 
-    register<NebulaRelease>("nebulaRelease") {
-        dependsOn(named("updateDocs"))
-    }
+tasks.withType<AbstractPublishToMaven> {
+    dependsOn("buildHelmPackage")
+}
 
-    compileKotlin {
-        kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
-    }
-
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
-    }
-
-    register<Copy>("prepareHelmPackage") {
-        dependsOn("dumpVersion")
-        from(layout.projectDirectory)
-        exclude(
-            layout.buildDirectory.get().asFile.name,
-            "buildSrc/",
-            "docs/",
-            "documentation/",
-            "gradle/",
-            "*gradle*",
-            ".*/",
-            "*.iml",
-            "*.sh"
-        )
-        into(buildXldOperatorDir)
-    }
-
-    register<Copy>("prepareValuesYaml") {
-        dependsOn("prepareHelmPackage")
-        from(buildXldOperatorDir)
-        include("values-nginx.yaml")
-        into(buildXldOperatorDir)
-        rename("values-nginx.yaml", "values.yaml")
-        doLast {
-            exec {
-                workingDir(buildXldOperatorDir)
-                commandLine("rm", "-f", "values-haproxy.yaml")
-            }
-            exec {
-                workingDir(buildXldOperatorDir)
-                commandLine("rm", "-f", "values-nginx.yaml")
-            }
-        }
-    }
-
-    register<Exec>("prepareHelmDeps") {
-        dependsOn("prepareValuesYaml")
-        workingDir(buildXldOperatorDir)
-        commandLine("helm", "dependency", "update", ".")
-
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
-        doLast {
-            exec {
-                workingDir(buildXldOperatorDir)
-                commandLine("rm", "-f", "Chart.lock")
-            }
-        }
-        doLast {
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
-            logger.lifecycle("Prepare helm deps finished")
-        }
-    }
-
-    register<Exec>("buildHelmPackage") {
-        dependsOn("prepareHelmDeps")
-        workingDir(buildXldDir)
-        commandLine("helm", "package", "--app-version=$releasedVersion", project.name)
-
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
-        doLast {
-            copy {
-                from(buildXldDir)
-                include("*.tgz")
-                into(buildXldDir)
-                rename("digitalai-deploy-.*.tgz", "xld.tgz")
-            }
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
-            logger.lifecycle("Helm package finished created ${buildDir}/xld/xld.tgz")
-        }
-    }
-
-    register<Exec>("prepareOperatorImage") {
-        dependsOn("buildHelmPackage")
-        workingDir(buildXldDir)
-        commandLine("operator-sdk", "init", "--domain=digital.ai", "--plugins=helm")
-
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
-        doLast {
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
-            logger.lifecycle("Init operator image finished")
-        }
-    }
-
-    register<Exec>("buildOperatorImage") {
-        dependsOn("prepareOperatorImage")
-        workingDir(buildXldDir)
-        commandLine("operator-sdk", "create", "api", "--group=xld", "--version=v1alpha1", "--helm-chart=xld.tgz")
-
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
-        doLast {
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
-            logger.lifecycle("Create operator image finished")
-        }
-    }
-
-    register<Exec>("publishToDockerHub") {
-        dependsOn("buildOperatorImage")
-        workingDir(buildXldDir)
-        val imageUrl = "docker.io/$dockerHubRepository/deploy-operator:$releasedVersion"
-        commandLine("make", "docker-build", "docker-push", "IMG=$imageUrl")
-
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
-        doLast {
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
-            logger.lifecycle("Publish to DockerHub $imageUrl finished")
-        }
-    }
-
-    register("checkDependencyVersions") {
-        // a placeholder to unify with release in jenkins-job
-    }
+tasks.named("build") {
+    dependsOn("buildOperatorImage")
 }
 
 publishing {
