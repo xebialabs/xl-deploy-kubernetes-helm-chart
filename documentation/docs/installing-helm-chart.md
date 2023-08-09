@@ -2,6 +2,8 @@
 sidebar_position: 6
 ---
 
+# Installing Helm Chart
+
 :::caution
 This is internal documentation. This document can be used only if it was recommended by the Support Team.
 :::
@@ -9,8 +11,6 @@ This is internal documentation. This document can be used only if it was recomme
 :::caution
 From 10.2 version helm chart is not used directly. Use operator based installation instead.
 :::
-
-# Installing Helm Chart
 
 Get the chart by cloning this repository:
 ```bash
