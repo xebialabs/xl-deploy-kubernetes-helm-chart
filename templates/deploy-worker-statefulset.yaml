@@ -230,13 +230,15 @@ spec:
             - name: REPOSITORY_KEYSTORE_PASSPHRASE
               {{- include "render.value-secret" (dict  "value" (.Values.keystore.passphrase) "defaultName" (include "common.names.fullname" .) "defaultKey" "repositoryKeystorePassphrase" "context" $ ) | nindent 14 }}
             {{- end }}
+            {{- if .Values.truststore.truststore }}
             - name: TRUSTSTORE
-              value: "file:/opt/xebialabs/deploy-task-engine/truststore/truststore.jks"
-              {{- include "render.value-secret" (dict  "value" (.Values.truststore.truststore) "defaultName" (include "common.names.fullname" .) "defaultKey" "truststore" "context" $ ) | nindent 14 }}
-            {{- end }}
+              value: "/opt/xebialabs/deploy-task-engine/truststore/{{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore") }}"
+            - name: TRUSTSTORE_TYPE
+              value: {{ .Values.truststore.type | quote }}
             {{- if .Values.truststore.password }}
             - name: TRUSTSTORE_PASSWORD
               {{- include "render.value-secret" (dict  "value" (.Values.truststore.password) "defaultName" (include "common.names.fullname" .) "defaultKey" "truststorePassword" "context" $ ) | nindent 14 }}
+            {{- end }}
             {{- end }}
             - name: USE_IP_AS_HOSTNAME
               value: {{ .Values.worker.useIpAsHostname | quote }}            
@@ -255,8 +257,8 @@ spec:
             - name: SERVER_PORT
               value: {{ .Values.worker.services.akka.ports.deployAkka | quote }}
             {{- end }}
-            - name: XL_DEPLOY_SERVER_OPTS
-              value: "{{- include "common.tplvalues.render" (dict "value" .Values.worker.jvmArgs "context" .) }} -Djavax.net.ssl.trustStore=$TRUSTSTORE -Djavax.net.ssl.trustStorePassword=$TRUSTSTORE_PASSWORD"
+            - name: DEPLOYIT_SERVER_OPTS
+              value: "{{- include "common.tplvalues.render" (dict "value" .Values.worker.jvmArgs "context" .) }} {{- if .Values.truststore.truststore }}-Djavax.net.ssl.trustStore=$(TRUSTSTORE) -Djavax.net.ssl.trustStorePassword=$(TRUSTSTORE_PASSWORD) -Djavax.net.ssl.trustStoreType=$(TRUSTSTORE_TYPE){{- end }}"
             {{- if .Values.worker.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.worker.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
@@ -308,9 +310,9 @@ spec:
               subPath: {{ $v.path }}
             {{- end }}
             {{- if .Values.truststore.truststore }}
-            - mountPath: /opt/xebialabs/deploy-task-engine/truststore/truststore.jks
+            - mountPath: /opt/xebialabs/deploy-task-engine/truststore/{{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore") }}
               name: deploy-truststore
-              subPath: truststore.jks
+              subPath: {{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore") }}
               readOnly: true
             {{- end }}
             - name: data
