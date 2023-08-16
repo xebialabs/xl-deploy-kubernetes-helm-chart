@@ -70,6 +70,12 @@ keystore:
   # if empty during initial run, the default keystore will be generated with provided "passphrase"
   keystore: ""
 
+truststore:
+   # possible value jks or jceks or pkcs12
+  type: "pkcs12"
+  password: ""
+  truststore: ""
+
 satellite:
   enabled: false
 
@@ -365,6 +371,8 @@ centralConfiguration:
     annotations:
       helm.sh/resource-policy: "keep"
 
+  jvmArgs: ""
+  
   ## @param command Override default container command (useful when using custom images)
   ##
   command:
@@ -820,6 +828,8 @@ master:
     ##
     annotations:
       helm.sh/resource-policy: "keep"
+
+  jvmArgs: ""
 
   ## @param command Override default container command (useful when using custom images)
   ##
@@ -1455,6 +1465,8 @@ worker:
     ##
     annotations:
       helm.sh/resource-policy: "keep"
+
+  jvmArgs: ""
 
   ## @param command Override default container command (useful when using custom images)
   ##

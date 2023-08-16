@@ -171,7 +171,7 @@ spec:
             {{- end }}
             {{- if .Values.keystore.passphrase }}
             - name: REPOSITORY_KEYSTORE_PASSPHRASE
-              {{- include "render.value-secret" (dict  "value" (.Values.keystore.passphrase) "defaultName" (include "common.names.fullname" .) "defaultKey" "keystorePassphrase" "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict  "value" (.Values.keystore.passphrase) "defaultName" (include "common.names.fullname" .) "defaultKey" "repositoryKeystorePassphrase" "context" $ ) | nindent 14 }}
             {{- end }}
             - name: XL_METRICS_ENABLED
               value: {{ .Values.metrics.enabled | quote }}
@@ -208,6 +208,8 @@ spec:
               {{- include "render.value-secret" (dict "value" .Values.oidc.accessToken.secretKey "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcAccessTokenSecretKey" "context" $ ) | nindent 14 }}
             {{- end -}}
             {{- end }}
+            - name: CONFIG_SERVER_OPTS
+              value: "{{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.jvmArgs "context" .) }}"
             {{- if .Values.centralConfiguration.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
