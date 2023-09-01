@@ -1,0 +1,8 @@
+centralConfiguration:
+  replicaCount: 1
+master:
+  replicaCount: 2
+worker:
+  replicaCount: 2
+rabbitmq:
+  replicaCount: 1

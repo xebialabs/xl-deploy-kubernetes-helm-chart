@@ -1,0 +1,30 @@
+satellite:
+  enabled: true
+centralConfiguration:
+  useIpAsHostname: true
+master:
+  hostAliases:
+    - ip: "172.22.0.2"
+      hostnames:
+      - "master-0.test123"
+      - "master-1.test123"
+      - "worker-0.test123"
+      - "worker-1.test123"
+  podServiceTemplate:
+    enabled: true
+    name: 'master-{{ .podNumber }}'
+    overrideHostnameSuffix: .test123
+    overrideHostname: 'master-{{ .podNumber }}'
+worker:
+  hostAliases:
+    - ip: "172.22.0.2"
+      hostnames:
+      - "master-0.test123"
+      - "master-1.test123"
+      - "worker-0.test123"
+      - "worker-1.test123"
+  podServiceTemplate:
+    enabled: true
+    name: 'worker-{{ .podNumber }}'
+    overrideHostnameSuffix: .test123
+    overrideHostname: 'worker-{{ .podNumber }}'

@@ -1,0 +1,15 @@
+centralConfiguration:
+  image:
+    repository: xldevdocker/central-configuration
+    tag: 23.3.0-714.113
+    pullPolicy: Always
+master:
+  image:
+    repository: xldevdocker/xl-deploy
+    tag: 23.3.0-SNAPSHOT
+    pullPolicy: Always
+worker:
+  image:
+    repository: xldevdocker/deploy-task-engine
+    tag: 23.3.0-SNAPSHOT
+    pullPolicy: Always

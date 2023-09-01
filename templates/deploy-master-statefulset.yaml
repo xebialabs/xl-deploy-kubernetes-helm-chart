@@ -1,0 +1,418 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "deploy.names.master" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    {{- if .Values.master.statefulsetLabels }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.master.statefulsetLabels "context" $) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.commonAnnotations .Values.master.statefulsetAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- if .Values.master.statefulsetAnnotations }}
+  {{- include "common.tplvalues.render" (dict "value" .Values.master.statefulsetAnnotations "context" $) | nindent 4 }}
+  {{- end }}
+  {{- end }}
+spec:
+  {{- if and .Values.master.podServiceTemplate.enabled (eq .Values.master.podServiceTemplate.serviceMode "SingleService") }}
+  serviceName: "{{- include "common.tplvalues.render" (dict "value" .Values.master.podServiceTemplate.name "context" $) }}"
+  {{- else }}
+  serviceName: {{ include "deploy.names.master" . }}
+  {{- end }}
+  podManagementPolicy: {{ .Values.master.podManagementPolicy }}
+  replicas: {{ .Values.master.replicaCount }}
+  {{- if .Values.master.updateStrategy }}
+  updateStrategy: {{- toYaml .Values.master.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+      {{- if .Values.master.podLabels }}
+      {{- include "common.tplvalues.render" (dict "value" .Values.master.podLabels "context" $) | nindent 6 }}
+      {{- end }}
+  template:
+    metadata:
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+        {{- if .Values.master.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.master.podLabels "context" $) | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- if .Values.commonAnnotations }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 8 }}
+        {{- end }}
+        checksum/centralconfiguration-config: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-configuration.yaml") . | sha256sum }}
+        checksum/master-config: {{ include (print $.Template.BasePath "/deploy-master-configuration.yaml") . | sha256sum }}
+        {{- if or (not .Values.auth.adminPassword)  .Values.extraSecrets }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- end }}
+        {{- if .Values.centralConfiguration.extraSecrets }}
+        checksum/centralconfiguration-secret: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-secrets.yaml") . | sha256sum }}
+        {{- end }}
+        {{- if .Values.master.extraSecrets }}
+        checksum/master-secret: {{ include (print $.Template.BasePath "/deploy-master-secrets.yaml") . | sha256sum }}
+        {{- end }}
+        {{- if .Values.master.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.master.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.master.schedulerName }}
+      schedulerName: {{ .Values.master.schedulerName | quote }}
+      {{- end }}
+      serviceAccountName: {{ template "deploy.serviceAccountName" . }}
+      {{- if .Values.master.affinity }}
+      affinity: {{- include "common.tplvalues.render" (dict "value" .Values.master.affinity "context" .) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.master.podAffinityPreset "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.master.podAntiAffinityPreset "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.master.nodeAffinityPreset.type "key" .Values.master.nodeAffinityPreset.key "values" .Values.master.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- if .Values.master.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.master.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.master.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" (dict "value" .Values.master.nodeSelector "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.master.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.master.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.master.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "common.tplvalues.render" (dict "value" .Values.master.topologySpreadConstraints "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.master.priorityClassName }}
+      priorityClassName: {{ .Values.master.priorityClassName }}
+      {{- end }}
+      {{- if .Values.master.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.master.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.master.dnsPolicy }}
+      dnsPolicy: {{ .Values.master.dnsPolicy }}
+      {{- end }}
+      {{- if .Values.master.hostNetwork }}
+      hostNetwork: {{ .Values.master.hostNetwork }}
+      {{- end }}
+      {{- if .Values.master.dnsConfig }}
+      dnsConfig: {{- include "common.tplvalues.render" (dict "value" .Values.master.dnsConfig "context" .) | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.master.terminationGracePeriodSeconds }}
+      {{- if or .Values.master.initContainers (and (not .Values.external.db.enabled) .Values.postgresql.install) (and (not .Values.external.mq.enabled) .Values.rabbitmq.install) }}
+      initContainers:
+        {{- if not .Values.master.diagnosticMode.enabled }}
+        - name: wait-for-central-configuration
+          image: {{ include "deploy.busyBox.image" . }}
+          imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
+          command:
+            - /bin/sh
+          args:
+            - -ec
+            - |
+              until nc -z -w 2 -v $CENTRAL_CONFIGURATION_SVC $CENTRAL_CONFIGURATION_PORT && echo centralConfiguration ok; do
+                sleep 2;
+              done;
+          env:
+            - name: CENTRAL_CONFIGURATION_SVC
+              value: {{ include "deploy.names.centralConfiguration" . }}
+            - name: CENTRAL_CONFIGURATION_PORT
+              value: {{ .Values.centralConfiguration.service.ports.ccHttp | quote }}
+        {{- if and (not .Values.external.db.enabled) .Values.postgresql.install }}
+        - name: wait-for-postgresql
+          image: {{ include "deploy.busyBox.image" . }}
+          imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
+          command:
+            - /bin/sh
+          args:
+            - -ec
+            - |
+              until nc -z -w 2 -v $POSTGRESQL_SVC $POSTGRESQL_PORT && echo postgresql ok; do
+                sleep 2;
+              done;
+          env:
+            - name: POSTGRESQL_SVC
+              value: {{ include "postgresql.subchart" . }}
+            - name: POSTGRESQL_PORT
+              value: {{ .Values.postgresql.service.port | quote }}
+        {{- end }}
+        {{- if and (not .Values.external.mq.enabled) .Values.rabbitmq.install }}
+        - name: wait-for-rabbitmq
+          image: {{ include "deploy.busyBox.image" . }}
+          imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
+          command:
+            - /bin/sh
+          args:
+            - -ec
+            - |
+              until nc -z -w 2 -v $RABBITMQ_SVC $RABBITMQ_PORT && echo database ok; do
+                sleep 2;
+              done;
+          env:
+            - name: RABBITMQ_SVC
+              value: {{ include "rabbitmq.subchart" . }}
+            - name: RABBITMQ_PORT
+              value: {{ .Values.rabbitmq.service.ports.amqp | quote }}
+        {{- end }}
+        {{- end }}
+        {{- if .Values.master.initContainers }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.master.initContainers "context" $) | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: deploy-master
+          image: {{ template "deploy.images.image" ( dict "imageRoot" .Values.master.image "global" .Values.global "context" .) }}
+          imagePullPolicy: {{ .Values.master.image.pullPolicy | quote }}
+          {{- if .Values.master.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.master.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.master.diagnosticMode.enabled }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.master.diagnosticMode.command "context" $) | nindent 12 }}
+          {{- else if .Values.master.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.master.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.master.diagnosticMode.enabled }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.master.diagnosticMode.args "context" $) | nindent 12 }}
+          {{- else if .Values.master.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.master.args "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.master.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.master.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ACCEPT_EULA
+              {{- if .Values.licenseAcceptEula }}
+              value: "y"
+              {{- else }}
+              value: "n"
+              {{- end }}
+            - name: APP_PORT
+              value: {{ .Values.master.containerPorts.deployHttp | quote }}
+            - name: ADMIN_PASSWORD
+              {{- include "render.value-secret" (dict  "value" (include "deploy.secretPassword" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "deployPassword" "default" true "context" $ ) | nindent 14 }}
+            - name: XL_CLUSTER_MODE
+              value: {{ .Values.clusterMode | quote }}
+            - name: XLD_IN_PROCESS
+              value: {{ .Values.xldInProcess | quote }}
+            - name: FORCE_UPGRADE
+              value: {{ .Values.master.forceUpgrade | quote }}
+            {{- if .Values.license }}
+            - name: XL_LICENSE
+              {{- include "render.value-secret" (dict  "value" (.Values.license) "defaultName" (include "common.names.fullname" .) "defaultKey" "deployLicense" "context" $ ) | nindent 14 }}
+            {{- end }}
+            {{- if or .Values.external.db.enabled .Values.postgresql.install }}
+            - name: XL_DB_URL
+              value: {{ include "deploy.mainDbUrl" . }}
+            {{- end }}
+            {{- if or .Values.rabbitmq.install .Values.external.mq.enabled }}
+            - name: XLD_TASK_QUEUE_DRIVER_CLASS_NAME
+              value: {{ include "deploy.mqDriverClassName" . }}
+            {{- end }}
+            {{- if .Values.keystore.keystore }}
+            - name: REPOSITORY_KEYSTORE
+              {{- include "render.value-secret" (dict  "value" (.Values.keystore.keystore) "defaultName" (include "common.names.fullname" .) "defaultKey" "repositoryKeystore" "context" $ ) | nindent 14 }}
+            {{- end }}
+            {{- if .Values.keystore.passphrase }}
+            - name: REPOSITORY_KEYSTORE_PASSPHRASE
+              {{- include "render.value-secret" (dict  "value" (.Values.keystore.passphrase) "defaultName" (include "common.names.fullname" .) "defaultKey" "repositoryKeystorePassphrase" "context" $ ) | nindent 14 }}
+            {{- end }}
+            {{- if .Values.truststore.truststore }}
+            - name: TRUSTSTORE
+              value: "/opt/xebialabs/xl-deploy-server/truststore/{{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore") }}"
+            - name: TRUSTSTORE_TYPE
+              value: {{ .Values.truststore.type | quote }}
+            {{- if .Values.truststore.password }}
+            - name: TRUSTSTORE_PASSWORD
+              {{- include "render.value-secret" (dict  "value" (.Values.truststore.password) "defaultName" (include "common.names.fullname" .) "defaultKey" "truststorePassword" "context" $ ) | nindent 14 }}
+            {{- end }}
+            {{- end }}
+            - name: XL_METRICS_ENABLED
+              value: {{ .Values.metrics.enabled | quote }}
+            - name: GENERATE_XL_CONFIG
+              value: {{ .Values.generateXlConfig | quote }}
+            - name: USE_IP_AS_HOSTNAME
+              value: {{ .Values.master.useIpAsHostname | quote }}
+            - name: CENTRAL_CONFIG_ENCRYPT_KEY
+              {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
+            - name: CENTRAL_CONFIG_URL
+              value: "http://{{ include "deploy.names.centralConfiguration" . }}:{{ .Values.centralConfiguration.service.ports.ccHttp }}/centralConfiguration"
+            - name: USE_EXTERNAL_CENTRAL_CONFIG
+              value: {{ .Values.externalCentralConfig | quote }}
+            - name: HOSTNAME_SUFFIX
+              value: {{ include "deploy.masterHostnameSuffix" . }}
+            {{- if .Values.master.podServiceTemplate.enabled }}
+            - name: SERVER_PORT
+              value: {{ .Values.master.podServiceTemplate.ports.deployAkka | quote }}
+            - name: CLUSTER_NODE_HOSTNAME_SUFFIX
+              value: "{{- include "common.tplvalues.render" (dict "value" .Values.master.clusterNodeHostnameSuffix "context" $) }}"
+            - name: CLUSTER_NODE_PORT
+              value: {{ .Values.master.services.akka.ports.deployClusterAkka | quote }}
+            {{- else }}
+            - name: SERVER_PORT
+              value: {{ .Values.master.services.akka.ports.deployAkka | quote }}
+            - name: CLUSTER_NODE_HOSTNAME_SUFFIX
+              value: {{ include "deploy.clusterMasterHostnameSuffix" . }}
+            - name: CLUSTER_NODE_PORT
+              value: {{ .Values.master.services.akka.ports.deployClusterAkka | quote }}
+            {{- end }}
+            - name: DEPLOYIT_SERVER_OPTS
+              value: " {{- include "common.tplvalues.render" (dict "value" .Values.master.jvmArgs "context" .) }} {{- if .Values.truststore.truststore }}-Djavax.net.ssl.trustStore=$(TRUSTSTORE) -Djavax.net.ssl.trustStorePassword=$(TRUSTSTORE_PASSWORD) -Djavax.net.ssl.trustStoreType=$(TRUSTSTORE_TYPE){{- end }}"
+            {{- if .Values.master.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.master.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.master.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.master.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.master.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.master.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          ports:
+            - name: {{ .Values.master.services.lb.portNames.deployHttp }}
+              containerPort: {{ .Values.master.containerPorts.deployHttp }}
+            - name: {{ .Values.master.services.akka.portNames.deployAkka }}
+              containerPort: {{ .Values.master.containerPorts.deployAkka }}
+            - name: {{ .Values.master.services.akka.portNames.deployJmxExporter }}
+              containerPort: {{ .Values.master.containerPorts.deployJmxExporter }}
+            {{- if .Values.master.extraContainerPorts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.master.extraContainerPorts "context" $) | nindent 12 }}
+            {{- end }}
+          {{- if not .Values.master.diagnosticMode.enabled }}
+          {{- if .Values.master.health.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.master.services.lb.portNames.deployHttp }}
+            initialDelaySeconds: {{ .Values.master.health.probesLivenessTimeout }}
+            periodSeconds: {{ .Values.master.health.periodScans }}
+            failureThreshold: {{ .Values.master.health.probeFailureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.master.services.lb.portNames.deployHttp }}
+            initialDelaySeconds: {{ .Values.master.health.probesReadinessTimeout }}
+            periodSeconds: {{ .Values.master.health.periodScans }}
+            failureThreshold: {{ .Values.master.health.probeFailureThreshold }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.master.resources }}
+          resources: {{- toYaml .Values.master.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- range $k, $v := .Values.master.configuration }}
+            - name: configuration
+              mountPath: /opt/xebialabs/xl-deploy-server/{{ $v.path }}
+              subPath: {{ $v.path }}
+            {{- end }}
+            {{- range $k, $v := .Values.master.extraConfiguration }}
+            - name: configuration-extra
+              mountPath: /opt/xebialabs/xl-deploy-server/{{ $v.path }}
+              subPath: {{ $v.path }}
+            {{- end }}
+            {{- if .Values.truststore.truststore }}
+            - mountPath: /opt/xebialabs/xl-deploy-server/truststore/{{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore") }}
+              name: deploy-truststore
+              subPath: {{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore") }}
+              readOnly: true
+            {{- end }}
+            - name: data
+              mountPath: /opt/xebialabs/xl-deploy-server/conf
+              subPath: conf
+            - name: data
+              mountPath: /opt/xebialabs/xl-deploy-server/ext
+              subPath: ext
+            - name: data
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix
+              subPath: hotfix
+            - name: data
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/lib
+              subPath: lib
+            - name: data
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/plugins
+              subPath: plugins
+            - name: data
+              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/satellite-lib
+              subPath: satellite-lib
+            - name: data
+              mountPath: /opt/xebialabs/xl-deploy-server/work
+              subPath: work
+            {{- if .Values.master.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.master.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
+        {{- if .Values.master.sidecars }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.master.sidecars "context" $) | nindent 8 }}
+        {{- end }}
+      volumes:
+        {{- if .Values.truststore.truststore }}
+        - name: deploy-truststore
+          secret:
+            secretName: "{{- include "render.secret-name" (dict "value" .Values.truststore.truststore "defaultName" (include "common.names.fullname" .) "context" $ ) }}"
+        {{- end }}
+        {{- if .Values.master.configuration }}
+        - name: configuration
+          configMap:
+            name: {{ printf "%s-master-config" (include "common.names.fullname" .) }}
+            items:
+              {{- range $k, $v := .Values.master.configuration }}
+              - key: {{ $k }}
+                path: {{ $v.path }}
+                {{- if $v.mode}}
+                mode: {{ $v.mode }}
+                {{- end }}
+              {{- end }}
+        {{- end }}
+        {{- if .Values.master.extraConfiguration }}
+        - name: configuration-extra
+          configMap:
+            name: {{ printf "%s-master-config" (include "common.names.fullname" .) }}-extra
+            items:
+              {{- range $k, $v := .Values.master.extraConfiguration }}
+              - key: {{ $k }}
+                path: {{ $v.path }}
+                {{- if $v.mode}}
+                mode: {{ $v.mode }}
+                {{- end }}
+              {{- end }}
+        {{- end }}
+        {{- if .Values.master.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.master.extraVolumes "context" $)  | nindent 8 }}
+        {{- end }}
+        {{- if not .Values.master.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- else if .Values.master.persistence.existingClaim }}
+        - name: data
+          persistentVolumeClaim:
+            {{- with .Values.master.persistence.existingClaim }}
+            claimName: {{ tpl . $ }}
+            {{- end }}
+        {{- else if .Values.master.persistence.single }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-{{ include "common.names.fullname" . }}
+        {{- else }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels: {{- include "common.labels.matchLabels" . | nindent 10 }}
+        {{- if .Values.master.persistence.annotations }}
+        annotations:
+          {{- include "common.tplvalues.render" ( dict "value" .Values.master.persistence.annotations "context" $) | nindent 10 }}
+        {{- end }}
+      spec:
+        accessModes:
+          {{- range .Values.master.persistence.accessModes }}
+            - {{ . | quote }}
+          {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.master.persistence.size | quote }}
+        {{ include "common.storage.class" (dict "persistence" .Values.master.persistence "global" .Values.global) }}
+        {{- if .Values.master.persistence.selector }}
+        selector: {{- include "common.tplvalues.render" (dict "value" .Values.master.persistence.selector "context" $) | nindent 10 }}
+        {{- end -}}
+  {{- end }}
