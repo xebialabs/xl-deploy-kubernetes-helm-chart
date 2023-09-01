@@ -89,9 +89,9 @@ spec:
       dnsConfig: {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.dnsConfig "context" .) | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.centralConfiguration.terminationGracePeriodSeconds }}
-      {{- if or .Values.centralConfiguration.initContainers (and .Values.centralConfiguration.migrateFromEmbedded .Values.centralConfiguration.persistence.enabled) }}
+      {{- if or .Values.centralConfiguration.initContainers (and (eq (.Values.centralConfiguration.migrateFromEmbedded | toString) "true") .Values.centralConfiguration.persistence.enabled) }}
       initContainers:
-        {{- if and .Values.centralConfiguration.migrateFromEmbedded .Values.centralConfiguration.persistence.enabled }}
+        {{- if and (eq (.Values.centralConfiguration.migrateFromEmbedded | toString) "true") .Values.centralConfiguration.persistence.enabled }}
         - name: wait-for-migrate-from-embedded-cc-to-standalone
           image: {{ template "deploy.images.image" ( dict "imageRoot" .Values.centralConfiguration.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.centralConfiguration.image.pullPolicy | quote }}
@@ -102,7 +102,7 @@ spec:
             - mountPath: "/mnt/centralConfiguration-source-dir"
               name: source-dir
             - mountPath: "/mnt/centralConfiguration-target-dir"
-              name: data-dir
+              name: data
         {{- end }}
         {{- if .Values.centralConfiguration.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.initContainers "context" $) | nindent 8 }}
@@ -302,7 +302,7 @@ spec:
         {{- if .Values.centralConfiguration.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.extraVolumes "context" $)  | nindent 8 }}
         {{- end }}
-        {{- if and .Values.centralConfiguration.persistence.enabled .Values.centralConfiguration.migrateFromEmbedded }}
+        {{- if and .Values.centralConfiguration.persistence.enabled (eq (.Values.centralConfiguration.migrateFromEmbedded | toString) "true") }}
         - name: source-dir
           persistentVolumeClaim:
             claimName: data-dir-{{ include "common.names.fullname" . }}-master-0
