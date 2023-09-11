@@ -21,7 +21,7 @@ spec:
   path: {{ .Values.route.path }}
   to:
     kind: Service
-    name: {{ $fullName }}
+    name: {{ include "deploy.masterLbName" . }}
   port:
     targetPort: {{ .Values.master.services.lb.portNames.deployHttp }}
 {{- if $.Values.route.tls.enabled }}
