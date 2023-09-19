@@ -32,6 +32,8 @@ externalCentralConfig: true
 xldInProcess: false
 usaCache: false
 
+appContextRoot: /
+
 ## deploy Authentication parameters
 ##
 auth:
@@ -2092,6 +2094,7 @@ postgresql:
       existingClaim: ""
   auth:
     enablePostgresUser: true
+    username: postgres
     postgresPassword: postgres
   service:
     port: 5432

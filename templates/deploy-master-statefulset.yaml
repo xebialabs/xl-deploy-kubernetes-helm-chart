@@ -44,9 +44,7 @@ spec:
         {{- end }}
         checksum/centralconfiguration-config: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-configuration.yaml") . | sha256sum }}
         checksum/master-config: {{ include (print $.Template.BasePath "/deploy-master-configuration.yaml") . | sha256sum }}
-        {{- if or (not .Values.auth.adminPassword)  .Values.extraSecrets }}
         checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
-        {{- end }}
         {{- if .Values.centralConfiguration.extraSecrets }}
         checksum/centralconfiguration-secret: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-secrets.yaml") . | sha256sum }}
         {{- end }}
@@ -257,7 +255,9 @@ spec:
             - name: CLUSTER_NODE_PORT
               value: {{ .Values.master.services.akka.ports.deployClusterAkka | quote }}
             {{- end }}
-            - name: DEPLOYIT_SERVER_OPTS
+            - name: APP_CONTEXT_ROOT
+              value: {{ .Values.appContextRoot }}
+            - name: DEPLOYIT_SERVER_OPTS_EXT
               value: " {{- include "common.tplvalues.render" (dict "value" .Values.master.jvmArgs "context" .) }} {{- if .Values.truststore.truststore }}-Djavax.net.ssl.trustStore=$(TRUSTSTORE) -Djavax.net.ssl.trustStorePassword=$(TRUSTSTORE_PASSWORD) -Djavax.net.ssl.trustStoreType=$(TRUSTSTORE_TYPE){{- end }}"
             {{- if .Values.master.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.master.extraEnvVars "context" $) | nindent 12 }}
@@ -285,14 +285,14 @@ spec:
           {{- if .Values.master.health.enabled }}
           livenessProbe:
             httpGet:
-              path: /
+              path: {{ .Values.appContextRoot }}
               port: {{ .Values.master.services.lb.portNames.deployHttp }}
             initialDelaySeconds: {{ .Values.master.health.probesLivenessTimeout }}
             periodSeconds: {{ .Values.master.health.periodScans }}
             failureThreshold: {{ .Values.master.health.probeFailureThreshold }}
           readinessProbe:
             httpGet:
-              path: /
+              path: {{ .Values.appContextRoot }}
               port: {{ .Values.master.services.lb.portNames.deployHttp }}
             initialDelaySeconds: {{ .Values.master.health.probesReadinessTimeout }}
             periodSeconds: {{ .Values.master.health.periodScans }}
