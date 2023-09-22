@@ -2115,7 +2115,7 @@ rabbitmq:
   auth:
     username: guest
     password: guest
-    erlangCookie: DEPLOYRABBITMQCLUSTER
+    existingErlangSecret: '{{ include "common.names.fullname" . }}-deploy'
   extraPlugins: 'rabbitmq_jms_topic_exchange'
   loadDefinition:
     enabled: true
