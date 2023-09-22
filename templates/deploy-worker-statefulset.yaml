@@ -45,9 +45,7 @@ spec:
         checksum/centralconfiguration-config: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-configuration.yaml") . | sha256sum }}
         checksum/master-config: {{ include (print $.Template.BasePath "/deploy-master-configuration.yaml") . | sha256sum }}
         checksum/worker-config: {{ include (print $.Template.BasePath "/deploy-worker-configuration.yaml") . | sha256sum }}
-        {{- if or (not .Values.auth.adminPassword)  .Values.extraSecrets }}
         checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
-        {{- end }}
         {{- if .Values.centralConfiguration.extraSecrets }}
         checksum/centralconfiguration-secret: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-secrets.yaml") . | sha256sum }}
         {{- end }}
@@ -257,7 +255,9 @@ spec:
             - name: SERVER_PORT
               value: {{ .Values.worker.services.akka.ports.deployAkka | quote }}
             {{- end }}
-            - name: DEPLOYIT_SERVER_OPTS
+            - name: APP_CONTEXT_ROOT
+              value: {{ .Values.appContextRoot }}
+            - name: DEPLOYIT_SERVER_OPTS_EXT
               value: "{{- include "common.tplvalues.render" (dict "value" .Values.worker.jvmArgs "context" .) }} {{- if .Values.truststore.truststore }}-Djavax.net.ssl.trustStore=$(TRUSTSTORE) -Djavax.net.ssl.trustStorePassword=$(TRUSTSTORE_PASSWORD) -Djavax.net.ssl.trustStoreType=$(TRUSTSTORE_TYPE){{- end }}"
             {{- if .Values.worker.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.worker.extraEnvVars "context" $) | nindent 12 }}

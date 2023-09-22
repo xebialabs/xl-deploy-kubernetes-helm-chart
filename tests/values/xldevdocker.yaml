@@ -1,7 +1,7 @@
 centralConfiguration:
   image:
     repository: xldevdocker/central-configuration
-    tag: 23.3.0-714.113
+    tag: 23.3.0-SNAPSHOT
     pullPolicy: Always
 master:
   image:

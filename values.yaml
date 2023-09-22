@@ -32,6 +32,8 @@ externalCentralConfig: true
 xldInProcess: false
 usaCache: false
 
+appContextRoot: /
+
 ## deploy Authentication parameters
 ##
 auth:
