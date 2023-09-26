@@ -1,7 +1,10 @@
 import com.github.gradle.node.yarn.task.YarnTask
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import org.jetbrains.kotlin.de.undercouch.gradle.tasks.download.Download
 import java.io.ByteArrayOutputStream
+import java.util.*
+import org.apache.commons.lang.SystemUtils.*
 
 buildscript {
     repositories {
@@ -42,11 +45,41 @@ apply(plugin = "com.xebialabs.dependency")
 group = "ai.digital.deploy.helm"
 project.defaultTasks = listOf("build")
 
+val helmVersion = properties["helmVersion"]
+val operatorSdkVersion = properties["operatorSdkVersion"]
+val os = detectOs()
+val arch = detectHostArch()
 val dockerHubRepository = System.getenv()["DOCKER_HUB_REPOSITORY"] ?: "xebialabsunsupported"
 val releasedVersion = System.getenv()["RELEASE_EXPLICIT"] ?: "23.3.0-${
     LocalDateTime.now().format(DateTimeFormatter.ofPattern("Mdd.Hmm"))
 }"
 project.extra.set("releasedVersion", releasedVersion)
+
+enum class Os {
+    DARWIN {
+        override fun toString(): String = "darwin"
+    },
+    LINUX {
+        override fun toString(): String = "linux"
+    },
+    WINDOWS {
+        override fun packaging(): String = "zip"
+        override fun toString(): String = "windows"
+    };
+    open fun packaging(): String = "tar.gz"
+    fun toStringCamelCase(): String = toString().replaceFirstChar { it.uppercaseChar() }
+}
+
+enum class Arch {
+    AMD64 {
+        override fun toString(): String = "amd64"
+    },
+    ARM64 {
+        override fun toString(): String = "arm64"
+    };
+
+    fun toStringCamelCase(): String = toString().replaceFirstChar { it.uppercaseChar() }
+}
 
 allprojects {
     repositories {
@@ -104,10 +137,42 @@ tasks {
 
     val buildXldDir = layout.buildDirectory.dir("xld")
     val buildXldOperatorDir = layout.buildDirectory.dir("xld/${project.name}")
+    val helmDir = layout.buildDirectory.dir("helm").get()
+    val helmCli = helmDir.dir("$os-$arch").file("helm")
+    val operatorSdkDir = layout.buildDirectory.dir("operatorSdk").get()
+    val operatorSdkCli = operatorSdkDir.file("operator-sdk")
+
+    register<Download>("downloadHelm") {
+        group = "helm"
+        src("https://get.helm.sh/helm-v$helmVersion-$os-$arch.tar.gz")
+        dest(helmDir.file("helm.tar.gz").getAsFile())
+    }
+    register<Copy>("unzipHelm") {
+        group = "helm"
+        dependsOn("downloadHelm")
+        doNotTrackState("")
+        from(tarTree(helmDir.file("helm.tar.gz")))
+        into(helmDir)
+        fileMode = 0b111101101
+    }
+
+    register<Download>("downloadOperatorSdk") {
+        group = "operatorSdk"
+        src("https://github.com/operator-framework/operator-sdk/releases/download/v$operatorSdkVersion/operator-sdk_${os}_$arch")
+        dest(operatorSdkDir.dir("operator-sdk-tool").file("operator-sdk").getAsFile())
+    }
+    register<Copy>("unzipOperatorSdk") {
+        group = "helm"
+        dependsOn("downloadOperatorSdk")
+        doNotTrackState("")
+        from(operatorSdkDir.dir("operator-sdk-tool").file("operator-sdk"))
+        into(operatorSdkDir)
+        fileMode = 0b111101101
+    }
 
     register<Copy>("prepareHelmPackage") {
         group = "helm"
-        dependsOn("dumpVersion", ":integration-tests:core:jar")
+        dependsOn("dumpVersion", "unzipHelm", ":integration-tests:core:jar")
         from(layout.projectDirectory)
         exclude(
             layout.buildDirectory.get().asFile.name,
@@ -121,6 +186,9 @@ tasks {
             "*.sh"
         )
         into(buildXldOperatorDir)
+        doFirst {
+            delete(buildXldDir)
+        }
     }
 
     register<Copy>("prepareValuesYaml") {
@@ -146,7 +214,7 @@ tasks {
         group = "helm"
         dependsOn("prepareValuesYaml")
         workingDir(buildXldOperatorDir)
-        commandLine("helm", "dependency", "update", ".")
+        commandLine(helmCli, "dependency", "update", ".")
 
         standardOutput = ByteArrayOutputStream()
         errorOutput = ByteArrayOutputStream()
@@ -168,7 +236,7 @@ tasks {
         group = "helm"
         dependsOn("prepareHelmDeps")
         workingDir(buildXldDir)
-        commandLine("helm", "package", "--app-version=$releasedVersion", project.name)
+        commandLine(helmCli, "package", "--app-version=$releasedVersion", project.name)
 
         standardOutput = ByteArrayOutputStream()
         errorOutput = ByteArrayOutputStream()
@@ -179,6 +247,7 @@ tasks {
                 include("*.tgz")
                 into(buildXldDir)
                 rename("digitalai-deploy-.*.tgz", "xld.tgz")
+                duplicatesStrategy = DuplicatesStrategy.WARN
             }
             logger.lifecycle(standardOutput.toString())
             logger.error(errorOutput.toString())
@@ -187,10 +256,10 @@ tasks {
     }
 
     register<Exec>("prepareOperatorImage") {
-        group = "helm"
-        dependsOn("buildHelmPackage")
+        group = "operator"
+        dependsOn("buildHelmPackage", "unzipOperatorSdk")
         workingDir(buildXldDir)
-        commandLine("operator-sdk", "init", "--domain=digital.ai", "--plugins=helm")
+        commandLine(operatorSdkCli, "init", "--domain=digital.ai", "--plugins=helm")
 
         standardOutput = ByteArrayOutputStream()
         errorOutput = ByteArrayOutputStream()
@@ -206,7 +275,7 @@ tasks {
         group = "operator"
         dependsOn("prepareOperatorImage")
         workingDir(buildXldDir)
-        commandLine("operator-sdk", "create", "api", "--group=xld", "--version=v1alpha1", "--helm-chart=xld.tgz")
+        commandLine(operatorSdkCli, "create", "api", "--group=xld", "--version=v1alpha1", "--helm-chart=xld.tgz")
 
         standardOutput = ByteArrayOutputStream()
         errorOutput = ByteArrayOutputStream()
@@ -333,4 +402,34 @@ node {
     version.set("14.17.5")
     yarnVersion.set("1.22.11")
     download.set(true)
+}
+
+fun detectOs(): Os {
+
+    val osDetectionMap = mapOf(
+        Pair(Os.LINUX, IS_OS_LINUX),
+        Pair(Os.WINDOWS, IS_OS_WINDOWS),
+        Pair(Os.DARWIN, IS_OS_MAC_OSX),
+    )
+
+    return osDetectionMap
+        .filter { it.value }
+        .firstNotNullOfOrNull { it.key } ?: throw IllegalStateException("Unrecognized os")
+}
+
+fun detectHostArch(): Arch {
+
+    val archDetectionMap = mapOf(
+        Pair("x86_64", Arch.AMD64),
+        Pair("x64", Arch.AMD64),
+        Pair("amd64", Arch.AMD64),
+        Pair("aarch64", Arch.ARM64),
+        Pair("arm64", Arch.ARM64),
+    )
+
+    val arch: String = System.getProperty("os.arch")
+    if (archDetectionMap.containsKey(arch)) {
+        return archDetectionMap[arch]!!
+    }
+    throw IllegalStateException("Unrecognized architecture: $arch")
 }
