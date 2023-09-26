@@ -45,8 +45,8 @@ apply(plugin = "com.xebialabs.dependency")
 group = "ai.digital.deploy.helm"
 project.defaultTasks = listOf("build")
 
-val helmVersion = "3.12.3"
-val operatorSdkVersion = "1.25.4"
+val helmVersion = properties["helmVersion"]
+val operatorSdkVersion = properties["operatorSdkVersion"]
 val os = detectOs()
 val arch = detectHostArch()
 val dockerHubRepository = System.getenv()["DOCKER_HUB_REPOSITORY"] ?: "xebialabsunsupported"
@@ -256,7 +256,7 @@ tasks {
     }
 
     register<Exec>("prepareOperatorImage") {
-        group = "helm"
+        group = "operator"
         dependsOn("buildHelmPackage", "unzipOperatorSdk")
         workingDir(buildXldDir)
         commandLine(operatorSdkCli, "init", "--domain=digital.ai", "--plugins=helm")
