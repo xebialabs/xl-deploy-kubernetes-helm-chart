@@ -669,7 +669,7 @@ master:
     ## StrategyType
     ## Can be set to RollingUpdate or OnDelete
     ##
-    type: RollingUpdate
+    type: OnDelete
   ## @param statefulsetLabels deploy statefulset labels. Evaluated as a template
   ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
   ##
@@ -1306,7 +1306,7 @@ worker:
     ## StrategyType
     ## Can be set to RollingUpdate or OnDelete
     ##
-    type: RollingUpdate
+    type: OnDelete
   ## @param statefulsetLabels deploy statefulset labels. Evaluated as a template
   ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
   ##
