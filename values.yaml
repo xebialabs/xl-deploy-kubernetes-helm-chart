@@ -374,7 +374,7 @@ centralConfiguration:
       helm.sh/resource-policy: "keep"
 
   jvmArgs: ""
-  
+
   ## @param command Override default container command (useful when using custom images)
   ##
   command:
@@ -746,7 +746,7 @@ master:
     ## StrategyType
     ## Can be set to RollingUpdate or OnDelete
     ##
-    type: RollingUpdate
+    type: OnDelete
   ## @param statefulsetLabels deploy statefulset labels. Evaluated as a template
   ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
   ##
@@ -955,7 +955,7 @@ master:
   ## Do not override unless you know what you are doing.
   ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
   ##
-  configuration: 
+  configuration:
     "bin_run-in-operator-sh":
       path: "bin/run-in-operator.sh"
       mode: 0755
@@ -1182,10 +1182,10 @@ master:
     ## it defines the number of hostnames, ports and services
     serviceMode: MultiService
     ## @param service.overrideHostnameSuffix together with overrideHostname composes full hostname of the exposed worker pod
-    overrideHostnameSuffix: '.{{ include "common.names.namespace" . }}.svc.cluster.local'    
+    overrideHostnameSuffix: '.{{ include "common.names.namespace" . }}.svc.cluster.local'
     ## @param service.overrideHostname  together with overrideHostnameSuffix composes full hostname of the exposed worker pod
     overrideHostname: '{{ include "deploy.names.master" . }}-{{ .podNumber }}'
-    overrideHostnames: []    
+    overrideHostnames: []
     ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
     ##
     portEnabled: true
@@ -1383,7 +1383,7 @@ worker:
     ## StrategyType
     ## Can be set to RollingUpdate or OnDelete
     ##
-    type: RollingUpdate
+    type: OnDelete
   ## @param statefulsetLabels deploy statefulset labels. Evaluated as a template
   ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
   ##
@@ -1591,7 +1591,7 @@ worker:
   ## Do not override unless you know what you are doing.
   ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
   ##
-  configuration: 
+  configuration:
     "bin_run-in-operator-sh":
       path: "bin/run-in-operator.sh"
       mode: 0755
@@ -1756,7 +1756,7 @@ worker:
     overrideHostnameSuffix: '.{{ include "common.names.namespace" . }}.svc.cluster.local'
     ## @param service.overrideHostname  together with overrideHostnameSuffix composes full hostname of the exposed worker pod
     overrideHostname: '{{ include "deploy.names.worker" . }}-{{ .podNumber }}'
-    overrideHostnames: []    
+    overrideHostnames: []
     ## @param service.portEnabled deploy port. Cannot be disabled when `auth.tls.enabled` is `false`. Listener can be disabled with `listeners.tcp = none`.
     ##
     portEnabled: true
