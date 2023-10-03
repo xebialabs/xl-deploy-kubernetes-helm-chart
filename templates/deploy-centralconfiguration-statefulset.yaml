@@ -39,9 +39,7 @@ spec:
         {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 8 }}
         {{- end }}
         checksum/config: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-configuration.yaml") . | sha256sum }}
-        {{- if or (not .Values.auth.adminPassword)  .Values.extraSecrets }}
         checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
-        {{- end }}
         {{- if .Values.centralConfiguration.extraSecrets }}
         checksum/centralconfiguration-secret: {{ include (print $.Template.BasePath "/deploy-centralconfiguration-secrets.yaml") . | sha256sum }}
         {{- end }}
@@ -102,7 +100,7 @@ spec:
             - mountPath: "/mnt/centralConfiguration-source-dir"
               name: source-dir
             - mountPath: "/mnt/centralConfiguration-target-dir"
-              name: data
+              name: data-dir
         {{- end }}
         {{- if .Values.centralConfiguration.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.initContainers "context" $) | nindent 8 }}
@@ -187,8 +185,7 @@ spec:
               value: {{ .Values.usaCache | quote }}
             - name: CENTRAL_CONFIG_ENCRYPT_KEY
               {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
-{{/*              TODO oidc */}}
-            {{- if .Values.oidc.external }}
+            {{- if .Values.oidc.enabled }}
             - name: OIDC_CLIENT_ID
               {{- include "render.value-secret" (dict  "value" .Values.oidc.clientId "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcClientId" "context" $ ) | nindent 14 }}
             - name: OIDC_CLIENT_SECRET
@@ -260,10 +257,10 @@ spec:
               mountPath: /opt/xebialabs/central-configuration-server/{{ $v.path }}
               subPath: {{ $v.path }}
             {{- end }}
-            - name: data
+            - name: data-dir
               mountPath: /opt/xebialabs/central-configuration-server/centralConfiguration
               subPath: centralConfiguration
-            - name: data
+            - name: data-dir
               mountPath: /opt/xebialabs/central-configuration-server/conf
               subPath: conf
             {{- if .Values.centralConfiguration.extraVolumeMounts }}
@@ -305,25 +302,29 @@ spec:
         {{- if and .Values.centralConfiguration.persistence.enabled (eq (.Values.centralConfiguration.migrateFromEmbedded | toString) "true") }}
         - name: source-dir
           persistentVolumeClaim:
+            {{- if eq .Values.k8sSetup.platform "Openshift" }}
+            claimName: data-dir-{{ include "common.names.fullname" . }}-ocp-master-0
+            {{- else }}
             claimName: data-dir-{{ include "common.names.fullname" . }}-master-0
+            {{- end }}
         {{- end }}
         {{- if not .Values.centralConfiguration.persistence.enabled }}
-        - name: data
+        - name: data-dir
           emptyDir: {}
         {{- else if .Values.centralConfiguration.persistence.existingClaim }}
-        - name: data
+        - name: data-dir
           persistentVolumeClaim:
             {{- with .Values.centralConfiguration.persistence.existingClaim }}
             claimName: {{ tpl . $ }}
             {{- end }}
         {{- else if .Values.centralConfiguration.persistence.single }}
-        - name: data2
+        - name: data-dir
           persistentVolumeClaim:
-            claimName: data-{{ include "common.names.fullname" . }}
+            claimName: data-dir-{{ include "deploy.names.centralConfiguration" . }}
         {{- else }}
   volumeClaimTemplates:
     - metadata:
-        name: data
+        name: data-dir
         labels: {{- include "common.labels.matchLabels" . | nindent 10 }}
         {{- if .Values.centralConfiguration.persistence.annotations }}
         annotations:

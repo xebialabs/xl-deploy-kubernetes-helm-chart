@@ -95,7 +95,6 @@ spec:
       dnsConfig: {{- include "common.tplvalues.render" (dict "value" .Values.master.dnsConfig "context" .) | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.master.terminationGracePeriodSeconds }}
-      {{- if or .Values.master.initContainers (and (not .Values.external.db.enabled) .Values.postgresql.install) (and (not .Values.external.mq.enabled) .Values.rabbitmq.install) }}
       initContainers:
         {{- if not .Values.master.diagnosticMode.enabled }}
         - name: wait-for-central-configuration
@@ -154,7 +153,6 @@ spec:
         {{- if .Values.master.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.master.initContainers "context" $) | nindent 8 }}
         {{- end }}
-      {{- end }}
       containers:
         - name: deploy-master
           image: {{ template "deploy.images.image" ( dict "imageRoot" .Values.master.image "global" .Values.global "context" .) }}
@@ -319,25 +317,25 @@ spec:
               subPath: {{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore") }}
               readOnly: true
             {{- end }}
-            - name: data
+            - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/conf
               subPath: conf
-            - name: data
+            - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/ext
               subPath: ext
-            - name: data
+            - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/hotfix
               subPath: hotfix
-            - name: data
+            - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/hotfix/lib
               subPath: lib
-            - name: data
+            - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/hotfix/plugins
               subPath: plugins
-            - name: data
+            - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/hotfix/satellite-lib
               subPath: satellite-lib
-            - name: data
+            - name: data-dir
               mountPath: /opt/xebialabs/xl-deploy-server/work
               subPath: work
             {{- if .Values.master.extraVolumeMounts }}
@@ -382,22 +380,22 @@ spec:
         {{- include "common.tplvalues.render" (dict "value" .Values.master.extraVolumes "context" $)  | nindent 8 }}
         {{- end }}
         {{- if not .Values.master.persistence.enabled }}
-        - name: data
+        - name: data-dir
           emptyDir: {}
         {{- else if .Values.master.persistence.existingClaim }}
-        - name: data
+        - name: data-dir
           persistentVolumeClaim:
             {{- with .Values.master.persistence.existingClaim }}
             claimName: {{ tpl . $ }}
             {{- end }}
         {{- else if .Values.master.persistence.single }}
-        - name: data
+        - name: data-dir
           persistentVolumeClaim:
-            claimName: data-{{ include "common.names.fullname" . }}
+            claimName: data-dir-{{ include "deploy.names.master" . }}
         {{- else }}
   volumeClaimTemplates:
     - metadata:
-        name: data
+        name: data-dir
         labels: {{- include "common.labels.matchLabels" . | nindent 10 }}
         {{- if .Values.master.persistence.annotations }}
         annotations:
