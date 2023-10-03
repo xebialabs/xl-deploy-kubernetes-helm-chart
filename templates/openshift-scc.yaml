@@ -93,6 +93,8 @@ allowHostPorts: false
 allowPrivilegeEscalation: true
 allowPrivilegedContainer: false
 allowedCapabilities: null
+seccompProfiles:
+- runtime/default
 defaultAddCapabilities: null
 fsGroup:
   type: RunAsAny

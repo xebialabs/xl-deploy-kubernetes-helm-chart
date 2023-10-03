@@ -24,15 +24,27 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{- define "deploy.names.centralConfiguration" -}}
+{{- if eq .Values.k8sSetup.platform "Openshift" -}}
+{{ include "deploy.names.customname" (dict "overrideName" .Values.centralConfiguration.overrideName "suffix" "-ocp-cc-server" "context" .) }}
+{{- else -}}
 {{ include "deploy.names.customname" (dict "overrideName" .Values.centralConfiguration.overrideName "suffix" "-cc-server" "context" .) }}
+{{- end -}}
 {{- end -}}
 
 {{- define "deploy.names.master" -}}
+{{- if eq .Values.k8sSetup.platform "Openshift" -}}
+{{ include "deploy.names.customname" (dict "overrideName" .Values.master.overrideName "suffix" "-ocp-master" "context" .) }}
+{{- else -}}
 {{ include "deploy.names.customname" (dict "overrideName" .Values.master.overrideName "suffix" "-master" "context" .) }}
+{{- end -}}
 {{- end -}}
 
 {{- define "deploy.names.worker" -}}
+{{- if eq .Values.k8sSetup.platform "Openshift" -}}
+{{ include "deploy.names.customname" (dict "overrideName" .Values.worker.overrideName "suffix" "-ocp-worker" "context" .) }}
+{{- else -}}
 {{ include "deploy.names.customname" (dict "overrideName" .Values.worker.overrideName "suffix" "-worker" "context" .) }}
+{{- end -}}
 {{- end -}}
 
 {{- define "postgresql.subchart" -}}
@@ -307,7 +319,11 @@ Get the report db URL
         {{ .Values.external.db.report.url }}
     {{- else -}}
         {{- if .Values.postgresql.install -}}
+            {{- if .Values.postgresql.hasReport -}}
             jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ .Values.postgresql.service.port }}/xld-report-db
+            {{- else -}}
+            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ .Values.postgresql.service.port }}/xld-db
+            {{- end -}}
         {{- end -}}
     {{- end -}}
 {{- end -}}
@@ -320,7 +336,11 @@ Get the report db username
         {{ .Values.external.db.report.username }}
     {{- else -}}
         {{- if .Values.postgresql.install -}}
+            {{- if .Values.postgresql.hasReport -}}
             xld-report
+            {{- else -}}
+            xld
+            {{- end -}}
         {{- end -}}
     {{- end -}}
 {{- end -}}
@@ -333,7 +353,11 @@ Get the report db password
         {{ .Values.external.db.report.password }}
     {{- else -}}
         {{- if .Values.postgresql.install -}}
+            {{- if .Values.postgresql.hasReport -}}
             xld-report
+            {{- else -}}
+            xld
+            {{- end -}}
         {{- end -}}
     {{- end -}}
 {{- end -}}
