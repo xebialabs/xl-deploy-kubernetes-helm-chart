@@ -289,7 +289,7 @@ centralConfiguration:
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 1001
+    runAsUser: 10001
     runAsNonRoot: true
 
   ## @param initContainers Add init containers to the deploy pod
@@ -2156,6 +2156,7 @@ nginx-ingress-controller:
 ## Install postgresql chart. If you have an existing database deployment, set 'install' to 'false'.
 postgresql:
   install: true
+  hasReport: true
   primary:
     initdb:
       scriptsSecret: '{{ include "postgresql.primary.fullname" . }}-deploy'
@@ -2187,7 +2188,8 @@ postgresql:
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/rabbitmq/README.md
 rabbitmq:
   install: true
-  forceBoot: true
+  clustering:
+    forceBoot: true
   replicaCount: 3
   auth:
     username: guest
