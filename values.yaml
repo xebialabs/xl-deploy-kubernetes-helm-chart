@@ -76,7 +76,7 @@ truststore:
    # possible value jks or jceks or pkcs12
   type: "pkcs12"
   password: ""
-  truststore: ""
+  truststore: {}
 
 satellite:
   enabled: false
@@ -289,7 +289,7 @@ centralConfiguration:
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 1001
+    runAsUser: 10001
     runAsNonRoot: true
 
   ## @param initContainers Add init containers to the deploy pod
@@ -418,14 +418,91 @@ centralConfiguration:
   ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
   ##
   configuration:
-    "central-conf_deploy-server.yaml.template":
+    "central-conf_deploy-server-yaml-template":
       path: "central-conf/deploy-server.yaml.template"
+      mode: 0660
       content: |
         deploy.server:
           bind-hostname: 0.0.0.0
           bind-port: {{ .Values.master.containerPorts.deployAkka }}
           license:
             daysBeforeWarning: 10
+          {{- if .Values.oidc.enabled }}    
+          security:
+            auth:
+              provider: "oidc"
+          {{- end }}
+    "central-conf_deploy-oidc-yaml-template":
+      path: "central-conf/deploy-oidc.yaml.template"
+      mode: 0660
+      content: |
+        deploy.security:
+          {{- if .Values.oidc.enabled }}
+          auth:
+            providers:
+              oidc:
+                clientId: {{ .Values.oidc.clientId | quote }}
+                clientSecret: {{ .Values.oidc.clientSecret | quote }}
+                {{- if .Values.oidc.clientAuthMethod }}
+                clientAuthMethod: {{ .Values.oidc.clientAuthMethod | quote }}
+                {{- end }}
+                {{- if .Values.oidc.clientAuthJwt.enable }}
+                clientAuthJwt:
+                  jwsAlg: {{ .Values.oidc.clientAuthJwt.jwsAlg | quote }}
+                  tokenKeyId: {{ .Values.oidc.clientAuthJwt.tokenKeyId | quote }}
+                  {{- if .Values.oidc.clientAuthJwt.keyStore.enable }}
+                  keyStore:
+                    path: {{ .Values.oidc.clientAuthJwt.keyStore.path | quote }}
+                    password: {{ .Values.oidc.clientAuthJwt.keyStore.password | quote }}
+                    type: {{ .Values.oidc.clientAuthJwt.keyStore.type | quote }}
+                  {{- end }}
+                  {{- if .Values.oidc.clientAuthJwt.key.enable }}
+                  key:
+                    alias: {{ .Values.oidc.clientAuthJwt.key.alias | quote }}
+                    password: {{ .Values.oidc.clientAuthJwt.key.password | quote }}
+                  {{- end }}
+                {{- end }}
+                issuer: {{ .Values.oidc.issuer | quote }}
+                keyRetrievalUri: {{ .Values.oidc.keyRetrievalUri | quote }}
+                accessTokenUri: {{ .Values.oidc.accessTokenUri | quote }}
+                userAuthorizationUri: {{ .Values.oidc.userAuthorizationUri | quote }}
+                logoutUri: {{ .Values.oidc.logoutUri | quote }}
+                redirectUri: {{ .Values.oidc.redirectUri | quote }}
+                postLogoutRedirectUri: {{ .Values.oidc.postLogoutRedirectUri | quote }}
+                rolesClaimName: {{ .Values.oidc.rolesClaimName | quote }}
+                userNameClaimName: {{ .Values.oidc.userNameClaimName | quote }}
+                {{- if .Values.oidc.scopes }}
+                scopes: {{ .Values.oidc.scopes }}
+                {{- end }}
+                {{- if .Values.oidc.idTokenJWSAlg }}
+                idTokenJWSAlg: {{ .Values.oidc.idTokenJWSAlg | quote }}
+                {{- end }}
+                {{- if .Values.oidc.accessToken.enable }}
+                access-token:
+                  {{- if .Values.oidc.accessToken.issuer }}
+                  issuer: {{ .Values.oidc.accessToken.issuer | quote }}
+                  {{- end }}
+                  {{- if .Values.oidc.accessToken.audience }}
+                  audience: {{ .Values.oidc.accessToken.audience | quote }}
+                  {{- end }}
+                  {{- if .Values.oidc.accessToken.keyRetrievalUri }}
+                  keyRetrievalUri: {{ .Values.oidc.accessToken.keyRetrievalUri | quote }}
+                  {{- end }}
+                  {{- if .Values.oidc.accessToken.jwsAlg }}
+                  jwsAlg: {{ .Values.oidc.accessToken.jwsAlg | quote }}
+                  {{- end }}
+                  {{- if .Values.oidc.accessToken.secretKey }}
+                  secretKey: {{ .Values.oidc.accessToken.secretKey | quote }}
+                  {{- end }}
+                {{- end }}
+                loginMethodDescription: {{ default "External login (OpenID Connect)" .Values.oidc.loginMethodDescription | quote }}
+                {{- if .Values.oidc.proxyHost }}
+                proxyHost: {{ .Values.oidc.proxyHost | quote }}
+                {{- end }}
+                {{- if .Values.oidc.proxyPort }}
+                proxyPort: {{ .Values.oidc.proxyPort | quote }}
+                {{- end }}
+          {{- end }}
 
   ## @param extraConfiguration [string] Configuration file content: extra configuration to be appended to deploy configuration
   ## Use this instead of `configuration` to add more configuration
@@ -879,7 +956,7 @@ master:
   ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
   ##
   configuration:
-    "bin_run-in-operator.sh":
+    "bin_run-in-operator-sh":
       path: "bin/run-in-operator.sh"
       mode: 0755
       content: |
@@ -1515,7 +1592,7 @@ worker:
   ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
   ##
   configuration:
-    "bin_run-in-operator.sh":
+    "bin_run-in-operator-sh":
       path: "bin/run-in-operator.sh"
       mode: 0755
       content: |
@@ -1782,47 +1859,45 @@ metrics:
   enabled: false
 
 oidc:
-  accessToken:
-    audience:
-    enable: false
-    issuer:
-    jwsAlg:
-    keyRetrievalUri:
-    secretKey:
-  accessTokenUri:
+  enabled: false
+  external: false
+  clientId:
+  clientSecret:
+  clientAuthMethod:
   clientAuthJwt:
     enable: false
     jwsAlg:
+    tokenKeyId:
     keyStore:
       enable: false
       path:
       password:
       type:
     key:
-      alias:
       enable: false
+      alias:
       password:
-    tokenKeyId:
-  clientAuthMethod:
-  clientId:
-  clientSecret:
-  emailClaim:
-  enabled: false
-  external: false
-  externalIdClaim:
-  fullNameClaim:
-  idTokenJWSAlg:
   issuer:
   keyRetrievalUri:
+  accessTokenUri:
+  userAuthorizationUri:
   logoutUri:
+  redirectUri:
   postLogoutRedirectUri:
+  rolesClaimName:
+  userNameClaimName:
+  scopes:
+  idTokenJWSAlg:
+  accessToken:
+    enable: false
+    issuer:
+    audience:
+    keyRetrievalUri:
+    jwsAlg:
+    secretKey:
+  loginMethodDescription:
   proxyHost:
   proxyPort:
-  redirectUri:
-  rolesClaim:
-  scopes: [ "openid" ]
-  userAuthorizationUri:
-  userNameClaim:
 
 ## @section Common parameters
 ##
@@ -1892,7 +1967,7 @@ ingress:
     #nginx.ingress.kubernetes.io/ssl-redirect: "false"
     #nginx.ingress.kubernetes.io/rewrite-target: /
     #nginx.ingress.kubernetes.io/affinity: cookie
-    #nginx.ingress.kubernetes.io/session-cookie-name: JSESSIONID
+    #nginx.ingress.kubernetes.io/session-cookie-name: SESSION_XLD
     #nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
     #nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
     #nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
@@ -1901,7 +1976,7 @@ ingress:
     #kubernetes.io/ingress.class: "haproxy-daid"
     #ingress.kubernetes.io/rewrite-target: /
     #ingress.kubernetes.io/affinity: cookie
-    #ingress.kubernetes.io/session-cookie-name: JSESSIONID
+    #ingress.kubernetes.io/session-cookie-name: SESSION_XLD
     #ingress.kubernetes.io/session-cookie-strategy: prefix
     #ingress.kubernetes.io/config-backend: |
     #  option httpchk GET /ha/health HTTP/1.0
@@ -1986,7 +2061,7 @@ route:
   hostname: ""
   ## @param route.annotations Additional annotations for the route resource.
   annotations:
-    haproxy.router.openshift.io/cookie_name: JSESSIONID
+    haproxy.router.openshift.io/cookie_name: SESSION_XLD
     haproxy.router.openshift.io/disable_cookies: "false"
     haproxy.router.openshift.io/rewrite-target: /
   tls:
@@ -2081,6 +2156,7 @@ nginx-ingress-controller:
 ## Install postgresql chart. If you have an existing database deployment, set 'install' to 'false'.
 postgresql:
   install: true
+  hasReport: true
   primary:
     initdb:
       scriptsSecret: '{{ include "postgresql.primary.fullname" . }}-deploy'
@@ -2099,6 +2175,8 @@ postgresql:
   service:
     port: 5432
     type: ClusterIP
+  serviceAccount:
+    create: true
   resources:
     requests:
       memory: 256Mi
@@ -2110,7 +2188,8 @@ postgresql:
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/rabbitmq/README.md
 rabbitmq:
   install: true
-  forceBoot: true
+  clustering:
+    forceBoot: true
   replicaCount: 3
   auth:
     username: guest
