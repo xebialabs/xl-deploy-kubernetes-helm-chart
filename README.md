@@ -111,7 +111,7 @@ kubectl delete namespace digitalai
 | `keystore.keystore`                                  | Use repository-keystore.jceks files content ecoded with base64                                                                                                                                                         | `""`     |
 | `truststore.type`                                    | Type of truststore, possible value jks or jceks or pkcs12                                                                                                                                                              | `pkcs12` |
 | `truststore.password`                                | Truststore password                                                                                                                                                                                                    | `""`     |
-| `truststore.truststore`                              | Truststore file base64 encoded                                                                                                                                                                                         | `""`     |
+| `truststore.truststore`                              | Truststore file base64 encoded                                                                                                                                                                                         | `{}`     |
 | `satellite.enabled`                                  | Enable support to work with Deploy SAtellites                                                                                                                                                                          | `false`  |
 | `centralConfiguration.overrideName`                  | If set the template will override the STS name.                                                                                                                                                                        | `""`     |
 | `centralConfiguration.useIpAsHostname`               | Set IP address of the container as the hostname for the instance.                                                                                                                                                      | `false`  |
@@ -164,7 +164,7 @@ kubectl delete namespace digitalai
 | `centralConfiguration.podSecurityContext.enabled`                    | Enable deploy pods' Security Context                                                                                     | `true`                                       |
 | `centralConfiguration.podSecurityContext.fsGroup`                    | Set deploy pod's Security Context fsGroup                                                                                | `10001`                                      |
 | `centralConfiguration.containerSecurityContext.enabled`              | Enabled deploy containers' Security Context                                                                              | `true`                                       |
-| `centralConfiguration.containerSecurityContext.runAsUser`            | Set deploy containers' Security Context runAsUser                                                                        | `1001`                                       |
+| `centralConfiguration.containerSecurityContext.runAsUser`            | Set deploy containers' Security Context runAsUser                                                                        | `10001`                                      |
 | `centralConfiguration.containerSecurityContext.runAsNonRoot`         | Set deploy container's Security Context runAsNonRoot                                                                     | `true`                                       |
 | `centralConfiguration.initContainers`                                | Add init containers to the deploy pod                                                                                    | `[]`                                         |
 | `centralConfiguration.sidecars`                                      | Add sidecar containers to the deploy pod                                                                                 | `[]`                                         |
@@ -521,45 +521,43 @@ kubectl delete namespace digitalai
 
 ### OIDC parameters
 
-| Name                                   | Description                                                                                                       | Value        |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| `oidc.accessToken.audience`            | Expected audience 'aud' claim value                                                                               | `nil`        |
-| `oidc.accessToken.enable`              | Enable access token                                                                                               | `false`      |
-| `oidc.accessToken.issuer`              | Expected issuer 'iss' claim value                                                                                 | `nil`        |
-| `oidc.accessToken.jwsAlg`              | Expected JSON Web Algorithm                                                                                       | `nil`        |
-| `oidc.accessToken.keyRetrievalUri`     | The jwks_uri to retrieve keys for the token                                                                       | `nil`        |
-| `oidc.accessToken.secretKey`           | The secret key if MAC based algorithms is used for the token                                                      | `nil`        |
-| `oidc.accessTokenUri`                  | The redirect URI to use for returning the access token                                                            | `nil`        |
-| `oidc.clientAuthJwt.enable`            | Enable Client Authentication Using private_key_jwt                                                                | `false`      |
-| `oidc.clientAuthJwt.jwsAlg`            | Expected JSON Web Algorithm                                                                                       | `nil`        |
-| `oidc.clientAuthJwt.keyStore.enable`   | Enable keystore                                                                                                   | `false`      |
-| `oidc.clientAuthJwt.keyStore.path`     | The key store file path                                                                                           | `nil`        |
-| `oidc.clientAuthJwt.keyStore.password` | The key store password                                                                                            | `nil`        |
-| `oidc.clientAuthJwt.keyStore.type`     | The type of keystore                                                                                              | `nil`        |
-| `oidc.clientAuthJwt.key.alias`         | Private key alias inside the key store                                                                            | `nil`        |
-| `oidc.clientAuthJwt.key.enable`        | Enable private key                                                                                                | `false`      |
-| `oidc.clientAuthJwt.key.password`      | Private key password                                                                                              | `nil`        |
-| `oidc.clientAuthJwt.tokenKeyId`        | Token key identifier 'kid' header - set it if your OpenID Connect provider requires it                            | `nil`        |
-| `oidc.clientAuthMethod`                | Client authentication method                                                                                      | `nil`        |
-| `oidc.clientId`                        | Client ID                                                                                                         | `nil`        |
-| `oidc.clientSecret`                    | Client secret                                                                                                     | `nil`        |
-| `oidc.emailClaim`                      | Email claim                                                                                                       | `nil`        |
-| `oidc.enabled`                         | Enable the OIDC configuration                                                                                     | `false`      |
-| `oidc.external`                        | Enable the OIDC configuration                                                                                     | `false`      |
-| `oidc.externalIdClaim`                 | A unique external ID such as the user's employee ID or GitHub ID. This is an optional claim.                      | `nil`        |
-| `oidc.fullNameClaim`                   | FullName claim                                                                                                    | `nil`        |
-| `oidc.idTokenJWSAlg`                   | The ID token signature verification algorithm                                                                     | `nil`        |
-| `oidc.issuer`                          | OpenID Provider Issuer here                                                                                       | `nil`        |
-| `oidc.keyRetrievalUri`                 | The jwks_uri to retrieve keys                                                                                     | `nil`        |
-| `oidc.logoutUri`                       | The logout endpoint to revoke token via the browser                                                               | `nil`        |
-| `oidc.postLogoutRedirectUri`           | If you need to redirect to the login page after logout, you can use your redirectUri as the postLogoutRedirectUri | `nil`        |
-| `oidc.proxyHost`                       | Proxy host                                                                                                        | `nil`        |
-| `oidc.proxyPort`                       | Proxy port                                                                                                        | `nil`        |
-| `oidc.redirectUri`                     | The redirectUri endpoint must always point to the /login/external-login Deploy endpoint.                          | `nil`        |
-| `oidc.rolesClaim`                      | Roles claim                                                                                                       | `nil`        |
-| `oidc.scopes`                          | Fields described here must be present in the scope.                                                               | `["openid"]` |
-| `oidc.userAuthorizationUri`            | The authorize endpoint to request tokens or authorization codes via the browser                                   | `nil`        |
-| `oidc.userNameClaim`                   | A unique username for both internal and external users.                                                           | `nil`        |
+| Name                                   | Description                                                                                                       | Value   |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------- |
+| `oidc.enabled`                         | Enable the OIDC configuration                                                                                     | `false` |
+| `oidc.clientId`                        | Client ID                                                                                                         | `nil`   |
+| `oidc.clientSecret`                    | Client secret                                                                                                     | `nil`   |
+| `oidc.clientAuthMethod`                | Client authentication method                                                                                      | `nil`   |
+| `oidc.clientAuthJwt.enable`            | Enable Client Authentication Using private_key_jwt                                                                | `false` |
+| `oidc.clientAuthJwt.jwsAlg`            | Expected JSON Web Algorithm                                                                                       | `nil`   |
+| `oidc.clientAuthJwt.tokenKeyId`        | Token key identifier 'kid' header - set it if your OpenID Connect provider requires it                            | `nil`   |
+| `oidc.clientAuthJwt.keyStore.enable`   | Enable keystore                                                                                                   | `false` |
+| `oidc.clientAuthJwt.keyStore.path`     | The key store file path                                                                                           | `nil`   |
+| `oidc.clientAuthJwt.keyStore.password` | The key store password                                                                                            | `nil`   |
+| `oidc.clientAuthJwt.keyStore.type`     | The type of keystore                                                                                              | `nil`   |
+| `oidc.clientAuthJwt.key.enable`        | Enable private key                                                                                                | `false` |
+| `oidc.clientAuthJwt.key.alias`         | Private key alias inside the key store                                                                            | `nil`   |
+| `oidc.clientAuthJwt.key.password`      | Private key password                                                                                              | `nil`   |
+| `oidc.emailClaim`                      | Email claim                                                                                                       | `nil`   |
+| `oidc.issuer`                          | OpenID Provider Issuer here                                                                                       | `nil`   |
+| `oidc.keyRetrievalUri`                 | The jwks_uri to retrieve keys                                                                                     | `nil`   |
+| `oidc.accessTokenUri`                  | The redirect URI to use for returning the access token                                                            | `nil`   |
+| `oidc.userAuthorizationUri`            | The authorize endpoint to request tokens or authorization codes via the browser                                   | `nil`   |
+| `oidc.logoutUri`                       | The logout endpoint to revoke token via the browser                                                               | `nil`   |
+| `oidc.redirectUri`                     | The redirectUri endpoint must always point to the /login/external-login Deploy endpoint.                          | `nil`   |
+| `oidc.postLogoutRedirectUri`           | If you need to redirect to the login page after logout, you can use your redirectUri as the postLogoutRedirectUri | `nil`   |
+| `oidc.rolesClaimName`                  | Roles claim                                                                                                       | `nil`   |
+| `oidc.userNameClaimName`               | A unique username for both internal and external users.                                                           | `nil`   |
+| `oidc.scopes`                          | Fields described here must be present in the scope.                                                               | `nil`   |
+| `oidc.idTokenJWSAlg`                   | The ID token signature verification algorithm                                                                     | `nil`   |
+| `oidc.accessToken.enable`              | Enable access token                                                                                               | `false` |
+| `oidc.accessToken.issuer`              | Expected issuer 'iss' claim value                                                                                 | `nil`   |
+| `oidc.accessToken.audience`            | Expected audience 'aud' claim value                                                                               | `nil`   |
+| `oidc.accessToken.keyRetrievalUri`     | The jwks_uri to retrieve keys for the token                                                                       | `nil`   |
+| `oidc.accessToken.jwsAlg`              | Expected JSON Web Algorithm                                                                                       | `nil`   |
+| `oidc.accessToken.secretKey`           | The secret key if MAC based algorithms is used for the token                                                      | `nil`   |
+| `oidc.loginMethodDescription`          | Description of the method used                                                                                    | `nil`   |
+| `oidc.proxyHost`                       | Proxy host                                                                                                        | `nil`   |
+| `oidc.proxyPort`                       | Proxy port                                                                                                        | `nil`   |
 
 ### Common parameters
 
@@ -629,10 +627,11 @@ kubectl delete namespace digitalai
 
 ### Traffic exposure parameters
 
-| Name                                    | Description                                  | Value          |
-| --------------------------------------- | -------------------------------------------- | -------------- |
-| `nginx-ingress-controller.service.type` | Kubernetes Service type for Controller       | `LoadBalancer` |
-| `postgresql.install`                    | Enable PostgreSQL helm subchart installation | `true`         |
+| Name                                    | Description                                   | Value          |
+| --------------------------------------- | --------------------------------------------- | -------------- |
+| `nginx-ingress-controller.service.type` | Kubernetes Service type for Controller        | `LoadBalancer` |
+| `postgresql.install`                    | Enable PostgreSQL helm subchart installation  | `true`         |
+| `postgresql.hasReport`                  | Indicating that reporting database is enabled | `true`         |
 
 ### PostgreSQL Primary parameters
 
@@ -646,10 +645,14 @@ kubectl delete namespace digitalai
 | `postgresql.primary.persistence.storageClass`  | PVC Storage Class for PostgreSQL Primary data volume                                                   | `""`                                                   |
 | `postgresql.primary.persistence.size`          | PVC Storage Request for PostgreSQL volume                                                              | `8Gi`                                                  |
 | `postgresql.primary.persistence.existingClaim` | Name of an existing PVC to use                                                                         | `""`                                                   |
+| `postgresql.primary.resources.requests.memory` | The requested memory for the PostgreSQL Primary containers                                             | `256Mi`                                                |
+| `postgresql.primary.resources.requests.cpu`    | The requested cpu for the PostgreSQL Primary containers                                                | `250m`                                                 |
+| `postgresql.primary.service.ports.postgresql`  | PostgreSQL service port                                                                                | `5432`                                                 |
 | `postgresql.primary.service.type`              | Kubernetes Service type                                                                                | `ClusterIP`                                            |
 | `postgresql.auth.enablePostgresUser`           | Assign a password to the "postgres" admin user. Otherwise, remote access will be blocked for this user | `true`                                                 |
 | `postgresql.auth.username`                     | Name for a custom user to create                                                                       | `postgres`                                             |
 | `postgresql.auth.postgresPassword`             | Password for the "postgres" admin user. Ignored if `auth.existingSecret` is provided                   | `postgres`                                             |
+| `postgresql.serviceAccount.create`             | Enable creation of ServiceAccount for PostgreSQL pod                                                   | `true`                                                 |
 
 ### Volume Permissions parameters
 
