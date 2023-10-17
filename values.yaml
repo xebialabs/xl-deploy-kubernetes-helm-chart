@@ -113,7 +113,7 @@ truststore:
   ## @param truststore.password Truststore password
   password: ""
   ## @param truststore.truststore Truststore file base64 encoded
-  truststore: ""
+  truststore: {}
 
 satellite:
   ## @param satellite.enabled Enable support to work with Deploy SAtellites
@@ -348,7 +348,7 @@ centralConfiguration:
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 1001
+    runAsUser: 10001
     runAsNonRoot: true
 
   ## @param centralConfiguration.initContainers Add init containers to the deploy pod
@@ -482,14 +482,91 @@ centralConfiguration:
   ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
   ##
   configuration:
-    "central-conf_deploy-server.yaml.template":
+    "central-conf_deploy-server-yaml-template":
       path: "central-conf/deploy-server.yaml.template"
+      mode: 0660
       content: |
         deploy.server:
           bind-hostname: 0.0.0.0
           bind-port: {{ .Values.master.containerPorts.deployAkka }}
           license:
             daysBeforeWarning: 10
+          {{- if .Values.oidc.enabled }}    
+          security:
+            auth:
+              provider: "oidc"
+          {{- end }}
+    "central-conf_deploy-oidc-yaml-template":
+      path: "central-conf/deploy-oidc.yaml.template"
+      mode: 0660
+      content: |
+        deploy.security:
+          {{- if .Values.oidc.enabled }}
+          auth:
+            providers:
+              oidc:
+                clientId: {{ .Values.oidc.clientId | quote }}
+                clientSecret: {{ .Values.oidc.clientSecret | quote }}
+                {{- if .Values.oidc.clientAuthMethod }}
+                clientAuthMethod: {{ .Values.oidc.clientAuthMethod | quote }}
+                {{- end }}
+                {{- if .Values.oidc.clientAuthJwt.enable }}
+                clientAuthJwt:
+                  jwsAlg: {{ .Values.oidc.clientAuthJwt.jwsAlg | quote }}
+                  tokenKeyId: {{ .Values.oidc.clientAuthJwt.tokenKeyId | quote }}
+                  {{- if .Values.oidc.clientAuthJwt.keyStore.enable }}
+                  keyStore:
+                    path: {{ .Values.oidc.clientAuthJwt.keyStore.path | quote }}
+                    password: {{ .Values.oidc.clientAuthJwt.keyStore.password | quote }}
+                    type: {{ .Values.oidc.clientAuthJwt.keyStore.type | quote }}
+                  {{- end }}
+                  {{- if .Values.oidc.clientAuthJwt.key.enable }}
+                  key:
+                    alias: {{ .Values.oidc.clientAuthJwt.key.alias | quote }}
+                    password: {{ .Values.oidc.clientAuthJwt.key.password | quote }}
+                  {{- end }}
+                {{- end }}
+                issuer: {{ .Values.oidc.issuer | quote }}
+                keyRetrievalUri: {{ .Values.oidc.keyRetrievalUri | quote }}
+                accessTokenUri: {{ .Values.oidc.accessTokenUri | quote }}
+                userAuthorizationUri: {{ .Values.oidc.userAuthorizationUri | quote }}
+                logoutUri: {{ .Values.oidc.logoutUri | quote }}
+                redirectUri: {{ .Values.oidc.redirectUri | quote }}
+                postLogoutRedirectUri: {{ .Values.oidc.postLogoutRedirectUri | quote }}
+                rolesClaimName: {{ .Values.oidc.rolesClaimName | quote }}
+                userNameClaimName: {{ .Values.oidc.userNameClaimName | quote }}
+                {{- if .Values.oidc.scopes }}
+                scopes: {{ .Values.oidc.scopes }}
+                {{- end }}
+                {{- if .Values.oidc.idTokenJWSAlg }}
+                idTokenJWSAlg: {{ .Values.oidc.idTokenJWSAlg | quote }}
+                {{- end }}
+                {{- if .Values.oidc.accessToken.enable }}
+                access-token:
+                  {{- if .Values.oidc.accessToken.issuer }}
+                  issuer: {{ .Values.oidc.accessToken.issuer | quote }}
+                  {{- end }}
+                  {{- if .Values.oidc.accessToken.audience }}
+                  audience: {{ .Values.oidc.accessToken.audience | quote }}
+                  {{- end }}
+                  {{- if .Values.oidc.accessToken.keyRetrievalUri }}
+                  keyRetrievalUri: {{ .Values.oidc.accessToken.keyRetrievalUri | quote }}
+                  {{- end }}
+                  {{- if .Values.oidc.accessToken.jwsAlg }}
+                  jwsAlg: {{ .Values.oidc.accessToken.jwsAlg | quote }}
+                  {{- end }}
+                  {{- if .Values.oidc.accessToken.secretKey }}
+                  secretKey: {{ .Values.oidc.accessToken.secretKey | quote }}
+                  {{- end }}
+                {{- end }}
+                loginMethodDescription: {{ default "External login (OpenID Connect)" .Values.oidc.loginMethodDescription | quote }}
+                {{- if .Values.oidc.proxyHost }}
+                proxyHost: {{ .Values.oidc.proxyHost | quote }}
+                {{- end }}
+                {{- if .Values.oidc.proxyPort }}
+                proxyPort: {{ .Values.oidc.proxyPort | quote }}
+                {{- end }}
+          {{- end }}
 
   ## @param centralConfiguration.extraConfiguration [string] Configuration file content: extra configuration to be appended to deploy configuration
   ## Use this instead of `configuration` to add more configuration
@@ -978,7 +1055,7 @@ master:
   ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
   ##
   configuration:
-    "bin_run-in-operator.sh":
+    "bin_run-in-operator-sh":
       path: "bin/run-in-operator.sh"
       mode: 0755
       content: |
@@ -1676,7 +1753,7 @@ worker:
   ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
   ##
   configuration:
-    "bin_run-in-operator.sh":
+    "bin_run-in-operator-sh":
       path: "bin/run-in-operator.sh"
       mode: 0755
       content: |
@@ -1985,26 +2062,21 @@ metrics:
 ##
 
 oidc:
-  accessToken:
-    ## @param oidc.accessToken.audience Expected audience 'aud' claim value
-    audience:
-    ## @param oidc.accessToken.enable Enable access token
-    enable: false
-    ## @param oidc.accessToken.issuer Expected issuer 'iss' claim value
-    issuer:
-    ## @param oidc.accessToken.jwsAlg Expected JSON Web Algorithm
-    jwsAlg:
-    ## @param oidc.accessToken.keyRetrievalUri The jwks_uri to retrieve keys for the token
-    keyRetrievalUri:
-    ## @param oidc.accessToken.secretKey The secret key if MAC based algorithms is used for the token
-    secretKey:
-  ## @param oidc.accessTokenUri The redirect URI to use for returning the access token
-  accessTokenUri:
+  ## @param oidc.enabled Enable the OIDC configuration
+  enabled: false
+  ## @param oidc.clientId Client ID
+  clientId:
+  ## @param oidc.clientSecret Client secret
+  clientSecret:
+  ## @param oidc.clientAuthMethod Client authentication method
+  clientAuthMethod:
   clientAuthJwt:
     ## @param oidc.clientAuthJwt.enable Enable Client Authentication Using private_key_jwt
     enable: false
     ## @param oidc.clientAuthJwt.jwsAlg Expected JSON Web Algorithm
     jwsAlg:
+    ## @param oidc.clientAuthJwt.tokenKeyId Token key identifier 'kid' header - set it if your OpenID Connect provider requires it
+    tokenKeyId:
     keyStore:
       ## @param oidc.clientAuthJwt.keyStore.enable Enable keystore
       enable: false
@@ -2015,59 +2087,60 @@ oidc:
       ## @param oidc.clientAuthJwt.keyStore.type The type of keystore
       type:
     key:
-      ## @param oidc.clientAuthJwt.key.alias Private key alias inside the key store
-      alias:
       ## @param oidc.clientAuthJwt.key.enable Enable private key
       enable: false
+      ## @param oidc.clientAuthJwt.key.alias Private key alias inside the key store
+      alias:
       ## @param oidc.clientAuthJwt.key.password Private key password
       password:
-    ## @param oidc.clientAuthJwt.tokenKeyId Token key identifier 'kid' header - set it if your OpenID Connect provider requires it
-    tokenKeyId:
-  ## @param oidc.clientAuthMethod Client authentication method
-  clientAuthMethod:
-  ## @param oidc.clientId Client ID
-  clientId:
-  ## @param oidc.clientSecret Client secret
-  clientSecret:
   ## @param oidc.emailClaim Email claim
   emailClaim:
-  ## @param oidc.enabled Enable the OIDC configuration
-  enabled: false
-  ## @param oidc.external Enable the OIDC configuration
-  external: false
-  ## @param oidc.externalIdClaim A unique external ID such as the user's employee ID or GitHub ID. This is an optional claim.
-  externalIdClaim:
-  ## @param oidc.fullNameClaim FullName claim
-  fullNameClaim:
-  ## @param oidc.idTokenJWSAlg The ID token signature verification algorithm
-  idTokenJWSAlg:
   ## @param oidc.issuer OpenID Provider Issuer here
   issuer:
   ## @param oidc.keyRetrievalUri The jwks_uri to retrieve keys
   keyRetrievalUri:
+  ## @param oidc.accessTokenUri The redirect URI to use for returning the access token
+  accessTokenUri:
+  ## @param oidc.userAuthorizationUri The authorize endpoint to request tokens or authorization codes via the browser
+  userAuthorizationUri:
   ## @param oidc.logoutUri The logout endpoint to revoke token via the browser
   logoutUri:
-  ## @param oidc.postLogoutRedirectUri If you need to redirect to the login page after logout, you can use your redirectUri as the postLogoutRedirectUri
-  postLogoutRedirectUri:
-  ## @param oidc.proxyHost Proxy host
-  proxyHost:
-  ## @param oidc.proxyPort Proxy port
-  proxyPort:
   ## @param oidc.redirectUri The redirectUri endpoint must always point to the /login/external-login Deploy endpoint.
   ## The redirectUri is an endpoint where authentication responses can be sent and received by Deploy.
   ## It must exactly match one of the redirect_uris you registered in the OKTA and Azure AD portal and it must be URL encoded.
   ## For Keycloak you can register a pattern for redirect_uri from the Keycloak Admin Panel.
   ## For example, you can provide a mask such as: http://example.com/mask** that matches http://example.com/mask/ or http://example.com/mask.
   redirectUri:
-  ## @param oidc.rolesClaim Roles claim
-  rolesClaim:
-  ## @param oidc.scopes Fields described here must be present in the scope.
-  scopes: [ "openid" ]
-  ## @param oidc.userAuthorizationUri The authorize endpoint to request tokens or authorization codes via the browser
-  userAuthorizationUri:
-  ## @param oidc.userNameClaim A unique username for both internal and external users.
+  ## @param oidc.postLogoutRedirectUri If you need to redirect to the login page after logout, you can use your redirectUri as the postLogoutRedirectUri
+  postLogoutRedirectUri:
+  ## @param oidc.rolesClaimName Roles claim
+  rolesClaimName:
+  ## @param oidc.userNameClaimName A unique username for both internal and external users.
   ## You cannot sign in with a user if a local account with the same username exists.
-  userNameClaim:
+  userNameClaimName:
+  ## @param oidc.scopes Fields described here must be present in the scope.
+  scopes:
+  ## @param oidc.idTokenJWSAlg The ID token signature verification algorithm
+  idTokenJWSAlg:
+  accessToken:
+    ## @param oidc.accessToken.enable Enable access token
+    enable: false
+    ## @param oidc.accessToken.issuer Expected issuer 'iss' claim value
+    issuer:
+    ## @param oidc.accessToken.audience Expected audience 'aud' claim value
+    audience:
+    ## @param oidc.accessToken.keyRetrievalUri The jwks_uri to retrieve keys for the token
+    keyRetrievalUri:
+    ## @param oidc.accessToken.jwsAlg Expected JSON Web Algorithm
+    jwsAlg:
+    ## @param oidc.accessToken.secretKey The secret key if MAC based algorithms is used for the token
+    secretKey:
+  ## @param oidc.loginMethodDescription Description of the method used
+  loginMethodDescription:
+  ## @param oidc.proxyHost Proxy host
+  proxyHost:
+  ## @param oidc.proxyPort Proxy port
+  proxyPort:
 
 ## @section Common parameters
 ##
@@ -2138,7 +2211,7 @@ ingress:
   ## nginx.ingress.kubernetes.io/ssl-redirect: "false"
   ## nginx.ingress.kubernetes.io/rewrite-target: /
   ## nginx.ingress.kubernetes.io/affinity: cookie
-  ## nginx.ingress.kubernetes.io/session-cookie-name: SESSION_XLD
+  ## nginx.ingress.kubernetes.io/session-cookie-name: ROUTE
   ## nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
   ## nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
   ## nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
@@ -2366,6 +2439,9 @@ nginx-ingress-controller:
 postgresql:
   ## @param postgresql.install Enable PostgreSQL helm subchart installation
   install: true
+  ## @param postgresql.hasReport Indicating that reporting database is enabled
+  ##
+  hasReport: true
   ## @section PostgreSQL Primary parameters
   ##
   primary:
@@ -2427,9 +2503,34 @@ postgresql:
     ## @param postgresql.auth.postgresPassword Password for the "postgres" admin user. Ignored if `auth.existingSecret` is provided
     ##
     postgresPassword: postgres
+  ## PostgreSQL Primary service configuration
+  ##
+  service:
+    ## @param postgresql.primary.service.ports.postgresql PostgreSQL service port
+    ##
+    ports:
+      postgresql: 5432
+    ## @param postgresql.primary.service.type Kubernetes Service type
+    ##
+    type: ClusterIP
+  ## Service account for PostgreSQL to use.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  ##
+  serviceAccount:
+    ## @param postgresql.serviceAccount.create Enable creation of ServiceAccount for PostgreSQL pod
+    ##
+    create: true
+  ## PostgreSQL Primary resource requests and limits
+  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+  ## @param postgresql.primary.resources.requests.memory The requested memory for the PostgreSQL Primary containers
+  ## @param postgresql.primary.resources.requests.cpu The requested cpu for the PostgreSQL Primary containers
+  ##
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
   ## @section Volume Permissions parameters
   ##
-
   ## Init containers parameters:
   ## volumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node
   ##
