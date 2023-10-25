@@ -439,7 +439,7 @@ kubectl delete namespace digitalai
 ### Persistence parameters for worker
 
 | Name                                                                     | Description                                                                                       | Value                                                               |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |---------------------------------------------------------------------|
 | `worker.persistence.enabled`                                             | Enable deploy data persistence using PVC                                                          | `true`                                                              |
 | `worker.persistence.single`                                              | Enable deploy data to use single PVC                                                              | `false`                                                             |
 | `worker.persistence.storageClass`                                        | PVC Storage Class for deploy data volume                                                          | `""`                                                                |
@@ -451,8 +451,7 @@ kubectl delete namespace digitalai
 | `worker.persistence.annotations.helm.sh/resource-policy`                 | Persistence annotation for keeping created PVCs                                                   | `keep`                                                              |
 | `worker.jvmArgs`                                                         | Deploy worker JVM arguments                                                                       | `""`                                                                |
 | `worker.command`                                                         | Override default container command (useful when using custom images)                              | `["/opt/xebialabs/tini"]`                                           |
-| `worker.args`                                                            | Override default container args (useful when using custom images)                                 | `- --
-- /opt/xebialabs/deploy-task-engine/bin/run-in-operator.sh`   |
+| `worker.args`                                                            | Override default container args (useful when using custom images)                                 | `[-- , /opt/xebialabs/deploy-task-engine/bin/run-in-operator.sh`    |
 | `worker.lifecycleHooks`                                                  | Overwrite livecycle for the deploy container(s) to automate configuration before or after startup | `{}`                                                                |
 | `worker.extraEnvVars`                                                    | Extra environment variables to add to deploy pods                                                 | `[]`                                                                |
 | `worker.extraEnvVarsCM`                                                  | Name of existing ConfigMap containing extra environment variables                                 | `""`                                                                |
