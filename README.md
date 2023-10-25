@@ -439,7 +439,7 @@ kubectl delete namespace digitalai
 ### Persistence parameters for worker
 
 | Name                                                                     | Description                                                                                       | Value                                                               |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |---------------------------------------------------------------------|
 | `worker.persistence.enabled`                                             | Enable deploy data persistence using PVC                                                          | `true`                                                              |
 | `worker.persistence.single`                                              | Enable deploy data to use single PVC                                                              | `false`                                                             |
 | `worker.persistence.storageClass`                                        | PVC Storage Class for deploy data volume                                                          | `""`                                                                |
@@ -451,8 +451,7 @@ kubectl delete namespace digitalai
 | `worker.persistence.annotations.helm.sh/resource-policy`                 | Persistence annotation for keeping created PVCs                                                   | `keep`                                                              |
 | `worker.jvmArgs`                                                         | Deploy worker JVM arguments                                                                       | `""`                                                                |
 | `worker.command`                                                         | Override default container command (useful when using custom images)                              | `["/opt/xebialabs/tini"]`                                           |
-| `worker.args`                                                            | Override default container args (useful when using custom images)                                 | `- --
-- /opt/xebialabs/deploy-task-engine/bin/run-in-operator.sh`   |
+| `worker.args`                                                            | Override default container args (useful when using custom images)                                 | `--, /opt/xebialabs/deploy-task-engine/bin/run-in-operator.sh`      |
 | `worker.lifecycleHooks`                                                  | Overwrite livecycle for the deploy container(s) to automate configuration before or after startup | `{}`                                                                |
 | `worker.extraEnvVars`                                                    | Extra environment variables to add to deploy pods                                                 | `[]`                                                                |
 | `worker.extraEnvVarsCM`                                                  | Name of existing ConfigMap containing extra environment variables                                 | `""`                                                                |
@@ -635,24 +634,23 @@ kubectl delete namespace digitalai
 
 ### PostgreSQL Primary parameters
 
-| Name                                           | Description                                                                                            | Value                                                  |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| Name                                           | Description                                                                                            | Value                                                 |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
 | `postgresql.primary.initdb.scriptsSecret`      | Secret with scripts to be run at first boot (in case it contains sensitive information)                | `{{ include "postgresql.primary.fullname" . }}-deploy` |
-| `postgresql.primary.extendedConfiguration`     | Extended PostgreSQL Primary configuration (appended to main or default configuration)                  | `max_connections = 300
-`                               |
-| `postgresql.primary.persistence.enabled`       | Enable PostgreSQL Primary data persistence using PVC                                                   | `true`                                                 |
-| `postgresql.primary.persistence.accessModes`   | PVC Access Mode for PostgreSQL volume                                                                  | `["ReadWriteOnce"]`                                    |
-| `postgresql.primary.persistence.storageClass`  | PVC Storage Class for PostgreSQL Primary data volume                                                   | `""`                                                   |
-| `postgresql.primary.persistence.size`          | PVC Storage Request for PostgreSQL volume                                                              | `8Gi`                                                  |
-| `postgresql.primary.persistence.existingClaim` | Name of an existing PVC to use                                                                         | `""`                                                   |
-| `postgresql.primary.resources.requests.memory` | The requested memory for the PostgreSQL Primary containers                                             | `256Mi`                                                |
-| `postgresql.primary.resources.requests.cpu`    | The requested cpu for the PostgreSQL Primary containers                                                | `250m`                                                 |
-| `postgresql.primary.service.ports.postgresql`  | PostgreSQL service port                                                                                | `5432`                                                 |
-| `postgresql.primary.service.type`              | Kubernetes Service type                                                                                | `ClusterIP`                                            |
-| `postgresql.auth.enablePostgresUser`           | Assign a password to the "postgres" admin user. Otherwise, remote access will be blocked for this user | `true`                                                 |
-| `postgresql.auth.username`                     | Name for a custom user to create                                                                       | `postgres`                                             |
-| `postgresql.auth.postgresPassword`             | Password for the "postgres" admin user. Ignored if `auth.existingSecret` is provided                   | `postgres`                                             |
-| `postgresql.serviceAccount.create`             | Enable creation of ServiceAccount for PostgreSQL pod                                                   | `true`                                                 |
+| `postgresql.primary.extendedConfiguration`     | Extended PostgreSQL Primary configuration (appended to main or default configuration)                  | `max_connections = 300`                               |
+| `postgresql.primary.persistence.enabled`       | Enable PostgreSQL Primary data persistence using PVC                                                   | `true`                                                |
+| `postgresql.primary.persistence.accessModes`   | PVC Access Mode for PostgreSQL volume                                                                  | `["ReadWriteOnce"]`                                   |
+| `postgresql.primary.persistence.storageClass`  | PVC Storage Class for PostgreSQL Primary data volume                                                   | `""`                                                  |
+| `postgresql.primary.persistence.size`          | PVC Storage Request for PostgreSQL volume                                                              | `8Gi`                                                 |
+| `postgresql.primary.persistence.existingClaim` | Name of an existing PVC to use                                                                         | `""`                                                  |
+| `postgresql.primary.resources.requests.memory` | The requested memory for the PostgreSQL Primary containers                                             | `256Mi`                                               |
+| `postgresql.primary.resources.requests.cpu`    | The requested cpu for the PostgreSQL Primary containers                                                | `250m`                                                |
+| `postgresql.primary.service.ports.postgresql`  | PostgreSQL service port                                                                                | `5432`                                                |
+| `postgresql.primary.service.type`              | Kubernetes Service type                                                                                | `ClusterIP`                                           |
+| `postgresql.auth.enablePostgresUser`           | Assign a password to the "postgres" admin user. Otherwise, remote access will be blocked for this user | `true`                                                |
+| `postgresql.auth.username`                     | Name for a custom user to create                                                                       | `postgres`                                            |
+| `postgresql.auth.postgresPassword`             | Password for the "postgres" admin user. Ignored if `auth.existingSecret` is provided                   | `postgres`                                            |
+| `postgresql.serviceAccount.create`             | Enable creation of ServiceAccount for PostgreSQL pod                                                   | `true`                                                |
 
 ### Volume Permissions parameters
 
