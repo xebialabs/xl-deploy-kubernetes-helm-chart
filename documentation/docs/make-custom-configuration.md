@@ -8,6 +8,10 @@ sidebar_position: 14
 This is internal documentation. This document can be used only if it was recommended by the Support Team.
 :::
 
+:::caution
+From 23.3 version this document is outdated. Use official Digital.ai documentation.
+:::
+
 ## Requirements
 
 - Running Deploy installation on k8s cluster
@@ -18,8 +22,6 @@ This is internal documentation. This document can be used only if it was recomme
   - 22.0.8
   - 22.1.6
   - 22.2.2
-
-
 
 ## Custom configuration of deployit-security.xml from master pods
 
