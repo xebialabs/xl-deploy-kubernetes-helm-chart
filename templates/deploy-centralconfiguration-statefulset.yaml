@@ -87,6 +87,9 @@ spec:
       dnsConfig: {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.dnsConfig "context" .) | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.centralConfiguration.terminationGracePeriodSeconds }}
+      {{- if or .Values.global.imagePullSecrets .Values.centralConfiguration.image.pullSecrets }}
+      {{ include "common.images.renderPullSecrets" ( dict "images" (list .Values.centralConfiguration.image) "context" .) | nindent 6 }}
+      {{- end }}
       {{- if or .Values.centralConfiguration.initContainers (and (eq (.Values.centralConfiguration.migrateFromEmbedded | toString) "true") .Values.centralConfiguration.persistence.enabled) }}
       initContainers:
         {{- if and (eq (.Values.centralConfiguration.migrateFromEmbedded | toString) "true") .Values.centralConfiguration.persistence.enabled }}
