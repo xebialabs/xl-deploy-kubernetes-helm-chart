@@ -99,6 +99,9 @@ spec:
       dnsConfig: {{- include "common.tplvalues.render" (dict "value" .Values.worker.dnsConfig "context" .) | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.worker.terminationGracePeriodSeconds }}
+      {{- if or .Values.global.imagePullSecrets .Values.worker.image.pullSecrets }}
+      {{ include "common.images.renderPullSecrets" ( dict "images" (list .Values.worker.image) "context" .) | nindent 6 }}
+      {{- end }}
       initContainers:
         {{- if not .Values.worker.diagnosticMode.enabled }}
         - name: wait-for-central-configuration
