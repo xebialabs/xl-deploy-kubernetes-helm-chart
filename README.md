@@ -1,9 +1,10 @@
 
 # Helm chart for Digital.ai Deploy
 
-**From 10.2 version helm chart is not used directly. Use operator based installation instead.**
+**From 10.2 version helm chart is not used directly. Use operator-based installation instead.**
 
-Additional documentation can be found by this link:
+Additional documentation can be found on the following links:
+- https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-before-you-begin.html
 - https://xebialabs.github.io/xl-deploy-kubernetes-helm-chart
 
 ## Prerequisites
