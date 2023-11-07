@@ -7,7 +7,11 @@
 ## To connect over HTTP port forward on port {{ .Values.master.containerPorts.deployHttp }} use:
 kubectl port-forward service/{{ include "common.names.fullname" . }} {{ .Values.master.containerPorts.deployHttp }}:{{ .Values.master.services.lb.portNames.deployHttp }}
 ## To get the admin password for Digitalai Deploy, run:
+{{- if kindIs "map" .Values.auth.adminPassword }}
+kubectl get secret --namespace {{ .Release.Namespace }} {{ .Values.auth.adminPassword.valueFrom.secretKeyRef.name }} -o jsonpath="{ .data.{{ .Values.auth.adminPassword.valueFrom.secretKeyRef.key }} }" | base64 --decode; echo
+{{- else }}
 kubectl get secret --namespace {{ .Release.Namespace }} {{ include "common.names.fullname" . }} -o jsonpath="{.data.deployPassword}" | base64 --decode; echo
+{{- end }}
 
 {{- if .Values.master.podServiceTemplate.enabled }}
 ## Access to the master's akka services is avalable via .Values.worker.podServiceTemplate.type services:
