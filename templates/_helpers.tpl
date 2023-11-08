@@ -186,7 +186,7 @@ Get the main db URL
         {{- .Values.external.db.main.url -}}
     {{- else -}}
         {{- if .Values.postgresql.install -}}
-            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ .Values.postgresql.primary.service.ports.postgresql }}/xld-db
+            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ include "postgresql.service.port" . }}/xld-db
         {{- end -}}
     {{- end -}}
 {{- end -}}
@@ -320,9 +320,9 @@ Get the report db URL
     {{- else -}}
         {{- if .Values.postgresql.install -}}
             {{- if .Values.postgresql.hasReport -}}
-            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ .Values.postgresql.primary.service.ports.postgresql }}/xld-report-db
+            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ include "postgresql.service.port" . }}/xld-report-db
             {{- else -}}
-            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ .Values.postgresql.primary.service.ports.postgresql }}/xld-db
+            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ include "postgresql.service.port" . }}/xld-db
             {{- end -}}
         {{- end -}}
     {{- end -}}
