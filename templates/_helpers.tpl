@@ -51,6 +51,10 @@ If release name contains chart name it will be used as a full name.
 {{ include "postgresql.primary.fullname" (merge .Subcharts.postgresql (dict "nameOverride" "postgresql")) }}
 {{- end -}}
 
+{{- define "deploy.postgresql.service.port" -}}
+{{ include "postgresql.service.port" (dict "Values" (dict "global" .Values.global "primary" .Values.postgresql.primary)) }}
+{{- end -}}
+
 {{- define "rabbitmq.subchart" -}}
 {{ include "common.names.fullname" (merge .Subcharts.rabbitmq (dict "nameOverride" "rabbitmq")) }}
 {{- end -}}
@@ -186,7 +190,7 @@ Get the main db URL
         {{- .Values.external.db.main.url -}}
     {{- else -}}
         {{- if .Values.postgresql.install -}}
-            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ include "postgresql.service.port" . }}/xld-db
+            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ include "deploy.postgresql.service.port" . }}/xld-db
         {{- end -}}
     {{- end -}}
 {{- end -}}
@@ -320,9 +324,9 @@ Get the report db URL
     {{- else -}}
         {{- if .Values.postgresql.install -}}
             {{- if .Values.postgresql.hasReport -}}
-            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ include "postgresql.service.port" . }}/xld-report-db
+            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ include "deploy.postgresql.service.port" . }}/xld-report-db
             {{- else -}}
-            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ include "postgresql.service.port" . }}/xld-db
+            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ include "deploy.postgresql.service.port" . }}/xld-db
             {{- end -}}
         {{- end -}}
     {{- end -}}
