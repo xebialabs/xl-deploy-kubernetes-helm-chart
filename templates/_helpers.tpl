@@ -479,7 +479,7 @@ Validate values of Deploy - license and licenseAcceptEula
 {{- define "deploy.validateValues.license" -}}
 {{- if not .Values.licenseAcceptEula }}
 {{- if not .Values.license }}
-deploy: keystore.license
+deploy: license or licenseAcceptEula
     The `license` is empty. It is mandatory to set if `licenseAcceptEula` is disabled.
 {{- end -}}
 {{- end -}}
