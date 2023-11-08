@@ -51,6 +51,10 @@ If release name contains chart name it will be used as a full name.
 {{ include "postgresql.primary.fullname" (merge .Subcharts.postgresql (dict "nameOverride" "postgresql")) }}
 {{- end -}}
 
+{{- define "deploy.postgresql.service.port" -}}
+{{ include "postgresql.service.port" (dict "Values" (dict "global" .Values.global "primary" .Values.postgresql.primary)) }}
+{{- end -}}
+
 {{- define "rabbitmq.subchart" -}}
 {{ include "common.names.fullname" (merge .Subcharts.rabbitmq (dict "nameOverride" "rabbitmq")) }}
 {{- end -}}
@@ -195,7 +199,7 @@ Get the main db URL
         {{- .Values.external.db.main.url -}}
     {{- else -}}
         {{- if .Values.postgresql.install -}}
-            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ .Values.postgresql.service.port }}/xld-db
+            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ include "deploy.postgresql.service.port" . }}/xld-db
         {{- end -}}
     {{- end -}}
 {{- end -}}
@@ -329,9 +333,9 @@ Get the report db URL
     {{- else -}}
         {{- if .Values.postgresql.install -}}
             {{- if .Values.postgresql.hasReport -}}
-            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ .Values.postgresql.service.port }}/xld-report-db
+            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ include "deploy.postgresql.service.port" . }}/xld-report-db
             {{- else -}}
-            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ .Values.postgresql.service.port }}/xld-db
+            jdbc:postgresql://{{ include "postgresql.subchart" . }}:{{ include "deploy.postgresql.service.port" . }}/xld-db
             {{- end -}}
         {{- end -}}
     {{- end -}}
@@ -444,8 +448,8 @@ Compile all warnings into a single message, and call fail.
 {{- $messages = append $messages (include "deploy.validateValues.ingress.tls" .) -}}
 {{- $messages = append $messages (include "deploy.validateValues.keystore.passphrase" .) -}}
 {{- $messages = append $messages (include "deploy.validateValues.license" .) -}}
-{{- if .Values.AdminPassword -}}
-{{- $messages = append $messages (include "validate.existing.secret" (dict "value" .Values.AdminPassword "context" $) ) -}}
+{{- if .Values.auth.adminPassword -}}
+{{- $messages = append $messages (include "validate.existing.secret" (dict "value" .Values.auth.adminPassword "context" $) ) -}}
 {{- end -}}
 {{- $messages = without $messages "" -}}
 {{- $message := join "\n" $messages -}}
@@ -488,7 +492,7 @@ Validate values of Deploy - license and licenseAcceptEula
 {{- define "deploy.validateValues.license" -}}
 {{- if not .Values.licenseAcceptEula }}
 {{- if not .Values.license }}
-deploy: keystore.license
+deploy: license or licenseAcceptEula
     The `license` is empty. It is mandatory to set if `licenseAcceptEula` is disabled.
 {{- end -}}
 {{- end -}}
@@ -521,7 +525,7 @@ Params:
   - default - String - Required - Default value if, there is no secret reference under secretRef
 */}}
 {{- define "secrets.key" -}}
-{{- if and .secretRef (not (kindIs "string" .secretRef)) -}}
+{{- if and .secretRef (kindIs "map" .secretRef) -}}
 {{ .secretRef.valueFrom.secretKeyRef.key }}
 {{- else if kindIs "string" .secretRef -}}
 {{ .default }}
@@ -531,6 +535,9 @@ Params:
 {{- end -}}
 
 {{- define "render.value-secret" -}}
+{{- if and .sourceEnabled .source (kindIs "map" .source) -}}
+  {{- tpl (.source | toYaml) .context }}
+{{- else -}}
   {{- if .value -}}
     {{- if kindIs "string" .value -}}
 valueFrom:
@@ -549,8 +556,10 @@ valueFrom:
     {{- end -}}
   {{- end -}}
 {{- end -}}
+{{- end -}}
 
 {{- define "render.value-if-not-secret" -}}
+{{- if or (not .source) (not (kindIs "map" .source)) -}}
     {{- if .value -}}
         {{- if kindIs "string" .value -}}
             {{ .key }}: {{ .value | b64enc | quote }}
@@ -560,6 +569,7 @@ valueFrom:
         {{ .key }}: {{ .default | b64enc | quote }}
       {{- end -}}
     {{- end -}}
+{{- end -}}
 {{- end -}}
 
 {{- define "render.value-if-not-secret-decode" -}}
@@ -587,18 +597,20 @@ Params:
 {{- define "secrets.exists" -}}
 {{- $secret := (lookup "v1" "Secret" .context.Release.Namespace .secret) -}}
 {{- if $secret -}}
-  {{- true -}}
+true
+{{- else -}}
+false
 {{- end -}}
 {{- end -}}
 
 {{- define "validate.existing.secret" -}}
   {{- if .value -}}
-    {{- if not (kindIs "string" .value) -}}
+    {{- if kindIs "map" .value -}}
       {{- if .value.valueFrom.secretKeyRef.name }}
         {{- $exists := include "secrets.exists" (dict "secret" .value.valueFrom.secretKeyRef.name "context" .context) -}}
         {{- if not $exists -}}
-            secret: {{ .value.valueFrom.secretKeyRef.name }}
-                The `{{ .value.valueFrom.secretKeyRef.name }}` does not exist.
+            secret: {{ .value.valueFrom.secretKeyRef.name }}:
+                The secret `{{ .value.valueFrom.secretKeyRef.name }}` does not exist in namespace `{{ .context.Release.Namespace }}`.
         {{- end -}}
       {{- else -}}
           secret: unknown
