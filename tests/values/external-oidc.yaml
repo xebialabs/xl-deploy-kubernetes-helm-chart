@@ -1,0 +1,47 @@
+
+## Requires:
+## kubectl apply -f tests/keycloak/realm.yaml
+## helm install keycloak-test1 codecentric/keycloak -f tests/keycloak/keycloak-values-nginx-test1.yaml
+## release u/p: gandalf/gandalf (for example: add principal gandalf to the deploy_admin_read_only)
+##
+oidc:
+  enabled: true
+  accessToken:
+    audience:
+    enable: false
+    issuer:
+    jwsAlg:
+    keyRetrievalUri:
+    secretKey:
+  clientAuthJwt:
+    enable: false
+    jwsAlg:
+    keyStore:
+      enable: false
+      path:
+      password:
+      type:
+    key:
+      alias:
+      enable: false
+      password:
+    tokenKeyId:
+  clientAuthMethod:
+  clientId: "deploy"
+  clientSecret: "2c89c720-009c-428f-b815-4e488674176c"
+  issuer: "http://localhost:8080/auth/realms/digitalai-platform"
+  keyRetrievalUri: "http://keycloak-test1-http.default.svc.cluster.local/auth/realms/digitalai-platform/protocol/openid-connect/certs"
+  accessTokenUri: "http://keycloak-test1-http.default.svc.cluster.local/auth/realms/digitalai-platform/protocol/openid-connect/token"
+  userAuthorizationUri: "http://localhost:8080/auth/realms/digitalai-platform/protocol/openid-connect/auth"
+  logoutUri: "http://localhost:8080/auth/realms/digitalai-platform/protocol/openid-connect/logout"
+  redirectUri: "http://localhost:4516/login/external-login"
+  postLogoutRedirectUri: "http://localhost:4516/oauth2/authorization/xl-deploy"
+  userNameClaimName: "preferred_username"
+  fullNameClaim: "name"
+  emailClaim: "email"
+  rolesClaimName: "groups"
+  scopes: [ "openid" ]
+  externalIdClaim:
+  idTokenJWSAlg:
+  proxyHost:
+  proxyPort:
