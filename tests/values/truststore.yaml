@@ -1,0 +1,7 @@
+truststore:
+  password: "test123"
+  truststore:
+    valueFrom:
+      secretKeyRef:
+        name: truststore.pkcs12
+        key: truststore.pkcs12

@@ -132,7 +132,7 @@ spec:
             - name: POSTGRESQL_SVC
               value: {{ include "postgresql.subchart" . }}
             - name: POSTGRESQL_PORT
-              value: {{ .Values.postgresql.service.port | quote }}
+              value: {{ (include "deploy.postgresql.service.port" .) | quote }}
         {{- end }}
         {{- if and (not .Values.external.mq.enabled) .Values.rabbitmq.install }}
         - name: wait-for-rabbitmq
@@ -190,7 +190,7 @@ spec:
             - name: APP_PORT
               value: {{ .Values.master.containerPorts.deployHttp | quote }}
             - name: ADMIN_PASSWORD
-              {{- include "render.value-secret" (dict  "value" (include "deploy.secretPassword" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "deployPassword" "default" true "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict  "value" (include "deploy.secretPassword" .) "source" .Values.auth.adminPassword "sourceEnabled" true "defaultName" (include "common.names.fullname" .) "defaultKey" "deployPassword" "default" true "context" $ ) | nindent 14 }}
             - name: XL_CLUSTER_MODE
               value: {{ .Values.clusterMode | quote }}
             - name: XLD_IN_PROCESS
@@ -234,7 +234,7 @@ spec:
             - name: USE_IP_AS_HOSTNAME
               value: {{ .Values.master.useIpAsHostname | quote }}
             - name: CENTRAL_CONFIG_ENCRYPT_KEY
-              {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "source" .Values.centralConfiguration.encryptKey "sourceEnabled" true "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
             - name: CENTRAL_CONFIG_URL
               value: "http://{{ include "deploy.names.centralConfiguration" . }}:{{ .Values.centralConfiguration.service.ports.ccHttp }}/centralConfiguration"
             - name: USE_EXTERNAL_CENTRAL_CONFIG

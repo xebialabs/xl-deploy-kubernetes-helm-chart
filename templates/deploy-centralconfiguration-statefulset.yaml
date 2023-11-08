@@ -140,17 +140,17 @@ spec:
             - name: XL_DB_URL
               value: {{ include "deploy.mainDbUrl" . }}
             - name: XL_DB_USERNAME
-              {{- include "render.value-secret" (dict  "value" (include "deploy.mainUsername" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "mainDatabaseUsername" "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict  "value" (include "deploy.mainUsername" .) "source" (.Values.external.db.main.username) "sourceEnabled" (.Values.external.db.enabled) "defaultName" (include "common.names.fullname" .) "defaultKey" "mainDatabaseUsername" "context" $ ) | nindent 14 }}
             - name: XL_DB_PASSWORD
-              {{- include "render.value-secret" (dict  "value" (include "deploy.mainPassword" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "mainDatabasePassword" "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict  "value" (include "deploy.mainPassword" .) "source" (.Values.external.db.main.password) "sourceEnabled" (.Values.external.db.enabled) "defaultName" (include "common.names.fullname" .) "defaultKey" "mainDatabasePassword" "context" $ ) | nindent 14 }}
             - name: XL_DB_MAX_POOL_SIZE
               value: {{ default 10 .Values.external.db.main.maxPoolSize | quote }}
             - name: XL_REPORT_DB_URL
               value: {{ include "deploy.reportDbUrl" . }}
             - name: XL_REPORT_DB_USERNAME
-              {{- include "render.value-secret" (dict  "value" (include "deploy.reportUsername" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "reportDatabaseUsername" "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict  "value" (include "deploy.reportUsername" .) "source" (.Values.external.db.report.username) "sourceEnabled" (.Values.external.db.enabled) "defaultName" (include "common.names.fullname" .) "defaultKey" "reportDatabaseUsername" "context" $ ) | nindent 14 }}
             - name: XL_REPORT_DB_PASSWORD
-              {{- include "render.value-secret" (dict  "value" (include "deploy.reportPassword" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "reportDatabasePassword" "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict  "value" (include "deploy.reportPassword" .) "source" (.Values.external.db.report.password) "sourceEnabled" (.Values.external.db.enabled) "defaultName" (include "common.names.fullname" .) "defaultKey" "reportDatabasePassword" "context" $ ) | nindent 14 }}
             - name: XL_REPORT_DB_MAX_POOL_SIZE
               value: {{ default 10 .Values.external.db.report.maxPoolSize | quote }}
              {{- end }}
@@ -162,9 +162,9 @@ spec:
             - name: XLD_TASK_QUEUE_NAME
               value: {{ include "deploy.mqQueueName" . }}
             - name: XLD_TASK_QUEUE_USERNAME
-              {{- include "render.value-secret" (dict  "value" (include "deploy.mqUsername" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "rabbitmqUsername" "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict  "value" (include "deploy.mqUsername" .) "source" .Values.external.mq.username "sourceEnabled" .Values.external.mq.enabled  "defaultName" (include "common.names.fullname" .) "defaultKey" "rabbitmqUsername" "context" $ ) | nindent 14 }}
             - name: XLD_TASK_QUEUE_PASSWORD
-              {{- include "render.value-secret" (dict  "value" (include "deploy.mqPassword" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "rabbitmqPassword" "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict  "value" (include "deploy.mqPassword" .) "source" .Values.external.mq.password "sourceEnabled" .Values.external.mq.enabled "defaultName" (include "common.names.fullname" .) "defaultKey" "rabbitmqPassword" "context" $ ) | nindent 14 }}
              {{- end }}
             {{- if .Values.keystore.keystore }}
             - name: REPOSITORY_KEYSTORE
@@ -187,7 +187,7 @@ spec:
             - name: USE_CACHE
               value: {{ .Values.usaCache | quote }}
             - name: CENTRAL_CONFIG_ENCRYPT_KEY
-              {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "source" .Values.centralConfiguration.encryptKey "sourceEnabled" true "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
             {{- if .Values.oidc.enabled }}
             - name: OIDC_CLIENT_ID
               {{- include "render.value-secret" (dict  "value" .Values.oidc.clientId "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcClientId" "context" $ ) | nindent 14 }}
