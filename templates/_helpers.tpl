@@ -79,9 +79,10 @@ Return the proper image name
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "deploy.imagePullSecrets" -}}
+{{- if or .Values.global.imagePullSecrets .Values.master.image.pullSecrets .Values.worker.image.pullSecrets .Values.centralConfiguration.image.pullSecrets .Values.busyBox.image.pullSecrets }}
 {{ include "common.images.renderPullSecrets" (dict "images" (list .Values.master.image .Values.worker.image .Values.centralConfiguration.image .Values.busyBox.image) "context" $) }}
 {{- end -}}
-
+{{- end -}}
 
 {{/*
 BusyBox image
