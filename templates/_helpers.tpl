@@ -79,7 +79,7 @@ Return the proper image name
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "deploy.imagePullSecrets" -}}
-{{ include "common.images.renderPullSecrets" (dict "images" (list .Values.master.image .Values.worker.image .Values.centralConfiguration.image .Values.busyBox.image) "context" .) }}
+{{ include "common.images.renderPullSecrets" (dict "images" (list .Values.master.image .Values.worker.image .Values.centralConfiguration.image .Values.busyBox.image) "context" $) }}
 {{- end -}}
 
 
