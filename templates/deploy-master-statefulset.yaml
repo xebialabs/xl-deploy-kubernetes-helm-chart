@@ -256,6 +256,26 @@ spec:
             {{- end }}
             - name: APP_CONTEXT_ROOT
               value: {{ .Values.appContextRoot }}
+            {{- if .Values.oidc.enabled }}
+            - name: DEPLOY_SECURITY_AUTH_PROVIDERS_OIDC_CLIENT_ID
+              {{- include "render.value-secret" (dict "value" .Values.oidc.clientId "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcClientId" "context" $ ) | nindent 14 }}
+            - name: DEPLOY_SECURITY_AUTH_PROVIDERS_OIDC_CLIENT_SECRET
+              {{- include "render.value-secret" (dict "value" .Values.oidc.clientSecret "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcClientSecret" "context" $ ) | nindent 14 }}
+            {{- if .Values.oidc.clientAuthJwt.enable -}}
+            {{- if .Values.oidc.clientAuthJwt.keyStore.password -}}
+            - name: DEPLOY_SECURITY_AUTH_PROVIDERS_OIDC_CLIENT_AUTH_JWT_KEYSTORE_PASSWORD
+              {{- include "render.value-secret" (dict "value" .Values.oidc.clientAuthJwt.keyStore.password "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcClientAuthJwtKeyStorePassword" "context" $ ) | nindent 14 }}
+            {{- end -}}
+            {{- if .Values.oidc.clientAuthJwt.key.password -}}
+            - name: DEPLOY_SECURITY_AUTH_PROVIDERS_OIDC_CLIENT_AUTH_JWT_KEY_PASSWORD
+              {{- include "render.value-secret" (dict "value" .Values.oidc.clientAuthJwt.key.password "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcClientAuthJwtKeyPassword" "context" $ ) | nindent 14 }}
+            {{- end -}}
+            {{- end -}}
+            {{- if and .Values.oidc.accessToken.enable .Values.oidc.accessToken.secretKey -}}
+            - name: DEPLOY_SECURITY_AUTH_PROVIDERS_OIDC_ACCESS_TOKEN_SECRET_KEY
+              {{- include "render.value-secret" (dict "value" .Values.oidc.accessToken.secretKey "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcAccessTokenSecretKey" "context" $ ) | nindent 14 }}
+            {{- end -}}
+            {{- end }}
             - name: DEPLOYIT_SERVER_OPTS_EXT
               value: " {{- include "common.tplvalues.render" (dict "value" .Values.master.jvmArgs "context" .) }} {{- if .Values.truststore.truststore }}-Djavax.net.ssl.trustStore=$(TRUSTSTORE) -Djavax.net.ssl.trustStorePassword=$(TRUSTSTORE_PASSWORD) -Djavax.net.ssl.trustStoreType=$(TRUSTSTORE_TYPE){{- end }}"
             {{- if .Values.master.extraEnvVars }}
