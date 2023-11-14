@@ -511,8 +511,8 @@ centralConfiguration:
           auth:
             providers:
               oidc:
-                clientId: {{ .Values.oidc.clientId | quote }}
-                clientSecret: {{ .Values.oidc.clientSecret | quote }}
+                clientId: "override-from-env"
+                clientSecret: "override-from-env"
                 {{- if .Values.oidc.clientAuthMethod }}
                 clientAuthMethod: {{ .Values.oidc.clientAuthMethod | quote }}
                 {{- end }}
@@ -523,13 +523,13 @@ centralConfiguration:
                   {{- if .Values.oidc.clientAuthJwt.keyStore.enable }}
                   keyStore:
                     path: {{ .Values.oidc.clientAuthJwt.keyStore.path | quote }}
-                    password: {{ .Values.oidc.clientAuthJwt.keyStore.password | quote }}
+                    password: "override-from-env"
                     type: {{ .Values.oidc.clientAuthJwt.keyStore.type | quote }}
                   {{- end }}
                   {{- if .Values.oidc.clientAuthJwt.key.enable }}
                   key:
                     alias: {{ .Values.oidc.clientAuthJwt.key.alias | quote }}
-                    password: {{ .Values.oidc.clientAuthJwt.key.password | quote }}
+                    password: "override-from-env"
                   {{- end }}
                 {{- end }}
                 issuer: {{ .Values.oidc.issuer | quote }}
@@ -562,7 +562,7 @@ centralConfiguration:
                   jwsAlg: {{ .Values.oidc.accessToken.jwsAlg | quote }}
                   {{- end }}
                   {{- if .Values.oidc.accessToken.secretKey }}
-                  secretKey: {{ .Values.oidc.accessToken.secretKey | quote }}
+                  secretKey: "${OIDC_ACCESS_TOKEN_SECRET_KEY}"
                   {{- end }}
                 {{- end }}
                 loginMethodDescription: {{ default "External login (OpenID Connect)" .Values.oidc.loginMethodDescription | quote }}
