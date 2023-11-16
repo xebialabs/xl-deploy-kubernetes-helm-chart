@@ -12,6 +12,10 @@ This is internal documentation. This document can be used only if it was recomme
 From 10.2 version helm chart is not used directly. Use operator based installation instead.
 :::
 
+:::caution
+From 23.3 version this document is outdated. Use official Digital.ai documentation.
+:::
+
 To upgrade the version `ImageTag` parameter needs to be updated to the desired version. To see the list of available ImageTag for Digital.ai Deploy, refer the following links [Deploy_tags](https://hub.docker.com/r/xebialabs/xl-deploy/tags). For upgrade, Rolling Update strategy is used.
 To upgrade the chart with the release name `xld-production`, execute below command: 
 ```bash

@@ -12,6 +12,10 @@ This is internal documentation. This document can be used only if it was recomme
 From 10.2 version helm chart is not used directly. Use operator based installation instead.
 :::
 
+:::caution
+From 23.3 version this document is outdated. Use official Digital.ai documentation.
+:::
+
 Let's have a look here about the easiest way to setup the cluster for a development on a local computer.
 
 1. Copy `values-haproxy.yaml` or `values-nginx.yaml` and rename it as `values.yaml` 

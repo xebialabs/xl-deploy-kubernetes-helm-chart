@@ -99,6 +99,7 @@ spec:
       dnsConfig: {{- include "common.tplvalues.render" (dict "value" .Values.worker.dnsConfig "context" .) | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.worker.terminationGracePeriodSeconds }}
+      {{- include "deploy.imagePullSecrets" . | nindent 6 }}
       initContainers:
         {{- if not .Values.worker.diagnosticMode.enabled }}
         - name: wait-for-central-configuration
@@ -133,7 +134,7 @@ spec:
             - name: POSTGRESQL_SVC
               value: {{ include "postgresql.subchart" . }}
             - name: POSTGRESQL_PORT
-              value: {{ .Values.postgresql.service.port | quote }}
+              value: {{ (include "deploy.postgresql.service.port" .) | quote }}
         {{- end }}
         {{- if and (not .Values.external.mq.enabled) .Values.rabbitmq.install }}
         - name: wait-for-rabbitmq
@@ -237,9 +238,9 @@ spec:
             {{- end }}
             {{- end }}
             - name: USE_IP_AS_HOSTNAME
-              value: {{ .Values.worker.useIpAsHostname | quote }}            
+              value: {{ .Values.worker.useIpAsHostname | quote }}
             - name: CENTRAL_CONFIG_ENCRYPT_KEY
-              {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "source" .Values.centralConfiguration.encryptKey "sourceEnabled" true "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
             - name: CENTRAL_CONFIG_URL
               value: "http://{{ include "deploy.names.centralConfiguration" . }}:{{ .Values.centralConfiguration.service.ports.ccHttp }}/centralConfiguration"
             - name: USE_EXTERNAL_CENTRAL_CONFIG
