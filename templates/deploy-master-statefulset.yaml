@@ -257,7 +257,7 @@ spec:
             - name: APP_CONTEXT_ROOT
               value: {{ .Values.appContextRoot }}
             - name: DEPLOYIT_SERVER_OPTS_EXT
-              value: " {{- include "common.tplvalues.render" (dict "value" .Values.master.jvmArgs "context" .) }} {{- if .Values.truststore.truststore }}-Djavax.net.ssl.trustStore=$(TRUSTSTORE) -Djavax.net.ssl.trustStorePassword=$(TRUSTSTORE_PASSWORD) -Djavax.net.ssl.trustStoreType=$(TRUSTSTORE_TYPE){{- end }}"
+              value: "{{- include "common.tplvalues.render" (dict "value" .Values.master.jvmArgs "context" .) }}{{- if .Values.truststore.truststore }} -Djavax.net.ssl.trustStore=$(TRUSTSTORE) -Djavax.net.ssl.trustStorePassword=$(TRUSTSTORE_PASSWORD) -Djavax.net.ssl.trustStoreType=$(TRUSTSTORE_TYPE){{- end }}"
             {{- if .Values.master.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.master.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
