@@ -287,14 +287,20 @@ Get the Deploy Worker hostname suffix
 {{- range $podNumber := untilStep 0 $maxServices 1 }}
 {{- $newValues := merge (dict "podNumber" $podNumber) $ }}
 {{- $masterHostname := include "deploy.masterHostname" $newValues }}
-{{- $masterPort := $serviceTemplate.nodePorts.deployAkka }}
+{{- $masterPort := $serviceTemplate.nodePorts.deployPekko }}
 {{- if contains $serviceTemplate.serviceMode "SingleHostname;MultiService" }}
 {{- $masterPort = add $masterPort $podNumber }}
 {{- end }}
   -master "{{ $masterHostname }}{{ include "deploy.masterHostnameSuffix" $newValues }}:{{ $masterPort }}" \
 {{- end }}
 {{- else }}
-  -master "{{ include "deploy.names.master" . }}.{{ include "common.names.namespace" . }}.svc.cluster.local:{{ .Values.master.services.akka.ports.deployAkka }}" \
+{{- $replicaCount := int .Values.master.replicaCount }}
+{{- $namespace := include "common.names.namespace" . }}
+{{- $serviceName := include "deploy.names.master" .}}
+{{- $deployPekkoPort := .Values.master.services.pekko.ports.deployPekko}}
+{{- range $podNumber := untilStep 0 $replicaCount 1 -}}
+  -master "{{ $serviceName }}-{{ $podNumber }}.{{ $serviceName }}.{{ $namespace }}.svc.cluster.local:{{ $deployPekkoPort }}" \
+{{- end }}
 {{- end }}
 {{- end -}}
 

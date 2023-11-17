@@ -57,17 +57,17 @@ spec:
   {{- end }}
   ports:
     {{- if $serviceTemplate.portEnabled }}
-    - name: {{ $serviceTemplate.portNames.deployAkka }}
-      {{- $akkaPort := $serviceTemplate.ports.deployAkka }}
+    - name: {{ $serviceTemplate.portNames.deployPekko }}
+      {{- $pekkoPort := $serviceTemplate.ports.deployPekko }}
       {{- if contains $serviceTemplate.serviceMode "SingleHostname;MultiService" }}
-      {{- $akkaPort = add $akkaPort $podNumber }}
+      {{- $pekkoPort = add $pekkoPort $podNumber }}
       {{- end }}
-      port: {{ $akkaPort }}
-      targetPort: {{ $serviceTemplate.portNames.deployAkka }}
+      port: {{ $pekkoPort }}
+      targetPort: {{ $serviceTemplate.portNames.deployPekko }}
       {{- if (eq $serviceTemplate.type "ClusterIP") }}
       nodePort: null
-      {{- else if and (or (eq $serviceTemplate.type "NodePort") (eq $serviceTemplate.type "LoadBalancer")) (not (empty $serviceTemplate.nodePorts.deployAkka)) }}
-      {{- $nodePort := $serviceTemplate.nodePorts.deployAkka }}
+      {{- else if and (or (eq $serviceTemplate.type "NodePort") (eq $serviceTemplate.type "LoadBalancer")) (not (empty $serviceTemplate.nodePorts.deployPekko)) }}
+      {{- $nodePort := $serviceTemplate.nodePorts.deployPekko }}
       {{- if contains $serviceTemplate.serviceMode "SingleHostname;MultiService" }}
       {{- $nodePort = add $nodePort $podNumber }}
       {{- end }}

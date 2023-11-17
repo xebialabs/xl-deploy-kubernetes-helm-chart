@@ -12,9 +12,9 @@ master:
       - a33ef45cd77644ff19da5029f2cb6a04-698668804
       - aeeb36ee07e964a7fa3794d2731f0171-1436979701
     ports:
-      deployAkka: 32180
+      deployPekko: 32180
     nodePorts:
-      deployAkka: 32180
+      deployPekko: 32180
 worker:
   podServiceTemplate:
     enabled: true
@@ -25,6 +25,6 @@ worker:
       - acef8fce08ccf469a8c361521be8969b-234256790
       - a9ff35ba53ef14f4cabbb86278fd3b6f-1377102692
     ports:
-      deployAkka: 32185
+      deployPekko: 32185
     nodePorts:
-      deployAkka: 32185
+      deployPekko: 32185
