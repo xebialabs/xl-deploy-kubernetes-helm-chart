@@ -451,7 +451,7 @@ centralConfiguration:
   ##
   args:
     - --
-    - /opt/xebialabs/central-configuration-server/bin/run-in-container.sh
+    - /opt/xebialabs/central-configuration-server/bin/run-in-operator.sh
   ## @param centralConfiguration.lifecycleHooks Overwrite livecycle for the deploy container(s) to automate configuration before or after startup
   ##
   lifecycleHooks: { }
@@ -488,6 +488,54 @@ centralConfiguration:
   ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
   ##
   configuration:
+    "bin_run-in-operator-sh":
+      path: "bin/run-in-operator.sh"
+      mode: 0755
+      content: |
+        {{- if .Values.oidc.enabled }}
+        if [[ ${GENERATE_XL_CONFIG,,} != "true" ]]; then
+          echo "Not generating deploy-oidc.yaml as GENERATE_XL_CONFIG != 'true'"
+        elif [[ -e ${APP_HOME}/central-conf/deploy-oidc.yaml.template && ! -f "${APP_HOME}/centralConfiguration/deploy-oidc.yaml" ]]; then
+          echo "Generate configuration file deploy-oidc.yaml from environment parameters"
+          sed -e "s#\${XL_DB_DRIVER}#${XL_DB_DRIVER}#g" \
+          -e "s#\${HOSTNAME_SUFFIX}#${HOSTNAME_SUFFIX}#g" \
+          -e "s#\${DNS_RESOLVER}#${DNS_RESOLVER}#g" \
+          -e "s#\${HOSTNAME}#${HOSTNAME}#g" \
+          -e "s#\${XLD_TASK_QUEUE_DRIVER_CLASS_NAME}#${JMS_DRIVER_CLASS_NAME}#g" \
+          -e "s#\${XL_CLUSTER_MODE}#${XL_CLUSTER_MODE}#g" \
+          -e "s#\${XL_DB_URL}#${XL_DB_URL}#g" \
+          -e "s#\${XL_DB_USERNAME}#${XL_DB_USERNAME}#g" \
+          -e "s#\${XL_DB_PASSWORD}#${XL_DB_PASSWORD}#g" \
+          -e "s#\${XL_DB_MAX_POOL_SIZE}#${XL_DB_MAX_POOL_SIZE}#g" \
+          -e "s#\${XL_REPORT_DB_URL}#${XL_REPORT_DB_URL}#g" \
+          -e "s#\${XL_REPORT_DB_USERNAME}#${XL_REPORT_DB_USERNAME}#g" \
+          -e "s#\${XL_REPORT_DB_PASSWORD}#${XL_REPORT_DB_PASSWORD}#g" \
+          -e "s#\${XL_REPORT_DB_MAX_POOL_SIZE}#${XL_REPORT_DB_MAX_POOL_SIZE}#g" \
+          -e "s#\${XL_METRICS_ENABLED}#${XL_METRICS_ENABLED}#g" \
+          -e "s#\${XLD_IN_PROCESS}#${XLD_IN_PROCESS}#g" \
+          -e "s#\${XLD_TASK_QUEUE_NAME}#${XLD_TASK_QUEUE_NAME}#g" \
+          -e "s#\${XLD_TASK_QUEUE_IN_PROCESS_MAX_DISK_USAGE}#${XLD_TASK_QUEUE_IN_PROCESS_MAX_DISK_USAGE}#g" \
+          -e "s#\${XLD_TASK_QUEUE_IN_PROCESS_SHUTDOWN_TIMEOUT}#${XLD_TASK_QUEUE_IN_PROCESS_SHUTDOWN_TIMEOUT}#g" \
+          -e "s#\${XLD_TASK_QUEUE_DRIVER_CLASS_NAME}#${XLD_TASK_QUEUE_DRIVER_CLASS_NAME}#g" \
+          -e "s#\${XLD_TASK_QUEUE_URL}#${XLD_TASK_QUEUE_URL}#g" \
+          -e "s#\${XLD_TASK_QUEUE_USERNAME}#${XLD_TASK_QUEUE_USERNAME}#g" \
+          -e "s#\${XLD_TASK_QUEUE_PASSWORD}#${XLD_TASK_QUEUE_PASSWORD}#g" \
+          -e "s#\${HOSTNAME_SUFFIX}#${HOSTNAME_SUFFIX}#g" \
+          -e "s#\${XL_LICENSE_KIND}#${XL_LICENSE_KIND}#g" \
+          -e "s#\${GENERATE_XL_CONFIG}#${GENERATE_XL_CONFIG}#g" \
+          -e "s#\${USE_IP_AS_HOSTNAME}#${USE_IP_AS_HOSTNAME}#g" \
+          -e "s#\${ENABLE_SATELLITE}#${ENABLE_SATELLITE}#g" \
+          -e "s#\${CENTRAL_CONFIG_ENCRYPT_KEY}#${CENTRAL_CONFIG_ENCRYPT_KEY}#g" \
+          -e "s#\${USE_CACHE}#${USE_CACHE}#g" \
+          -e "s#\${OIDC_CLIENT_ID}#${OIDC_CLIENT_ID}#g" \
+          -e "s#\${OIDC_CLIENT_SECRET}#${OIDC_CLIENT_SECRET}#g" \
+          -e "s#\${OIDC_CLIENT_AUTH_JWT_KEYSTORE_PASSWORD}#${OIDC_CLIENT_AUTH_JWT_KEYSTORE_PASSWORD}#g" \
+          -e "s#\${OIDC_CLIENT_AUTH_JWT_KEY_PASSWORD}#${OIDC_CLIENT_AUTH_JWT_KEY_PASSWORD}#g" \
+          -e "s#\${OIDC_ACCESS_TOKEN_SECRET_KEY}#${OIDC_ACCESS_TOKEN_SECRET_KEY}#g" \
+          ${APP_HOME}/central-conf/deploy-oidc.yaml.template > ${APP_HOME}/centralConfiguration/deploy-oidc.yaml
+        fi
+        {{- end }}
+        exec /opt/xebialabs/central-configuration-server/bin/run-in-container.sh $@
     "central-conf_deploy-server-yaml-template":
       path: "central-conf/deploy-server.yaml.template"
       mode: 0660
@@ -511,8 +559,8 @@ centralConfiguration:
           auth:
             providers:
               oidc:
-                clientId: {{ .Values.oidc.clientId | quote }}
-                clientSecret: {{ .Values.oidc.clientSecret | quote }}
+                clientId: "${OIDC_CLIENT_ID}"
+                clientSecret: "${OIDC_CLIENT_SECRET}"
                 {{- if .Values.oidc.clientAuthMethod }}
                 clientAuthMethod: {{ .Values.oidc.clientAuthMethod | quote }}
                 {{- end }}
@@ -523,13 +571,13 @@ centralConfiguration:
                   {{- if .Values.oidc.clientAuthJwt.keyStore.enable }}
                   keyStore:
                     path: {{ .Values.oidc.clientAuthJwt.keyStore.path | quote }}
-                    password: {{ .Values.oidc.clientAuthJwt.keyStore.password | quote }}
+                    password: "${OIDC_CLIENT_AUTH_JWT_KEYSTORE_PASSWORD}"
                     type: {{ .Values.oidc.clientAuthJwt.keyStore.type | quote }}
                   {{- end }}
                   {{- if .Values.oidc.clientAuthJwt.key.enable }}
                   key:
                     alias: {{ .Values.oidc.clientAuthJwt.key.alias | quote }}
-                    password: {{ .Values.oidc.clientAuthJwt.key.password | quote }}
+                    password: "${OIDC_CLIENT_AUTH_JWT_KEY_PASSWORD}"
                   {{- end }}
                 {{- end }}
                 issuer: {{ .Values.oidc.issuer | quote }}
@@ -562,7 +610,7 @@ centralConfiguration:
                   jwsAlg: {{ .Values.oidc.accessToken.jwsAlg | quote }}
                   {{- end }}
                   {{- if .Values.oidc.accessToken.secretKey }}
-                  secretKey: {{ .Values.oidc.accessToken.secretKey | quote }}
+                  secretKey: "${OIDC_ACCESS_TOKEN_SECRET_KEY}"
                   {{- end }}
                 {{- end }}
                 loginMethodDescription: {{ default "External login (OpenID Connect)" .Values.oidc.loginMethodDescription | quote }}
