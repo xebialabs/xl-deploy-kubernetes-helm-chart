@@ -241,18 +241,18 @@ spec:
               value: {{ include "deploy.masterHostnameSuffix" . }}
             {{- if .Values.master.podServiceTemplate.enabled }}
             - name: SERVER_PORT
-              value: {{ .Values.master.podServiceTemplate.ports.deployAkka | quote }}
+              value: {{ .Values.master.podServiceTemplate.ports.deployPekko | quote }}
             - name: CLUSTER_NODE_HOSTNAME_SUFFIX
               value: "{{- include "common.tplvalues.render" (dict "value" .Values.master.clusterNodeHostnameSuffix "context" $) }}"
             - name: CLUSTER_NODE_PORT
-              value: {{ .Values.master.services.akka.ports.deployClusterAkka | quote }}
+              value: {{ .Values.master.services.pekko.ports.deployClusterPekko | quote }}
             {{- else }}
             - name: SERVER_PORT
-              value: {{ .Values.master.services.akka.ports.deployAkka | quote }}
+              value: {{ .Values.master.services.pekko.ports.deployPekko | quote }}
             - name: CLUSTER_NODE_HOSTNAME_SUFFIX
               value: {{ include "deploy.clusterMasterHostnameSuffix" . }}
             - name: CLUSTER_NODE_PORT
-              value: {{ .Values.master.services.akka.ports.deployClusterAkka | quote }}
+              value: {{ .Values.master.services.pekko.ports.deployClusterPekko | quote }}
             {{- end }}
             - name: APP_CONTEXT_ROOT
               value: {{ .Values.appContextRoot }}
@@ -273,9 +273,9 @@ spec:
           ports:
             - name: {{ .Values.master.services.lb.portNames.deployHttp }}
               containerPort: {{ .Values.master.containerPorts.deployHttp }}
-            - name: {{ .Values.master.services.akka.portNames.deployAkka }}
-              containerPort: {{ .Values.master.containerPorts.deployAkka }}
-            - name: {{ .Values.master.services.akka.portNames.deployJmxExporter }}
+            - name: {{ .Values.master.services.pekko.portNames.deployPekko }}
+              containerPort: {{ .Values.master.containerPorts.deployPekko }}
+            - name: {{ .Values.master.services.pekko.portNames.deployJmxExporter }}
               containerPort: {{ .Values.master.containerPorts.deployJmxExporter }}
             {{- if .Values.master.extraContainerPorts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.master.extraContainerPorts "context" $) | nindent 12 }}

@@ -249,10 +249,10 @@ spec:
               value: {{ include "deploy.workerHostnameSuffix" . }}
             {{- if .Values.worker.podServiceTemplate.enabled }}
             - name: SERVER_PORT
-              value: {{ .Values.worker.podServiceTemplate.ports.deployAkka | quote }}
+              value: {{ .Values.worker.podServiceTemplate.ports.deployPekko | quote }}
             {{- else }}
             - name: SERVER_PORT
-              value: {{ .Values.worker.services.akka.ports.deployAkka | quote }}
+              value: {{ .Values.worker.services.pekko.ports.deployPekko | quote }}
             {{- end }}
             - name: APP_CONTEXT_ROOT
               value: {{ .Values.appContextRoot }}
@@ -271,9 +271,9 @@ spec:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.worker.extraEnvVarsSecret "context" $) }}
             {{- end }}
           ports:
-            - name: {{ .Values.worker.services.akka.portNames.deployAkka }}
-              containerPort: {{ .Values.worker.containerPorts.deployAkka }}
-            - name: {{ .Values.worker.services.akka.portNames.deployJmxExporter }}
+            - name: {{ .Values.worker.services.pekko.portNames.deployPekko }}
+              containerPort: {{ .Values.worker.containerPorts.deployPekko }}
+            - name: {{ .Values.worker.services.pekko.portNames.deployJmxExporter }}
               containerPort: {{ .Values.worker.containerPorts.deployJmxExporter }}
             {{- if .Values.worker.extraContainerPorts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.worker.extraContainerPorts "context" $) | nindent 12 }}
@@ -282,13 +282,13 @@ spec:
           {{- if .Values.worker.health.enabled }}
           livenessProbe:
             tcpSocket:
-              port: {{ .Values.worker.services.akka.portNames.deployAkka }}
+              port: {{ .Values.worker.services.pekko.portNames.deployPekko }}
             initialDelaySeconds: {{ .Values.worker.health.probesLivenessTimeout }}
             periodSeconds: {{ .Values.worker.health.periodScans }}
             failureThreshold: {{ .Values.worker.health.probeFailureThreshold }}
           readinessProbe:
             tcpSocket:
-              port: {{ .Values.worker.services.akka.portNames.deployAkka }}
+              port: {{ .Values.worker.services.pekko.portNames.deployPekko }}
             initialDelaySeconds: {{ .Values.worker.health.probesReadinessTimeout }}
             periodSeconds: {{ .Values.worker.health.periodScans }}
             failureThreshold: {{ .Values.worker.health.probeFailureThreshold }}

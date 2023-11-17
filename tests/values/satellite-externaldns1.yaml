@@ -1,14 +1,14 @@
 satellite:
   enabled: true
 master:
-  clusterNodeHostnameSuffix: '.{{ include "deploy.names.master" . }}-akka.{{ include "common.names.namespace" . }}.svc.cluster.local'
+  clusterNodeHostnameSuffix: '.{{ include "deploy.names.master" . }}-pekko.{{ include "common.names.namespace" . }}.svc.cluster.local'
   podServiceTemplate:
     enabled: true
     serviceMode: SingleService
     type: ClusterIP
-    name: '{{ include "deploy.names.master" . }}-akka'
+    name: '{{ include "deploy.names.master" . }}-pekko'
     incrementPort: false
-    overrideHostnameSuffix: '.{{ include "deploy.names.master" . }}-akka.{{ include "common.names.namespace" . }}.svc.cluster.local'
+    overrideHostnameSuffix: '.{{ include "deploy.names.master" . }}-pekko.{{ include "common.names.namespace" . }}.svc.cluster.local'
     # overrideHostnameSuffix: .test123
     annotations:
       external-dns.alpha.kubernetes.io/hostname: test123
@@ -19,17 +19,17 @@ master:
     - None 
     - None
     ports:
-      deployAkka: 8180
+      deployPekko: 8180
     nodePorts:
-      deployAkka: 8180
+      deployPekko: 8180
 worker:
   podServiceTemplate:
     enabled: true
     serviceMode: SingleService
     type: ClusterIP
-    name: '{{ include "deploy.names.worker" . }}-akka'
+    name: '{{ include "deploy.names.worker" . }}-pekko'
     incrementPort: false
-    overrideHostnameSuffix: '.{{ include "deploy.names.worker" . }}-akka.{{ include "common.names.namespace" . }}.svc.cluster.local'
+    overrideHostnameSuffix: '.{{ include "deploy.names.worker" . }}-pekko.{{ include "common.names.namespace" . }}.svc.cluster.local'
     # overrideHostnameSuffix: .test123
     annotations:
       external-dns.alpha.kubernetes.io/hostname: test123
@@ -40,6 +40,6 @@ worker:
     - None 
     - None
     ports:
-      deployAkka: 8180
+      deployPekko: 8180
     nodePorts:
-      deployAkka: 8180
+      deployPekko: 8180

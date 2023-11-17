@@ -14,7 +14,7 @@ kubectl get secret --namespace {{ .Release.Namespace }} {{ include "common.names
 {{- end }}
 
 {{- if .Values.master.podServiceTemplate.enabled }}
-## Access to the master's akka services is avalable via .Values.worker.podServiceTemplate.type services:
+## Access to the master's pekko services is avalable via .Values.worker.podServiceTemplate.type services:
 {{- range $podNumber := untilStep 0 (int .Values.worker.replicaCount) 1 }}
 {{- $newValues := merge (dict "podNumber" $podNumber) $ }}
 ## - "{{- include "common.tplvalues.render" (dict "value" $.Values.worker.podServiceTemplate.name "context" $newValues) }}"

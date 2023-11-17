@@ -131,7 +131,7 @@ centralConfiguration:
   overrideName: ""
   ## @param centralConfiguration.useIpAsHostname Set IP address of the container as the hostname for the instance.
   ## If set to true then IP will be used instead of the container ID. This is useful
-  ## when deploying XL Deploy as active-active cluster using docker compose as Akka cannot resolve aliases within the docker network.
+  ## when deploying XL Deploy as active-active cluster using docker compose as Pekko cannot resolve aliases within the docker network.
   ##
   useIpAsHostname: false
   ## @param centralConfiguration.terminationGracePeriodSeconds Default duration in seconds k8s waits for container to exit before sending kill signal.
@@ -542,7 +542,7 @@ centralConfiguration:
       content: |
         deploy.server:
           bind-hostname: 0.0.0.0
-          bind-port: {{ .Values.master.containerPorts.deployAkka }}
+          bind-port: {{ .Values.master.containerPorts.deployPekko }}
           license:
             daysBeforeWarning: 10
           {{- if .Values.oidc.enabled }}    
@@ -550,6 +550,13 @@ centralConfiguration:
             auth:
               provider: "oidc"
           {{- end }}
+        pekko:
+          io:
+            dns:
+              resolver: "${DNS_RESOLVER}"
+          # loggers:
+          #  - "org.apache.pekko.event.slf4j.Slf4jLogger"
+          loglevel: "INFO"
     "central-conf_deploy-oidc-yaml-template":
       path: "central-conf/deploy-oidc.yaml.template"
       mode: 0660
@@ -745,7 +752,7 @@ master:
   overrideName: ""
   ## @param master.useIpAsHostname Set IP address of the container as the hostname for the instance.
   ## If set to true then IP will be used instead of the container ID. This is useful
-  ## when deploying XL Deploy as active-active cluster using docker compose as Akka cannot resolve aliases within the docker network.
+  ## when deploying XL Deploy as active-active cluster using docker compose as Pekko cannot resolve aliases within the docker network.
   ##
   useIpAsHostname: false
   ## @param master.clusterNodeHostnameSuffix If set the template will override the hostname.
@@ -1086,14 +1093,14 @@ master:
 
   ## Container Ports
   ## @param master.containerPorts.deployHttp Deploy HTTP port value exposed on the master container
-  ## @param master.containerPorts.deployAkka Deploy Akka port value exposed on the master container
-  ## @param master.containerPorts.deployClusterAkka Deploy Akka cluster port value exposed on the master container
+  ## @param master.containerPorts.deployPekko Deploy Pekko port value exposed on the master container
+  ## @param master.containerPorts.deployClusterPekko Deploy Pekko cluster port value exposed on the master container
   ## @param master.containerPorts.deployJmxExporter Deploy JMX exporter port value exposed on the master container
   ##
   containerPorts:
     deployHttp: 4516
-    deployAkka: 8180
-    deployClusterAkka: 25520
+    deployPekko: 8180
+    deployClusterPekko: 25520
     deployJmxExporter: 9100
 
   ## @param master.extraContainerPorts Extra ports to be included in container spec, primarily informational
@@ -1250,41 +1257,41 @@ master:
       ##     timeoutSeconds: 300
       ##
       sessionAffinityConfig: { }
-    akka:
-      ## @param master.services.akka.type Kubernetes Service type
+    pekko:
+      ## @param master.services.pekko.type Kubernetes Service type
       ##
       type: ClusterIP
 
-      ## @param master.services.akka.portEnabled deploy port.
+      ## @param master.services.pekko.portEnabled deploy port.
       ## Cannot be disabled when `auth.tls.enabled` is `false`.
       ## Listener can be disabled with `listeners.tcp = none`.
       ##
       portEnabled: true
       ## Service ports
-      ## @param master.services.akka.ports.deployAkka Deploy master Akka port value exposed on the service
-      ## @param master.services.akka.ports.deployClusterAkka Deploy master Akka cluster port value exposed on the service
+      ## @param master.services.pekko.ports.deployPekko Deploy master Pekko port value exposed on the service
+      ## @param master.services.pekko.ports.deployClusterPekko Deploy master Pekko cluster port value exposed on the service
       ##
       ports:
-        deployAkka: 8180
-        deployClusterAkka: 25520
+        deployPekko: 8180
+        deployClusterPekko: 25520
       ## Service ports name
-      ## @param master.services.akka.portNames.deployAkka Deploy master Akka port name
-      ## @param master.services.akka.portNames.deployJmxExporter Deploy master JMX exporter port name
-      ## @param master.services.akka.portNames.deployClusterAkka Deploy master Akka cluster port name
+      ## @param master.services.pekko.portNames.deployPekko Deploy master Pekko port name
+      ## @param master.services.pekko.portNames.deployJmxExporter Deploy master JMX exporter port name
+      ## @param master.services.pekko.portNames.deployClusterPekko Deploy master Pekko cluster port name
       ##
       portNames:
-        deployAkka: "deploy-akka"
+        deployPekko: "deploy-pekko"
         deployJmxExporter: "deploy-jmx"
-        deployClusterAkka: "cluster-akka"
+        deployClusterPekko: "cluster-pekko"
 
       ## Node ports to expose
-      ## @param master.services.akka.nodePorts.deployAkka Deploy master Akka port value exposed on the node (in case of NodePort service)
-      ## @param master.services.akka.nodePorts.deployClusterAkka Deploy master Akka cluster port value exposed on the node (in case of NodePort service)
+      ## @param master.services.pekko.nodePorts.deployPekko Deploy master Pekko port value exposed on the node (in case of NodePort service)
+      ## @param master.services.pekko.nodePorts.deployClusterPekko Deploy master Pekko cluster port value exposed on the node (in case of NodePort service)
       ##
       nodePorts:
-        deployAkka: ""
-        deployClusterAkka: ""
-      ## @param master.services.akka.extraPorts Extra ports to expose in the service
+        deployPekko: ""
+        deployClusterPekko: ""
+      ## @param master.services.pekko.extraPorts Extra ports to expose in the service
       ## E.g.:
       ## extraPorts:
       ## - name: new_svc_name
@@ -1292,48 +1299,48 @@ master:
       ##   targetPort: 1234
       ##
       extraPorts: [ ]
-      ## @param master.services.akka.loadBalancerSourceRanges Address(es) that are allowed when service is `LoadBalancer`
+      ## @param master.services.pekko.loadBalancerSourceRanges Address(es) that are allowed when service is `LoadBalancer`
       ## https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
       ## e.g:
       ## loadBalancerSourceRanges:
       ## - 10.10.10.0/24
       ##
       loadBalancerSourceRanges: [ ]
-      ## @param master.services.akka.externalIPs Set the ExternalIPs
+      ## @param master.services.pekko.externalIPs Set the ExternalIPs
       ##
       externalIPs: [ ]
-      ## @param master.services.akka.externalTrafficPolicy Enable client source IP preservation
+      ## @param master.services.pekko.externalTrafficPolicy Enable client source IP preservation
       ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
       ##
       externalTrafficPolicy: Cluster
-      ## @param master.services.akka.loadBalancerIP Set the LoadBalancerIP
+      ## @param master.services.pekko.loadBalancerIP Set the LoadBalancerIP
       ##
       loadBalancerIP: ""
-      ## @param master.services.akka.clusterIP Kubernetes service Cluster IP
+      ## @param master.services.pekko.clusterIP Kubernetes service Cluster IP
       ## e.g.:
       ## clusterIP: None
       ##
       clusterIP: None
-      ## @extra master.services.akka.labels Service labels. Evaluated as a template
-      ## @param master.services.akka.labels.app.kubernetes.io/component Label with component name
+      ## @extra master.services.pekko.labels Service labels. Evaluated as a template
+      ## @param master.services.pekko.labels.app.kubernetes.io/component Label with component name
       ##
       labels:
         "app.kubernetes.io/component": master
-      ## @param master.services.akka.annotations Service annotations. Evaluated as a template
+      ## @param master.services.pekko.annotations Service annotations. Evaluated as a template
       ## Example:
       ## annotations:
       ##   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
       ##
       annotations: { }
-      ## @param master.services.akka.publishNotReadyAddresses Enable publishing of the DNS records when Pod is still not ready.
+      ## @param master.services.pekko.publishNotReadyAddresses Enable publishing of the DNS records when Pod is still not ready.
       ##
       publishNotReadyAddresses: true
-      ## @param master.services.akka.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
+      ## @param master.services.pekko.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
       ## If "ClientIP", consecutive client requests will be directed to the same Pod
       ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
       ##
       sessionAffinity: None
-      ## @param master.services.akka.sessionAffinityConfig Additional settings for the sessionAffinity
+      ## @param master.services.pekko.sessionAffinityConfig Additional settings for the sessionAffinity
       ## sessionAffinityConfig:
       ##   clientIP:
       ##     timeoutSeconds: 300
@@ -1366,21 +1373,21 @@ master:
     ##
     portEnabled: true
     ## Service ports
-    ## @param master.podServiceTemplate.ports.deployAkka Deploy master Akka port value exposed on the service
+    ## @param master.podServiceTemplate.ports.deployPekko Deploy master Pekko port value exposed on the service
     ##
     ports:
-      deployAkka: 32180
+      deployPekko: 32180
     ## Service ports name
-    ## @param master.podServiceTemplate.portNames.deployAkka Deploy master Akka port name
+    ## @param master.podServiceTemplate.portNames.deployPekko Deploy master Pekko port name
     ##
     portNames:
-      deployAkka: "deploy-akka"
+      deployPekko: "deploy-pekko"
 
     ## Node ports to expose
-    ## @param master.podServiceTemplate.nodePorts.deployAkka Deploy master Akka port value exposed on the node (in case of NodePort service)
+    ## @param master.podServiceTemplate.nodePorts.deployPekko Deploy master Pekko port value exposed on the node (in case of NodePort service)
     ##
     nodePorts:
-      deployAkka: 32180
+      deployPekko: 32180
     ## @param master.podServiceTemplate.extraPorts Extra ports to expose in the service
     ## E.g.:
     ## extraPorts:
@@ -1452,7 +1459,7 @@ worker:
   overrideName: ""
   ## @param worker.useIpAsHostname Set IP address of the container as the hostname for the instance.
   ## If set to true then IP will be used instead of the container ID. This is useful
-  ## when deploying XL Deploy as active-active cluster using docker compose as Akka cannot resolve aliases within the docker network.
+  ## when deploying XL Deploy as active-active cluster using docker compose as Pekko cannot resolve aliases within the docker network.
   ##
   useIpAsHostname: false
   ## @param worker.terminationGracePeriodSeconds Default duration in seconds k8s waits for container to exit before sending kill signal.
@@ -1787,11 +1794,11 @@ worker:
   extraEnvVarsSecret: ""
 
   ## Container Ports
-  ## @param worker.containerPorts.deployAkka Deploy Akka port value exposed on the worker container
+  ## @param worker.containerPorts.deployPekko Deploy Pekko port value exposed on the worker container
   ## @param worker.containerPorts.deployJmxExporter Deploy JMX exportet port value exposed on the worker container
   ##
   containerPorts:
-    deployAkka: 8180
+    deployPekko: 8180
     deployJmxExporter: 9100
 
   ## @param worker.extraContainerPorts Extra ports to be included in container spec, primarily informational
@@ -1880,35 +1887,35 @@ worker:
   ## Kubernetes service type for the Deploy worker
   ##
   services:
-    akka:
-      ## @param worker.services.akka.type Kubernetes Service type for the Deploy worker
+    pekko:
+      ## @param worker.services.pekko.type Kubernetes Service type for the Deploy worker
       ##
       type: ClusterIP
 
-      ## @param worker.services.akka.portEnabled Enable Deploy worker port.
+      ## @param worker.services.pekko.portEnabled Enable Deploy worker port.
       ## Cannot be disabled when `auth.tls.enabled` is `false`.
       ## Listener can be disabled with `listeners.tcp = none`.
       ##
       portEnabled: true
       ## Service ports
-      ## @param worker.services.akka.ports.deployAkka Deploy worker Akka port value exposed on the service
+      ## @param worker.services.pekko.ports.deployPekko Deploy worker Pekko port value exposed on the service
       ##
       ports:
-        deployAkka: 8180
+        deployPekko: 8180
       ## Service ports name
-      ## @param worker.services.akka.portNames.deployAkka Deploy worker Akka port name
-      ## @param worker.services.akka.portNames.deployJmxExporter Deploy worker JMX exporter port name
+      ## @param worker.services.pekko.portNames.deployPekko Deploy worker Pekko port name
+      ## @param worker.services.pekko.portNames.deployJmxExporter Deploy worker JMX exporter port name
       ##
       portNames:
-        deployAkka: "deploy-akka"
+        deployPekko: "deploy-pekko"
         deployJmxExporter: "deploy-jmx"
 
       ## Node ports to expose
-      ## @param worker.services.akka.nodePorts.deployAkka Deploy worker Akka port value exposed on the node (in case of NodePort service)
+      ## @param worker.services.pekko.nodePorts.deployPekko Deploy worker Pekko port value exposed on the node (in case of NodePort service)
       ##
       nodePorts:
-        deployAkka: ""
-      ## @param worker.services.akka.extraPorts Extra ports to expose in the service
+        deployPekko: ""
+      ## @param worker.services.pekko.extraPorts Extra ports to expose in the service
       ## E.g.:
       ## extraPorts:
       ## - name: new_svc_name
@@ -1916,48 +1923,48 @@ worker:
       ##   targetPort: 1234
       ##
       extraPorts: [ ]
-      ## @param worker.services.akka.loadBalancerSourceRanges Address(es) that are allowed when service is `LoadBalancer`
+      ## @param worker.services.pekko.loadBalancerSourceRanges Address(es) that are allowed when service is `LoadBalancer`
       ## https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
       ## e.g:
       ## loadBalancerSourceRanges:
       ## - 10.10.10.0/24
       ##
       loadBalancerSourceRanges: [ ]
-      ## @param worker.services.akka.externalIPs Set the ExternalIPs
+      ## @param worker.services.pekko.externalIPs Set the ExternalIPs
       ##
       externalIPs: [ ]
-      ## @param worker.services.akka.externalTrafficPolicy Enable client source IP preservation
+      ## @param worker.services.pekko.externalTrafficPolicy Enable client source IP preservation
       ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
       ##
       externalTrafficPolicy: Cluster
-      ## @param worker.services.akka.loadBalancerIP Set the LoadBalancerIP
+      ## @param worker.services.pekko.loadBalancerIP Set the LoadBalancerIP
       ##
       loadBalancerIP: ""
-      ## @param worker.services.akka.clusterIP Kubernetes service Cluster IP
+      ## @param worker.services.pekko.clusterIP Kubernetes service Cluster IP
       ## e.g.:
       ## clusterIP: None
       ##
       clusterIP: None
-      ## @extra worker.services.akka.labels Service labels. Evaluated as a template
-      ## @param worker.services.akka.labels.app.kubernetes.io/component Label with component name
+      ## @extra worker.services.pekko.labels Service labels. Evaluated as a template
+      ## @param worker.services.pekko.labels.app.kubernetes.io/component Label with component name
       ##
       labels:
         "app.kubernetes.io/component": worker
-      ## @param worker.services.akka.annotations Service annotations. Evaluated as a template
+      ## @param worker.services.pekko.annotations Service annotations. Evaluated as a template
       ## Example:
       ## annotations:
       ##   service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
       ##
       annotations: { }
-      ## @param worker.services.akka.publishNotReadyAddresses Enable publishing of the DNS records when Pod is still not ready.
+      ## @param worker.services.pekko.publishNotReadyAddresses Enable publishing of the DNS records when Pod is still not ready.
       ##
       publishNotReadyAddresses: true
-      ## @param worker.services.akka.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
+      ## @param worker.services.pekko.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
       ## If "ClientIP", consecutive client requests will be directed to the same Pod
       ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
       ##
       sessionAffinity: None
-      ## @param worker.services.akka.sessionAffinityConfig Additional settings for the sessionAffinity
+      ## @param worker.services.pekko.sessionAffinityConfig Additional settings for the sessionAffinity
       ## sessionAffinityConfig:
       ##   clientIP:
       ##     timeoutSeconds: 300
@@ -1996,21 +2003,21 @@ worker:
     ##
     portEnabled: true
     ## Service ports
-    ## @param worker.podServiceTemplate.ports.deployAkka Deploy worker Akka port value exposed on the service
+    ## @param worker.podServiceTemplate.ports.deployPekko Deploy worker Pekko port value exposed on the service
     ##
     ports:
-      deployAkka: 32185
+      deployPekko: 32185
     ## Service ports name
-    ## @param worker.podServiceTemplate.portNames.deployAkka Deploy worker Akka port name
+    ## @param worker.podServiceTemplate.portNames.deployPekko Deploy worker Pekko port name
     ##
     portNames:
-      deployAkka: "deploy-akka"
+      deployPekko: "deploy-pekko"
 
     ## Node ports to expose
-    ## @param worker.podServiceTemplate.nodePorts.deployAkka Deploy worker Akka port value exposed on the node (in case of NodePort service)
+    ## @param worker.podServiceTemplate.nodePorts.deployPekko Deploy worker Pekko port value exposed on the node (in case of NodePort service)
     ##
     nodePorts:
-      deployAkka: 32185
+      deployPekko: 32185
     ## @param worker.podServiceTemplate.extraPorts Extra ports to expose in the service
     ## E.g.:
     ## extraPorts:
