@@ -451,7 +451,7 @@ centralConfiguration:
   ##
   args:
     - --
-    - /opt/xebialabs/central-configuration-server/bin/run-in-container.sh
+    - /opt/xebialabs/central-configuration-server/bin/run-in-operator.sh
   ## @param centralConfiguration.lifecycleHooks Overwrite livecycle for the deploy container(s) to automate configuration before or after startup
   ##
   lifecycleHooks: { }
@@ -488,6 +488,13 @@ centralConfiguration:
   ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
   ##
   configuration:
+    "bin_run-in-operator-sh":
+      path: "bin/run-in-operator.sh"
+      mode: 0755
+      content: |
+        echo "Delete empty files to replace them with latest configuration"
+        find /opt/xebialabs/central-configuration-server/centralConfiguration -maxdepth 1 -type f -empty -print -delete
+        exec /opt/xebialabs/central-configuration-server/bin/run-in-container.sh $@
     "central-conf_deploy-server-yaml-template":
       path: "central-conf/deploy-server.yaml.template"
       mode: 0660
