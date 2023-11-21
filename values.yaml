@@ -500,6 +500,8 @@ centralConfiguration:
       path: "bin/run-in-operator.sh"
       mode: 0755
       content: |
+        echo "Delete empty files to replace them with latest configuration"
+        find /opt/xebialabs/central-configuration-server/centralConfiguration -maxdepth 1 -type f -empty -print -delete
         {{- if .Values.oidc.enabled }}
         if [[ ${GENERATE_XL_CONFIG,,} != "true" ]]; then
           echo "Not generating deploy-oidc.yaml as GENERATE_XL_CONFIG != 'true'"
