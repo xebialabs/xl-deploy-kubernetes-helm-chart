@@ -194,9 +194,9 @@ spec:
               {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "source" .Values.centralConfiguration.encryptKey "sourceEnabled" true "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
             {{- if .Values.oidc.enabled }}
             - name: OIDC_CLIENT_ID
-              {{- include "render.value-secret" (dict  "value" .Values.oidc.clientId "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcClientId" "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict "value" .Values.oidc.clientId "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcClientId" "context" $ ) | nindent 14 }}
             - name: OIDC_CLIENT_SECRET
-              {{- include "render.value-secret" (dict  "value" .Values.oidc.clientSecret "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcClientSecret" "context" $ ) | nindent 14 }}
+              {{- include "render.value-secret" (dict "value" .Values.oidc.clientSecret "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcClientSecret" "context" $ ) | nindent 14 }}
             {{- if .Values.oidc.clientAuthJwt.enable -}}
             {{- if .Values.oidc.clientAuthJwt.keyStore.password -}}
             - name: OIDC_CLIENT_AUTH_JWT_KEYSTORE_PASSWORD
@@ -212,7 +212,7 @@ spec:
               {{- include "render.value-secret" (dict "value" .Values.oidc.accessToken.secretKey "defaultName" (include "common.names.fullname" .) "defaultKey" "oidcAccessTokenSecretKey" "context" $ ) | nindent 14 }}
             {{- end -}}
             {{- end }}
-            - name: CONFIG_SERVER_OPTS
+            - name: CONFIG_SERVER_OPTS_EXT
               value: "{{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.jvmArgs "context" .) }}"
             {{- if .Values.centralConfiguration.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.extraEnvVars "context" $) | nindent 12 }}
