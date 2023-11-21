@@ -187,6 +187,12 @@ spec:
               {{- end }}
             - name: APP_PORT
               value: {{ .Values.master.containerPorts.deployHttp | quote }}
+            - name: LOGBACK_GLOBAL_LOGGING_LEVEL
+              value: {{ .Values.master.logback.globalLoggingLevel | quote }}
+            - name: LOGBACK_SCAN_ENABLED
+              value: {{ .Values.master.logback.scanEnabled | quote }}
+            - name: LOGBACK_SCAN_PERIOD
+              value: {{ .Values.master.logback.scanPeriod | quote }}
             - name: ADMIN_PASSWORD
               {{- include "render.value-secret" (dict  "value" (include "deploy.secretPassword" .) "source" .Values.auth.adminPassword "sourceEnabled" true "defaultName" (include "common.names.fullname" .) "defaultKey" "deployPassword" "default" true "context" $ ) | nindent 14 }}
             - name: XL_CLUSTER_MODE

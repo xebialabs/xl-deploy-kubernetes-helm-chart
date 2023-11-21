@@ -207,6 +207,12 @@ spec:
               {{- end }}
             - name: APP_PORT
               value: {{ .Values.master.containerPorts.deployHttp | quote }}
+            - name: LOGBACK_GLOBAL_LOGGING_LEVEL
+              value: {{ .Values.worker.logback.globalLoggingLevel | quote }}
+            - name: LOGBACK_SCAN_ENABLED
+              value: {{ .Values.worker.logback.scanEnabled | quote }}
+            - name: LOGBACK_SCAN_PERIOD
+              value: {{ .Values.worker.logback.scanPeriod | quote }}
             {{- if .Values.license }}
             - name: XL_LICENSE
               {{- include "render.value-secret" (dict  "value" (.Values.license) "defaultName" (include "common.names.fullname" .) "defaultKey" "deployLicense" "context" $ ) | nindent 14 }}

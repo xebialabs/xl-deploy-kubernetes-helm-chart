@@ -130,6 +130,12 @@ spec:
           env:
             - name: APP_PORT
               value: {{ .Values.centralConfiguration.containerPorts.ccHttp | quote }}
+            - name: LOGBACK_GLOBAL_LOGGING_LEVEL
+              value: {{ .Values.centralConfiguration.logback.globalLoggingLevel | quote }}
+            - name: LOGBACK_SCAN_ENABLED
+              value: {{ .Values.centralConfiguration.logback.scanEnabled | quote }}
+            - name: LOGBACK_SCAN_PERIOD
+              value: {{ .Values.centralConfiguration.logback.scanPeriod | quote }}
             - name: XL_CLUSTER_MODE
               value: {{ .Values.clusterMode }}
             - name: XLD_IN_PROCESS
