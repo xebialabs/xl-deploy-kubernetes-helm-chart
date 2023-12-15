@@ -4,30 +4,29 @@ auth:
   adminPassword: "test123"
   
 keystore:
-  passphrase: test123
+  passphrase: "test-keystore"
+
 licenseAcceptEula: true
 
+centralConfiguration:
+  encryptKey: test-cc
+  
 # Optional
 
-centralConfiguration:
-  persistence:
-    size: 50Mi
-    accessModes:
-      - ReadWriteOnce # use ReadWriteMany in case multiple replicas
   replicaCount: 1
   terminationGracePeriodSeconds: 10
 master:
   persistence:
     size: 100Mi
     accessModes:
-      - ReadWriteOnce # use ReadWriteMany in case multiple replicas
+      - ReadWriteOnce
   replicaCount: 1
   terminationGracePeriodSeconds: 10
 worker:
   persistence:
     size: 100Mi
     accessModes:
-      - ReadWriteOnce # use ReadWriteMany in case multiple replicas
+      - ReadWriteOnce 
   replicaCount: 1
   terminationGracePeriodSeconds: 10
 

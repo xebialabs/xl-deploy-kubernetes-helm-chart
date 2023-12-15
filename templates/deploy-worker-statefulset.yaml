@@ -213,9 +213,19 @@ spec:
               value: {{ .Values.worker.logback.scanEnabled | quote }}
             - name: LOGBACK_SCAN_PERIOD
               value: {{ .Values.worker.logback.scanPeriod | quote }}
+            - name: ADMIN_PASSWORD
+              {{- include "render.value-secret" (dict  "value" (include "deploy.secretPassword" .) "source" .Values.auth.adminPassword "sourceEnabled" true "defaultName" (include "common.names.fullname" .) "defaultKey" "deployPassword" "default" true "context" $ ) | nindent 14 }}
             {{- if .Values.license }}
             - name: XL_LICENSE
               {{- include "render.value-secret" (dict  "value" (.Values.license) "defaultName" (include "common.names.fullname" .) "defaultKey" "deployLicense" "context" $ ) | nindent 14 }}
+            {{- else }}
+            {{- if and .Values.hooks.getLicense.enabled .Values.licenseAcceptEula }}
+            - name: XL_LICENSE
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "common.tplvalues.render" ( dict "value" .Values.hooks.getLicense.name "context" $ ) }}"
+                  key: deployit-license.lic
+            {{- end }}              
             {{- end }}
             {{- if or .Values.external.db.enabled .Values.postgresql.install }}
             - name: XL_DB_URL
@@ -320,24 +330,6 @@ spec:
               subPath: {{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore") }}
               readOnly: true
             {{- end }}
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/conf
-              subPath: conf
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/ext
-              subPath: ext
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/hotfix
-              subPath: hotfix
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/hotfix/lib
-              subPath: lib
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/hotfix/plugins
-              subPath: plugins
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/hotfix/satellite-lib
-              subPath: satellite-lib
             - name: data-dir
               mountPath: /opt/xebialabs/deploy-task-engine/work
               subPath: work

@@ -121,6 +121,60 @@ truststore:
   ## @param truststore.truststore Truststore file base64 encoded
   truststore: {}
 
+hooks:
+  ## @param busyBox.image.registry busyBox container image registry
+  ## @param busyBox.image.repository busyBox container image repository
+  ## @param busyBox.image.tag busyBox container image tag
+  ## @param busyBox.image.pullPolicy busyBox container image pull policy
+  ## @param busyBox.image.pullSecrets Specify docker-registry secret names as an array
+  ##
+  getLicense:
+    enabled: true
+    name: '{{ include "common.names.fullname" . }}-license'
+    getCommand: 
+      - /opt/xebialabs/xl-deploy-server/bin/get-license.sh
+    installCommand: 
+      - /opt/xebialabs/xl-deploy-server/bin/install-license.sh
+    image:
+      registry: docker.io
+      repository: bitnami/kubectl
+      tag: latest
+      ## Specify a imagePullPolicy
+      ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+      ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+      ##
+      pullPolicy: IfNotPresent
+      ## Optionally specify an array of imagePullSecrets (secrets must be manually created in the namespace)
+      ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+      ## Example:
+      ## pullSecrets:
+      ##   - myRegistryKeySecretName
+      ##
+      pullSecrets: []
+      ## @param configuration [string] Deploy Configuration file content: required cluster configuration
+      ## Do not override unless you know what you are doing.
+      ## To add more configuration, use `extraConfiguration` of `advancedConfiguration` instead
+      ##
+    configuration:
+      bin_get-license:
+        path: "bin/get-license.sh"
+        mode: 0755
+        content: |
+          #!/bin/bash
+
+          echo "Requesting unregistered license"
+          SERVER_PATH_PART=https://download.xebialabs.com
+          echo -e $(curl -X POST "${SERVER_PATH_PART}/api/unregistered/xl-deploy" | jq --raw-output .license) > ${APP_HOME}/conf/deployit-license.lic
+
+      bin_install-license:
+        path: "bin/install-license.sh"
+        mode: 0755
+        content: |
+          #!/bin/bash
+
+          file_path="/opt/xebialabs/xl-deploy-server/conf/deployit-license.lic"
+          kubectl create secret generic {{ include "common.tplvalues.render" ( dict "value" $.Values.hooks.getLicense.name "context" $ ) }} --from-file=$file_path
+    
 satellite:
   ## @param satellite.enabled Enable support to work with Deploy SAtellites
   enabled: false
@@ -394,51 +448,6 @@ centralConfiguration:
     ##
     maxUnavailable: ""
 
-  ## @section Central configuration persistence parameters
-  ##
-
-  persistence:
-    ## @param centralConfiguration.persistence.enabled Enable deploy data persistence using PVC
-    ##
-    enabled: true
-    ## @param centralConfiguration.persistence.single Enable deploy data to use single PVC
-    ##
-    single: false
-    ## @param centralConfiguration.persistence.storageClass PVC Storage Class for deploy data volume
-    ## If defined, storageClassName: <storageClass>
-    ## If set to "-", storageClassName: "", which disables dynamic provisioning
-    ## If undefined (the default) or set to null, no storageClassName spec is
-    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-    ##   GKE, AWS & OpenStack)
-    ##
-    storageClass: ""
-    ## @param centralConfiguration.persistence.selector Selector to match an existing Persistent Volume
-    ## selector:
-    ##   matchLabels:
-    ##     app: my-app
-    ##
-    selector: { }
-    ## @param centralConfiguration.persistence.accessModes PVC Access Modes for deploy data volume
-    ##
-    accessModes:
-      - ReadWriteOnce
-    ## @param centralConfiguration.persistence.existingClaim Provide an existing PersistentVolumeClaims
-    ## The value is evaluated as a template
-    ## So, for example, the name can depend on .Release or .Chart
-    ##
-    existingClaim: ""
-    ## @param centralConfiguration.persistence.size PVC Storage Request for deploy data volume
-    ##
-    size: 500Mi
-    ## @extra centralConfiguration.persistence.annotations Persistence annotations. Evaluated as a template
-    ## @param centralConfiguration.persistence.annotations.helm.sh/resource-policy Persistence annotation for keeping created PVCs
-    ## Example:
-    ## annotations:
-    ##   example.io/disk-volume-type: SSD
-    ##
-    annotations:
-      helm.sh/resource-policy: "keep"
-
   ## @param centralConfiguration.jvmArgs Deploy centralConfiguration JVM arguments
   ##
   jvmArgs: ""
@@ -545,6 +554,23 @@ centralConfiguration:
           ${APP_HOME}/central-conf/deploy-oidc.yaml.template > ${APP_HOME}/centralConfiguration/deploy-oidc.yaml
         fi
         {{- end }}
+
+        # copy central-conf files
+        cd ${APP_HOME}/central-conf
+        echo "... Copying default centralConfiguration from ${APP_HOME}/central-conf"
+        for f in *; do
+          if [[ $f == *.template ]]; then
+            continue
+          fi
+          if [ -f ${APP_HOME}/centralConfiguration/$f ]; then
+            echo "... Not copying $f because it already exists in the centralConfiguration directory"
+          else
+            echo "... Copying $f to the centralConfiguration directory"
+            cp -R $f ${APP_HOME}/centralConfiguration/
+          fi
+        done
+        cd ${APP_HOME}
+
         exec /opt/xebialabs/central-configuration-server/bin/run-in-container.sh $@
     "central-conf_deploy-server-yaml-template":
       path: "central-conf/deploy-server.yaml.template"
