@@ -614,7 +614,7 @@ false
     {{- if kindIs "map" .value -}}
       {{- if .value.valueFrom.secretKeyRef.name }}
         {{- $exists := include "secrets.exists" (dict "secret" .value.valueFrom.secretKeyRef.name "context" .context) -}}
-        {{- if not $exists -}}
+        {{- if eq $exists "false" -}}
             secret: {{ .value.valueFrom.secretKeyRef.name }}:
                 The secret `{{ .value.valueFrom.secretKeyRef.name }}` does not exist in namespace `{{ .context.Release.Namespace }}`.
         {{- end -}}
