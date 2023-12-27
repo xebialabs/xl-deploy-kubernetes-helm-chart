@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "deploy.masterLbName" . }}
+  name: {{ include "deploy.masterLbService" . }}
   namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     {{- if .Values.commonLabels }}
@@ -49,6 +49,16 @@ spec:
   {{- end }}
   ports:
     {{- if .Values.master.services.lb.portEnabled }}
+    {{- if .Values.ssl.enabled }}
+    - name: {{ .Values.master.services.lb.portNames.deployHttps }}
+      port: {{ .Values.master.services.lb.ports.deployHttps }}
+      targetPort: {{ .Values.master.services.lb.portNames.deployHttps }}
+      {{- if (eq .Values.master.services.lb.type "ClusterIP") }}
+      nodePort: null
+      {{- else if and (or (eq .Values.master.services.lb.type "NodePort") (eq .Values.master.services.lb.type "LoadBalancer")) (not (empty .Values.master.services.lb.nodePorts.deployHttps)) }}
+      nodePort: {{ .Values.master.services.lb.nodePorts.deployHttps }}
+      {{- end }}
+    {{- else }}
     - name: {{ .Values.master.services.lb.portNames.deployHttp }}
       port: {{ .Values.master.services.lb.ports.deployHttp }}
       targetPort: {{ .Values.master.services.lb.portNames.deployHttp }}
@@ -57,6 +67,7 @@ spec:
       {{- else if and (or (eq .Values.master.services.lb.type "NodePort") (eq .Values.master.services.lb.type "LoadBalancer")) (not (empty .Values.master.services.lb.nodePorts.deployHttp)) }}
       nodePort: {{ .Values.master.services.lb.nodePorts.deployHttp }}
       {{- end }}
+    {{- end }}
     {{- end }}
     {{- if .Values.master.services.lb.extraPorts }}
     {{- include "common.tplvalues.render" (dict "value" .Values.master.services.lb.extraPorts "context" $) | nindent 4 }}

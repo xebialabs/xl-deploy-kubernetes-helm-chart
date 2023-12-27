@@ -120,7 +120,7 @@ Get the password secret.
     {{- if .Values.auth.adminPassword -}}
         {{ .Values.auth.adminPassword }}
     {{- else -}}
-        {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace (include "common.names.fullname" .)) | default dict }}
+        {{- $secretObj := (lookup "v1" "Secret" (include "common.names.namespace" .) (include "common.names.fullname" .)) | default dict }}
         {{- $secretData := (get $secretObj "data") | default dict }}
         {{- (get $secretData "deployPassword") | b64dec | default (randAlphaNum 10) }}
     {{- end -}}
@@ -184,9 +184,13 @@ Get the server URL
             {{- else }}
                 {{- printf "%s://%s" $protocol $hostname }}
             {{- end }}
-            {{- printf "%s://%s" $protocol $hostname }}
         {{- else -}}
-            {{- print "" }}
+            {{- $path := include "deploy.path.fullname" $ }}
+            {{- if $path }}
+                {{- printf "%s://%s%s" ( include "deploy.masterLbUrlWithoutPort" . ) $path }}
+            {{- else }}
+                {{- printf "%s://%s" ( include "deploy.masterLbUrlWithoutPort" . ) }}
+            {{- end }}
         {{- end }}
     {{- end }}
 {{- end -}}
@@ -205,9 +209,28 @@ Get the main db URL
 {{- end -}}
 
 {{/*
+Use the service name with namespace. In case of ssl enabled the SNI check will fail without ".".
+*/}}
+{{- define "deploy.hostname" -}}
+    {{- if .Values.ingress.enabled }}
+        {{- .Values.ingress.hostname }}
+    {{- else -}}
+        {{- if .Values.route.enabled }}
+            {{- .Values.route.hostname }}
+        {{- else -}}        
+            {{- include "deploy.masterLbName" . }}
+        {{- end }}
+    {{- end }}
+{{- end -}}
+
+{{/*
 Get the Deploy LB service name
 */}}
 {{- define "deploy.masterLbName" -}}
+{{ include "common.names.fullname" . }}-lb.{{ include "common.names.namespace" . }}
+{{- end -}}
+
+{{- define "deploy.masterLbService" -}}
 {{ include "common.names.fullname" . }}-lb
 {{- end -}}
 
@@ -215,7 +238,19 @@ Get the Deploy LB service name
 Get the Deploy LB service URL
 */}}
 {{- define "deploy.masterLbUrl" -}}
-http://{{ include "deploy.masterLbName" . }}:{{ .Values.master.services.lb.ports.deployHttp }}/
+{{- if .Values.ssl.enabled }}
+{{ include "deploy.masterLbUrlWithoutPort" . }}:{{ .Values.master.services.lb.ports.deployHttps }}
+{{- else -}}
+{{ include "deploy.masterLbUrlWithoutPort" . }}:{{ .Values.master.services.lb.ports.deployHttp }}
+{{- end -}}
+{{- end -}}
+
+{{- define "deploy.masterLbUrlWithoutPort" -}}
+{{- if .Values.ssl.enabled }}
+https://{{ include "deploy.masterLbName" . }}
+{{- else -}}
+http://{{ include "deploy.masterLbName" . }}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -507,7 +542,7 @@ deploy: license or licenseAcceptEula
 {{- define "render.secret-name" -}}
   {{- if .value -}}
     {{- if kindIs "map" .value -}}
-{{ .value.valueFrom.secretKeyRef.name }}
+{{- tpl (.value.valueFrom.secretKeyRef.name | toYaml) .context }}
     {{- else if kindIs "string" .value -}}
 {{ .defaultName }}
     {{- else -}}
@@ -524,7 +559,7 @@ deploy: license or licenseAcceptEula
 Returns the name of the secret key if exists, in other case it gives the default value
 
 Usage:
-{{ include "secrets.key" (dict "secretRef" .Values.secretObjectRef "default" "defaultValue") }}
+{{ include "secrets.key" (dict "secretRef" .Values.secretObjectRef "default" "defaultValue" "context" $) }}
 
 Params:
   - secretRef - dict - Required - Name of the 'Secret' resource where the password is stored.
@@ -532,7 +567,7 @@ Params:
 */}}
 {{- define "secrets.key" -}}
 {{- if and .secretRef (kindIs "map" .secretRef) -}}
-{{ .secretRef.valueFrom.secretKeyRef.key }}
+{{- tpl .secretRef.valueFrom.secretKeyRef.key .context }}
 {{- else if kindIs "string" .secretRef -}}
 {{ .default }}
 {{- else -}}
@@ -601,7 +636,7 @@ Params:
   - context - Context - Required - Parent context.
 */}}
 {{- define "secrets.exists" -}}
-{{- $secret := (lookup "v1" "Secret" .context.Release.Namespace .secret) -}}
+{{- $secret := (lookup "v1" "Secret" (include "common.names.namespace" .context) .secret) -}}
 {{- if $secret -}}
 true
 {{- else -}}
@@ -616,7 +651,7 @@ false
         {{- $exists := include "secrets.exists" (dict "secret" .value.valueFrom.secretKeyRef.name "context" .context) -}}
         {{- if eq $exists "false" -}}
             secret: {{ .value.valueFrom.secretKeyRef.name }}:
-                The secret `{{ .value.valueFrom.secretKeyRef.name }}` does not exist in namespace `{{ .context.Release.Namespace }}`.
+                The secret `{{ .value.valueFrom.secretKeyRef.name }}` does not exist in namespace `{{ include "common.names.namespace" .context }}`.
         {{- end -}}
       {{- else -}}
           secret: unknown

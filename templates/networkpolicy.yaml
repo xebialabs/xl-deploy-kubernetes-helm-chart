@@ -17,7 +17,11 @@ spec:
   ingress:
     # Allow inbound connections
     - ports:
+        {{- if .Values.ssl.enabled }}
+        - port: {{ .Values.master.services.lb.ports.deployHttps }}
+        {{- else }}
         - port: {{ .Values.master.services.lb.ports.deployHttp }}
+        {{- end }}
       {{- if not .Values.networkPolicy.allowExternal }}
       from:
         - podSelector:

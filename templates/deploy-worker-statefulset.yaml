@@ -117,7 +117,11 @@ spec:
             - name: CENTRAL_CONFIGURATION_SVC
               value: {{ include "deploy.names.centralConfiguration" . }}
             - name: CENTRAL_CONFIGURATION_PORT
+              {{- if .Values.centralConfiguration.ssl.enabled }}
+              value: {{ .Values.centralConfiguration.service.ports.ccHttps | quote }}
+              {{- else }}
               value: {{ .Values.centralConfiguration.service.ports.ccHttp | quote }}
+              {{- end }}
         {{- if and (not .Values.external.db.enabled) .Values.postgresql.install }}
         - name: wait-for-postgresql
           image: {{ include "deploy.busyBox.image" . }}
@@ -169,7 +173,11 @@ spec:
             - name: MASTER_SVC
               value: {{ include "deploy.masterLbName" . }}
             - name: MASTER_PORT
+              {{- if .Values.ssl.enabled }}
+              value: {{ .Values.master.services.lb.ports.deployHttps | quote }}
+              {{- else }}
               value: {{ .Values.master.services.lb.ports.deployHttp | quote }}
+              {{- end }}
         {{- end }}
         {{- if .Values.worker.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.worker.initContainers "context" $) | nindent 8 }}
@@ -206,7 +214,11 @@ spec:
               value: "n"
               {{- end }}
             - name: APP_PORT
+              {{- if .Values.ssl.enabled }}
+              value: {{ .Values.master.containerPorts.deployHttps | quote }}
+              {{- else }}
               value: {{ .Values.master.containerPorts.deployHttp | quote }}
+              {{- end }}
             - name: LOGBACK_GLOBAL_LOGGING_LEVEL
               value: {{ .Values.worker.logback.globalLoggingLevel | quote }}
             - name: LOGBACK_SCAN_ENABLED
@@ -245,7 +257,7 @@ spec:
             {{- end }}
             {{- if .Values.truststore.truststore }}
             - name: TRUSTSTORE
-              value: "/opt/xebialabs/deploy-task-engine/truststore/{{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore") }}"
+              value: "/opt/xebialabs/deploy-task-engine/truststore/{{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore" "context" $) }}"
             - name: TRUSTSTORE_TYPE
               value: {{ .Values.truststore.type | quote }}
             {{- if .Values.truststore.password }}
@@ -258,7 +270,11 @@ spec:
             - name: CENTRAL_CONFIG_ENCRYPT_KEY
               {{- include "render.value-secret" (dict  "value" (include "deploy.encryptKey" .) "source" .Values.centralConfiguration.encryptKey "sourceEnabled" true "defaultName" (include "common.names.fullname" .) "defaultKey" "centralConfigurationEncryptKey" "context" $ ) | nindent 14 }}
             - name: CENTRAL_CONFIG_URL
+              {{- if .Values.centralConfiguration.ssl.enabled }}
+              value: "https://{{ include "deploy.names.centralConfiguration" . }}:{{ .Values.centralConfiguration.service.ports.ccHttps }}/centralConfiguration"
+              {{- else }}
               value: "http://{{ include "deploy.names.centralConfiguration" . }}:{{ .Values.centralConfiguration.service.ports.ccHttp }}/centralConfiguration"
+              {{- end }}
             - name: USE_EXTERNAL_CENTRAL_CONFIG
               value: {{ .Values.externalCentralConfig | quote }}
             - name: HOSTNAME_SUFFIX
@@ -325,9 +341,9 @@ spec:
               subPath: {{ $v.path }}
             {{- end }}
             {{- if .Values.truststore.truststore }}
-            - mountPath: /opt/xebialabs/deploy-task-engine/truststore/{{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore") }}
+            - mountPath: /opt/xebialabs/deploy-task-engine/truststore/{{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore" "context" $) }}
               name: deploy-truststore
-              subPath: {{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore") }}
+              subPath: {{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore" "context" $) }}
               readOnly: true
             {{- end }}
             - name: data-dir
@@ -343,7 +359,7 @@ spec:
         {{- if .Values.truststore.truststore }}
         - name: deploy-truststore
           secret:
-            secretName: "{{- include "render.secret-name" (dict "value" .Values.truststore.truststore "defaultName" (include "common.names.fullname" .) "context" $ ) }}"
+            secretName: {{- include "render.secret-name" (dict "value" .Values.truststore.truststore "defaultName" (include "common.names.fullname" .) "context" $ ) }}
         {{- end }}
         {{- if .Values.worker.configuration }}
         - name: configuration
