@@ -1,5 +1,6 @@
 {{- if and .Values.hooks.getLicense.enabled .Values.licenseAcceptEula (not .Values.license) }}
 {{- $name := include "common.tplvalues.render" ( dict "value" .Values.hooks.getLicense.name "context" $ ) -}}
+{{- $licenseExists := include "secrets.exists" ( dict "secret" $name "context" $ ) -}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -19,7 +20,21 @@ data:
   {{ $k }}: |-
     {{- include "common.tplvalues.render" (dict "value" $v.content "context" $) | nindent 4 }}
   {{- end }}
-{{- $licenseExists := include "secrets.exists" ( dict "secret" $name "context" $ ) -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-status
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+data:
+    "license-status": "{{ $licenseExists }}"
 {{- if eq $licenseExists "false" }}
 ---
 kind: Role
