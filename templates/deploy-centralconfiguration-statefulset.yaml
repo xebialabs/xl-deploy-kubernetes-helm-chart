@@ -116,7 +116,11 @@ spec:
           {{- end }}
           env:
             - name: APP_PORT
+              {{- if .Values.centralConfiguration.ssl.enabled }}
+              value: {{ .Values.centralConfiguration.containerPorts.ccHttps | quote }}
+              {{- else }}
               value: {{ .Values.centralConfiguration.containerPorts.ccHttp | quote }}
+              {{- end }}
             - name: LOGBACK_GLOBAL_LOGGING_LEVEL
               value: {{ .Values.centralConfiguration.logback.globalLoggingLevel | quote }}
             - name: LOGBACK_SCAN_ENABLED
@@ -214,8 +218,13 @@ spec:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.extraEnvVarsSecret "context" $) }}
             {{- end }}
           ports:
+            {{- if .Values.centralConfiguration.ssl.enabled }}
+            - name: {{ .Values.centralConfiguration.service.portNames.ccHttps }}
+              containerPort: {{ .Values.centralConfiguration.containerPorts.ccHttps }}
+            {{- else }}
             - name: {{ .Values.centralConfiguration.service.portNames.ccHttp }}
               containerPort: {{ .Values.centralConfiguration.containerPorts.ccHttp }}
+            {{- end }}
             {{- if .Values.centralConfiguration.extraContainerPorts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.extraContainerPorts "context" $) | nindent 12 }}
             {{- end }}
@@ -224,14 +233,26 @@ spec:
           livenessProbe:
             httpGet:
               path: /login
+              {{- if .Values.centralConfiguration.ssl.enabled }}
+              scheme: HTTPS
+              port: {{ .Values.centralConfiguration.service.portNames.ccHttps }}
+              {{- else }}
+              scheme: HTTP
               port: {{ .Values.centralConfiguration.service.portNames.ccHttp }}
+              {{- end }}
             initialDelaySeconds: {{ .Values.centralConfiguration.health.probesLivenessTimeout }}
             periodSeconds: {{ .Values.centralConfiguration.health.periodScans }}
             failureThreshold: {{ .Values.centralConfiguration.health.probeFailureThreshold }}
           readinessProbe:
             httpGet:
               path: /login
+              {{- if .Values.centralConfiguration.ssl.enabled }}
+              scheme: HTTPS
+              port: {{ .Values.centralConfiguration.service.portNames.ccHttps }}
+              {{- else }}
+              scheme: HTTP
               port: {{ .Values.centralConfiguration.service.portNames.ccHttp }}
+              {{- end }}
             initialDelaySeconds: {{ .Values.centralConfiguration.health.probesReadinessTimeout }}
             periodSeconds: {{ .Values.centralConfiguration.health.periodScans }}
             failureThreshold: {{ .Values.centralConfiguration.health.probeFailureThreshold }}

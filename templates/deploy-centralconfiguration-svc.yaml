@@ -49,14 +49,25 @@ spec:
   {{- end }}
   ports:
     {{- if .Values.centralConfiguration.service.portEnabled }}
+    {{- if .Values.centralConfiguration.ssl.enabled }}
+    - name: {{ .Values.centralConfiguration.service.portNames.ccHttps }}
+      port: {{ .Values.centralConfiguration.service.ports.ccHttps }}
+      targetPort: {{ .Values.centralConfiguration.service.portNames.ccHttps }}
+      {{- if (eq .Values.centralConfiguration.service.type "ClusterIP") }}
+      nodePort: null
+      {{- else if and (or (eq .Values.centralConfiguration.service.type "NodePort") (eq .Values.centralConfiguration.service.type "LoadBalancer")) (not (empty .Values.centralConfiguration.service.nodePorts.ccHttps)) }}
+      nodePort: {{ .Values.centralConfiguration.service.nodePorts.ccHttps }}
+      {{- end }}
+    {{- else }}
     - name: {{ .Values.centralConfiguration.service.portNames.ccHttp }}
       port: {{ .Values.centralConfiguration.service.ports.ccHttp }}
       targetPort: {{ .Values.centralConfiguration.service.portNames.ccHttp }}
       {{- if (eq .Values.centralConfiguration.service.type "ClusterIP") }}
       nodePort: null
-      {{- else if and (or (eq .Values.centralConfiguration.service.type "NodePort") (eq .Values.centralConfiguration.service.type "LoadBalancer")) (not (empty .Values.centralConfiguration.service.nodePorts.deployHttp)) }}
+      {{- else if and (or (eq .Values.centralConfiguration.service.type "NodePort") (eq .Values.centralConfiguration.service.type "LoadBalancer")) (not (empty .Values.centralConfiguration.service.nodePorts.ccHttp)) }}
       nodePort: {{ .Values.centralConfiguration.service.nodePorts.ccHttp }}
       {{- end }}
+    {{- end }}
     {{- end }}
     {{- if .Values.centralConfiguration.service.extraPorts }}
     {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.service.extraPorts "context" $) | nindent 4 }}

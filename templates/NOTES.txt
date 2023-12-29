@@ -4,13 +4,18 @@
 ## To get the application URL, run:
 {{ include "deploy.serverUrl" . }}
 {{- end }}
+{{- if .Values.ssl.enabled }}
+## To connect over HTTPS port forward on port {{ .Values.master.containerPorts.deployHttps }} use:
+kubectl port-forward service/{{ include "common.names.fullname" . }} {{ .Values.master.containerPorts.deployHttps }}:{{ .Values.master.services.lb.portNames.deployHttps }}
+{{- else }}
 ## To connect over HTTP port forward on port {{ .Values.master.containerPorts.deployHttp }} use:
 kubectl port-forward service/{{ include "common.names.fullname" . }} {{ .Values.master.containerPorts.deployHttp }}:{{ .Values.master.services.lb.portNames.deployHttp }}
+{{- end }}
 ## To get the admin password for Digitalai Deploy, run:
 {{- if kindIs "map" .Values.auth.adminPassword }}
-kubectl get secret --namespace {{ .Release.Namespace }} {{ .Values.auth.adminPassword.valueFrom.secretKeyRef.name }} -o jsonpath="{ .data.{{ .Values.auth.adminPassword.valueFrom.secretKeyRef.key }} }" | base64 --decode; echo
+kubectl get secret --namespace {{ include "common.names.namespace" . }} {{ .Values.auth.adminPassword.valueFrom.secretKeyRef.name }} -o jsonpath="{ .data.{{ .Values.auth.adminPassword.valueFrom.secretKeyRef.key }} }" | base64 --decode; echo
 {{- else }}
-kubectl get secret --namespace {{ .Release.Namespace }} {{ include "common.names.fullname" . }} -o jsonpath="{.data.deployPassword}" | base64 --decode; echo
+kubectl get secret --namespace {{ include "common.names.namespace" . }} {{ include "common.names.fullname" . }} -o jsonpath="{.data.deployPassword}" | base64 --decode; echo
 {{- end }}
 
 {{- if .Values.master.podServiceTemplate.enabled }}
@@ -25,12 +30,12 @@ kubectl get secret --namespace {{ .Release.Namespace }} {{ include "common.names
 
 {{- if or .Values.postgresql.install .Values.external.db.enabled }}
 ## To get the password for main database, run:
-kubectl get secret --namespace  {{ .Release.Namespace }} {{ include "common.names.fullname" . }} -o jsonpath="{.data.mainDatabasePassword}" | base64 --decode; echo
+kubectl get secret --namespace {{ include "common.names.namespace" . }} {{ include "common.names.fullname" . }} -o jsonpath="{.data.mainDatabasePassword}" | base64 --decode; echo
 ## To get the password for report database, run:
-kubectl get secret --namespace  {{ .Release.Namespace }} {{ include "common.names.fullname" . }} -o jsonpath="{.data.reportDatabasePassword}" | base64 --decode; echo
+kubectl get secret --namespace {{ include "common.names.namespace" . }}{{ include "common.names.fullname" . }} -o jsonpath="{.data.reportDatabasePassword}" | base64 --decode; echo
 {{- end }}
 
 {{- if or .Values.rabbitmq.install .Values.external.mq.enabled }}
 ## To get the password for rabbitMQ, run:
-kubectl get secret --namespace  {{ .Release.Namespace }} {{ include "common.names.fullname" . }} -o jsonpath="{.data.rabbitmqPassword}" | base64 --decode; echo
+kubectl get secret --namespace {{ include "common.names.namespace" . }} {{ include "common.names.fullname" . }} -o jsonpath="{.data.rabbitmqPassword}" | base64 --decode; echo
 {{- end }}
