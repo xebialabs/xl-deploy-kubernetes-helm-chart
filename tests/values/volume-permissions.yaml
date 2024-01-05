@@ -1,0 +1,6 @@
+master:
+  volumePermissions:
+    enabled: true
+worker:
+  volumePermissions:
+    enabled: true

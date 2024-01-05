@@ -179,6 +179,27 @@ spec:
               value: {{ .Values.master.services.lb.ports.deployHttp | quote }}
               {{- end }}
         {{- end }}
+        {{- if and .Values.worker.volumePermissions.enabled .Values.worker.persistence.enabled }}
+        - name: volume-permissions
+          image: {{ template "deploy.images.image" ( dict "imageRoot" .Values.worker.volumePermissions.image "global" .Values.global "context" .) }}
+          imagePullPolicy: {{ .Values.worker.volumePermissions.image.pullPolicy | quote }}
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              {{- include "common.tplvalues.render" (dict "value" .Values.worker.volumePermissions.script "context" $) | nindent 14 }}
+          securityContext: {{- .Values.worker.volumePermissions.containerSecurityContext | toYaml | nindent 12 }}
+          {{- if .Values.worker.volumePermissions.resources }}
+          resources: {{- toYaml .Values.worker.volumePermissions.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- range $path := .Values.worker.persistence.paths }}
+            - name: data-dir
+              mountPath: {{ $path }}
+              subPath: {{ regexFind "[^/]+$" $path }}
+            {{- end }}    
+        {{- end }}        
         {{- if .Values.worker.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.worker.initContainers "context" $) | nindent 8 }}
         {{- end }}
@@ -346,9 +367,11 @@ spec:
               subPath: {{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore" "context" $) }}
               readOnly: true
             {{- end }}
+            {{- range $path := .Values.worker.persistence.paths }}
             - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/work
-              subPath: work
+              mountPath: {{ $path }}
+              subPath: {{ regexFind "[^/]+$" $path }}
+            {{- end }}
             {{- if .Values.worker.extraVolumeMounts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.worker.extraVolumeMounts "context" $) | nindent 12 }}
             {{- end }}
