@@ -28,8 +28,9 @@ spec:
         component: {{ template "xl-deploy.name" . }}-master
         release: {{ .Release.Name }}
     spec:
-      securityContext:
-        fsGroup: 10001
+      {{- if .Values.master.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.master.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
       {{- if .Values.ImagePullSecret }}
       imagePullSecrets:
         - name: {{ .Values.ImagePullSecret }}
@@ -81,6 +82,23 @@ spec:
             - name: RABBITMQ_PORT
               value: "5672"
         {{- end }}
+        {{- if .Values.master.volumePermissions.enabled }}
+        - name: volume-permissions
+          image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
+          command:
+            - /bin/sh
+          args:
+            - -ec
+            - |
+              {{- include "common.tplvalues.render" (dict "value" .Values.master.volumePermissions.script "context" $) | nindent 14 }}
+          securityContext: {{- .Values.master.volumePermissions.containerSecurityContext | toYaml | nindent 12 }}
+          volumeMounts:
+          {{- range $path := .Values.master.persistence.paths }}
+            - name: data-dir
+              mountPath: {{ $path }}
+              subPath: {{ regexFind "[^/]+$" $path }}
+          {{- end }}
+        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           {{- if .Values.deploy.master.image.tag }}
@@ -89,6 +107,9 @@ spec:
           image: "{{ .Values.ServerImageRepository }}:{{ .Values.ImageTag }}"
           {{- end }}
           imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
+          {{- if .Values.master.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.master.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           ports:
             - name: http
               containerPort: 4516
@@ -115,30 +136,11 @@ spec:
               mountPath: /opt/xebialabs/xl-deploy-server/centralConfiguration/deploy-oidc.yaml
               subPath: deploy-oidc.yaml
             {{- end }}
+            {{- range $path := .Values.master.persistence.paths }}
             - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/work
-              subPath: work
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/conf
-              subPath: conf
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/centralConfiguration
-              subPath: centralConfiguration
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/ext
-              subPath: ext
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/log
-              subPath: log
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/lib
-              subPath: lib
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/plugins
-              subPath: plugins
-            - name: data-dir
-              mountPath: /opt/xebialabs/xl-deploy-server/hotfix/satellite-lib
-              subPath: satellite-lib
+              mountPath: {{ $path }}
+              subPath: {{ regexFind "[^/]+$" $path }}
+            {{- end }}
             {{- if .Values.deploy.configurationManagement.master.volumeMounts.enabled }}
             {{- range $key, $val := .Values.deploy.configurationManagement.master.volumeMounts.paths }}
             - name: data-dir
