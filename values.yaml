@@ -511,6 +511,8 @@ centralConfiguration:
   ##
   podSecurityContext:
     enabled: true
+    runAsUser: 10001
+    runAsGroup: 10001
     fsGroup: 10001
 
   ## @param centralConfiguration.containerSecurityContext.enabled Enabled deploy containers' Security Context
@@ -1153,7 +1155,9 @@ master:
   ##
   podSecurityContext:
     enabled: true
-    fsGroup: 1001
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
 
   ## @param master.containerSecurityContext.enabled Enabled deploy containers' Security Context
   ## @param master.containerSecurityContext.runAsUser Set deploy containers' Security Context runAsUser
@@ -1167,7 +1171,7 @@ master:
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 1001
+    runAsUser: 10001
     runAsNonRoot: true
 
   ## @param master.initContainers Add init containers to the deploy master pod
@@ -1192,6 +1196,77 @@ master:
   ##         containerPort: 1234
   ##
   sidecars: []
+
+  ## Init Container parameters
+  ## Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component
+  ## values from the securityContext section of the component
+  ##
+  volumePermissions:
+    ## @param master.volumePermissions.enabled Enable init container that changes the owner and group of the persistent volume(s) mountpoint to `runAsUser:fsGroup`
+    ##
+    enabled: false
+    ## @param master.volumePermissions.image.registry Init container volume-permissions image registry
+    ## @param master.volumePermissions.image.repository Init container volume-permissions image repository
+    ## @param master.volumePermissions.image.tag Init container volume-permissions image tag
+    ## @param master.volumePermissions.image.digest Init container volume-permissions image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
+    ## @param master.volumePermissions.image.pullPolicy Init container volume-permissions image pull policy
+    ## @param master.volumePermissions.image.pullSecrets Specify docker-registry secret names as an array
+    ##
+    image:
+      registry: docker.io
+      repository: bitnami/bitnami-shell
+      tag: 11-debian-11-r92
+      digest: ""
+      ## Specify a imagePullPolicy
+      ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+      ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+      ##
+      pullPolicy: IfNotPresent
+      ## Optionally specify an array of imagePullSecrets (secrets must be manually created in the namespace)
+      ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+      ## Example:
+      ## pullSecrets:
+      ##   - myRegistryKeySecretName
+      ##
+      pullSecrets: []
+    ## @param master.volumePermissions.script Script for changing the owner and group of the persistent volume(s). Paths are declared in the 'paths' variable.
+    script: |
+      declare -a paths=( {{ range $path := .Values.master.persistence.paths }} "{{ $path }}"{{ end }} )
+      for path in "${paths[@]}"; do
+        echo "Changing ownership to {{ .Values.master.containerSecurityContext.runAsUser }}:{{ .Values.master.podSecurityContext.fsGroup }} for ${path}"
+        chown "{{ .Values.master.containerSecurityContext.runAsUser }}:{{ .Values.master.podSecurityContext.fsGroup }}" "${path}"
+        find "${path}" -mindepth 1 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
+          xargs -r chown -R "{{ .Values.master.containerSecurityContext.runAsUser }}:{{ .Values.master.podSecurityContext.fsGroup }}"
+      done
+    ## Init Container resource requests and limits
+    ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+    ## We usually recommend not to specify default resources and to leave this as a conscious
+    ## choice for the user. This also increases chances charts run on environments with little
+    ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+    ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    ## @param master.volumePermissions.resources.limits Init container volume-permissions resource limits
+    ## @param master.volumePermissions.resources.requests Init container volume-permissions resource requests
+    ##
+    resources:
+      ## Example:
+      ## limits:
+      ##    cpu: 100m
+      ##    memory: 128Mi
+      ##
+      limits: {}
+      ## Examples:
+      ## requests:
+      ##    cpu: 100m
+      ##    memory: 128Mi
+      ##
+      requests: {}
+    ## Init container' Security Context
+    ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
+    ## and not the below volumePermissions.containerSecurityContext.runAsUser
+    ## @param master.volumePermissions.containerSecurityContext.runAsUser User ID for the init container
+    ##
+    containerSecurityContext:
+      runAsUser: 0
 
   ## Pod Disruption Budget configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
@@ -1251,7 +1326,10 @@ master:
     ##
     annotations:
       helm.sh/resource-policy: "keep"
-
+    ## @param master.persistence.paths mounted paths for the Deploy master
+    paths:
+      - /opt/xebialabs/xl-deploy-server/work
+      
   ## @param master.jvmArgs Deploy master JVM arguments
   ##
   jvmArgs: ""
@@ -1874,7 +1952,9 @@ worker:
   ##
   podSecurityContext:
     enabled: true
-    fsGroup: 1001
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
 
   ## @param worker.containerSecurityContext.enabled Enabled deploy containers' Security Context
   ## @param worker.containerSecurityContext.runAsUser Set deploy containers' Security Context runAsUser
@@ -1888,7 +1968,7 @@ worker:
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 1001
+    runAsUser: 10001
     runAsNonRoot: true
 
   ## @param worker.initContainers Add init containers to the Deploy worker pod
@@ -1913,6 +1993,77 @@ worker:
   ##         containerPort: 1234
   ##
   sidecars: []
+
+  ## Init Container parameters
+  ## Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component
+  ## values from the securityContext section of the component
+  ##
+  volumePermissions:
+    ## @param worker.volumePermissions.enabled Enable init container that changes the owner and group of the persistent volume(s) mountpoint to `runAsUser:fsGroup`
+    ##
+    enabled: false
+    ## @param worker.volumePermissions.image.registry Init container volume-permissions image registry
+    ## @param worker.volumePermissions.image.repository Init container volume-permissions image repository
+    ## @param worker.volumePermissions.image.tag Init container volume-permissions image tag
+    ## @param worker.volumePermissions.image.digest Init container volume-permissions image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
+    ## @param worker.volumePermissions.image.pullPolicy Init container volume-permissions image pull policy
+    ## @param worker.volumePermissions.image.pullSecrets Specify docker-registry secret names as an array
+    ##
+    image:
+      registry: docker.io
+      repository: bitnami/bitnami-shell
+      tag: 11-debian-11-r92
+      digest: ""
+      ## Specify a imagePullPolicy
+      ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+      ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+      ##
+      pullPolicy: IfNotPresent
+      ## Optionally specify an array of imagePullSecrets (secrets must be manually created in the namespace)
+      ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+      ## Example:
+      ## pullSecrets:
+      ##   - myRegistryKeySecretName
+      ##
+      pullSecrets: []
+    ## @param worker.volumePermissions.script Script for changing the owner and group of the persistent volume(s). Paths are declared in the 'paths' variable.
+    script: |
+      declare -a paths=( {{ range $path := .Values.worker.persistence.paths }} "{{ $path }}"{{ end }} )
+      for path in "${paths[@]}"; do
+        echo "Changing ownership to {{ .Values.worker.containerSecurityContext.runAsUser }}:{{ .Values.worker.podSecurityContext.fsGroup }} for ${path}"
+        chown "{{ .Values.worker.containerSecurityContext.runAsUser }}:{{ .Values.worker.podSecurityContext.fsGroup }}" "${path}"
+        find "${path}" -mindepth 1 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
+          xargs -r chown -R "{{ .Values.worker.containerSecurityContext.runAsUser }}:{{ .Values.worker.podSecurityContext.fsGroup }}"
+      done
+    ## Init Container resource requests and limits
+    ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+    ## We usually recommend not to specify default resources and to leave this as a conscious
+    ## choice for the user. This also increases chances charts run on environments with little
+    ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+    ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    ## @param worker.volumePermissions.resources.limits Init container volume-permissions resource limits
+    ## @param worker.volumePermissions.resources.requests Init container volume-permissions resource requests
+    ##
+    resources:
+      ## Example:
+      ## limits:
+      ##    cpu: 100m
+      ##    memory: 128Mi
+      ##
+      limits: {}
+      ## Examples:
+      ## requests:
+      ##    cpu: 100m
+      ##    memory: 128Mi
+      ##
+      requests: {}
+    ## Init container' Security Context
+    ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
+    ## and not the below volumePermissions.containerSecurityContext.runAsUser
+    ## @param worker.volumePermissions.containerSecurityContext.runAsUser User ID for the init container
+    ##
+    containerSecurityContext:
+      runAsUser: 0
 
   ## Pod Disruption Budget configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
@@ -1972,6 +2123,9 @@ worker:
     ##
     annotations:
       helm.sh/resource-policy: "keep"
+    ## @param worker.persistence.paths mounted paths for the Deploy worker
+    paths:
+      - /opt/xebialabs/deploy-task-engine/work
 
   ## @param worker.jvmArgs Deploy worker JVM arguments
   ##
