@@ -21,14 +21,16 @@ spec:
         component: {{ template "xl-deploy.name" . }}-cc-server
         release: {{ .Release.Name }}
     spec:
-      securityContext:
-        fsGroup: 10001
+      {{- if .Values.centralConfiguration.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.centralConfiguration.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
       {{- if .Values.ImagePullSecret }}
       imagePullSecrets:
         - name: {{ .Values.ImagePullSecret }}
       {{- end }}
-      {{- if or (and (eq .Values.centralConfiguration.migrateFromEmbedded "true") (eq .Values.Persistence.Enabled true)) }}
+      {{- if or (and (eq .Values.centralConfiguration.migrateFromEmbedded "true") (eq .Values.Persistence.Enabled true)) .Values.centralConfiguration.volumePermissions.enabled }}
       initContainers:
+        {{- if and (eq .Values.centralConfiguration.migrateFromEmbedded "true") (eq .Values.Persistence.Enabled true) }}
         - name: wait-for-migrate-from-embedded-cc-to-standalone
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.ImageTag }}"
           imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
@@ -38,6 +40,24 @@ spec:
               name: source-dir
             - mountPath: "/mnt/centralConfiguration-target-dir"
               name: data-dir
+        {{- end }}
+        {{- if .Values.centralConfiguration.volumePermissions.enabled }}
+        - name: volume-permissions
+          image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
+          command:
+            - /bin/sh
+          args:
+            - -ec
+            - |
+              {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.volumePermissions.script "context" $) | nindent 14 }}
+          securityContext: {{- .Values.centralConfiguration.volumePermissions.containerSecurityContext | toYaml | nindent 12 }}
+          volumeMounts:
+          {{- range $path := .Values.centralConfiguration.persistence.paths }}
+            - name: data-dir
+              mountPath: {{ $path }}
+              subPath: {{ regexFind "[^/]+$" $path }}
+          {{- end }}
+        {{- end }}
       {{- end }}
       containers:
         - name: cc-server
@@ -47,6 +67,9 @@ spec:
           image: "{{ .Values.centralConfiguration.image.repository }}:{{ .Values.ImageTag}}"
           {{- end }}
           imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
+          {{- if .Values.centralConfiguration.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.centralConfiguration.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           ports:
             - name: http
               containerPort: 8888
@@ -67,12 +90,11 @@ spec:
               mountPath: /opt/xebialabs/central-configuration-server/centralConfiguration/deploy-oidc.yaml
               subPath: deploy-oidc.yaml
             {{- end }}
+            {{- range $path := .Values.centralConfiguration.persistence.paths }}
             - name: data-dir
-              mountPath: /opt/xebialabs/central-configuration-server/centralConfiguration
-              subPath: centralConfiguration
-            - name: data-dir
-              mountPath: /opt/xebialabs/central-configuration-server/conf
-              subPath: conf
+              mountPath: {{ $path }}
+              subPath: {{ regexFind "[^/]+$" $path }}
+            {{- end }}
             {{- if .Values.deploy.configurationManagement.centralConfiguration.volumeMounts.enabled }}
             {{- range $key, $val := .Values.deploy.configurationManagement.centralConfiguration.volumeMounts.paths }}
             - name: data-dir
