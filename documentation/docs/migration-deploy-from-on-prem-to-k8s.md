@@ -48,10 +48,10 @@ Also, the version of on-prem Deploy before migration needs to be the same to the
 
 The migration supports multiple platforms including (here are also links with some details that are important for the specific provider):
 - Plain Multi-node Kubernetes Cluster On-premise, 
-- OpenShift (on [AWS](https://docs.digital.ai/bundle/devops-release-version-v.23.3/page/deploy/operator/xl-op-install-on-aws-openshift.html), Azure and on other providers), 
-- [Amazon EKS](https://docs.digital.ai/bundle/devops-release-version-v.23.3/page/deploy/operator/xl-op-install-on-eks.html), 
-- [Google GKE](https://docs.digital.ai/bundle/devops-release-version-v.23.3/page/deploy/operator/xl-op-install-on-gke.html), and 
-- [Azure AKS](https://docs.digital.ai/bundle/devops-release-version-v.23.3/page/deploy/operator/xl-op-install-on-aks.html).
+- OpenShift (on [AWS](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-install-on-aws-openshift.html), Azure and on other providers), 
+- [Amazon EKS](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-install-on-eks.html), 
+- [Google GKE](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-install-on-gke.html), and 
+- [Azure AKS](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-install-on-aks.html).
 
 ### 1.3. Provide Docker Image Tags
 
@@ -63,7 +63,7 @@ Check if all images are available on your K8s cluster.
 If you plan to use private image registry, check how to setup it during installation: 
 [Install or Upgrade Deploy on an Air-gaped Environment](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-airgapped-install.html)
 
-### 1.4. Deploy and Release Server Replicas
+### 1.4. Deploy Server Replicas
 
 Estimate the number of master and worker replicas required for your Deploy installation and the resources that are needed on cluster. 
 With that estimate check have you enough the number of nodes in the K8S cluster. 
@@ -236,7 +236,7 @@ Install finished successfully!
 ```
 
 :::note
-In the next steps we will do updates to the CR yaml file, to reflect all the custom changes that are already available on the on-prem Release installation. 
+In the next steps we will do updates to the CR yaml file, to reflect all the custom changes that are already available on the on-prem Deploy installation. 
 The changes will go mainly in the custom-resource (CR) yaml file that is in our case: `/tmp/dai/digitalai/dai-deploy/digitalai/20240108-120535/kubernetes/dai-deploy_cr.yaml`, 
 we will refer it from now with `dai-deploy_cr.yaml` name.
 
@@ -287,7 +287,7 @@ Check the example file [dai-deploy_cr.yaml](yamls/dai-deploy_cr-example.yaml) un
 
 sections, there are examples of how to customize:
 - `central-conf/type-defaults.properties`
-- `default-conf/xl-release-security.xml`
+- `default-conf/deployit-security.xml`
 
 In the same way, you can change any file in the configuration directory.
 

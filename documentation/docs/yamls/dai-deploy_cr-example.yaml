@@ -69,9 +69,9 @@ spec:
         cpu: 250m
         memory: 512Mi
     extraConfiguration:
-      default-conf_xl-release-security:
+      default-conf_deployit-security:
         mode: 432
-        path: default-conf/xl-release-security.xml
+        path: default-conf/deployit-security.xml
         content: |
           <?xml version="1.0" encoding="UTF-8"?>
   
@@ -99,9 +99,9 @@ spec:
         cpu: 250m
         memory: 512Mi
     extraConfiguration:
-      default-conf_xl-release-security:
+      default-conf_deployit-security:
         mode: 432
-        path: default-conf/xl-release-security.xml
+        path: default-conf/deployit-security.xml
         content: |
           <?xml version="1.0" encoding="UTF-8"?>
           
