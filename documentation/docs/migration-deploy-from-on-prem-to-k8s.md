@@ -1,5 +1,5 @@
 ---
-sidebar_position: 15
+sidebar_position: 22
 ---
 
 #  Migrate an existing Digital.ai Deploy installation to Kubernetes (v23.3 and v24.1)
