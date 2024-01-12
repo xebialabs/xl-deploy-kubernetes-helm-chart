@@ -2,7 +2,16 @@
 sidebar_position: 15
 ---
 
-#  Migration Digital.ai Deploy from on-prem to Kubernetes-based installation (v23.3 and v24.1)
+#  Migrate an existing Digital.ai Deploy installation to Kubernetes (v23.3 and v24.1)
+
+:::caution
+This is internal documentation.
+The document can be used only if it was recommended by the Support Team.
+:::
+
+:::caution
+This document is for a Deploy version from 23.3 and up.
+:::
 
 Following steps should cover the general process of moving your Digital.ai software onto a Kubernetes platform. 
 Note that details can vary depending on your specific situation, needs, and pre-existing infrastructure.
@@ -15,8 +24,10 @@ If you have more specific questions about any of these steps, feel free to ask!
 
 ## 1. Preparation
 
-Make sure all necessary prerequisites are in place. These include things like setting up your Kubernetes cluster, 
-installing and configuring required Kubernetes CLI tools, preparing necessary information for PostgreSQL and RabbitMQ servers if existing ones are to be used.
+Make sure all necessary prerequisites are in place. These include things like:
+- setting up your Kubernetes cluster, 
+- installing and configuring required Kubernetes CLI tools, 
+- preparing necessary information for PostgreSQL and RabbitMQ servers if existing ones are to be used.
 
 :::TIP
 Read through the xl kube workshop to gain a comprehensive understanding of how to install or upgrade Digital.ai Deploy or Release or Remote Runner on a kubernetes cluster.
@@ -25,10 +36,11 @@ See:
 - [Helm chart documentation](https://github.com/xebialabs/xl-deploy-kubernetes-helm-chart/tree/23.3.x-maintenance) - the Deploy operator is managing Deploy helm chart on K8S cluster
 :::
 
-This manual is for 23.3 and 24.1 versions. The target version of Deploy needs to be aligned with tools used (xl), and supported java version. 
+This manual is for 23.3 and 24.1 versions (or above). 
+The target version of Deploy needs to be aligned with tools used (xl), and supported java version. 
 Also, the version of on-prem Deploy before migration needs to be the same to the target version of the Deploy that will be installed on K8S cluster.
 
-### 1.1. Requirements for Installation Station
+### 1.1. Requirements for Client Machine
 
 #### Mandatory
 - Installed [xl](https://dist.xebialabs.com/public/xl-cli/) - same version of the Deploy you plan to install on K8S cluster
@@ -42,7 +54,7 @@ Also, the version of on-prem Deploy before migration needs to be the same to the
 - Installed [helm](https://helm.sh/docs/intro/install/) - if you would like to get additional info during installation - the latest version
 - Installed docker image registry compatible cli to push/pull images - if you need to pull/push images from `docker.io` to the private K8S image registry
   - [docker-cli](https://docs.docker.com/get-docker/)
-  - [podman-cli](https://podman.io/docs/installation)
+  - [podman-cli](https://podman.io/docs/installation) - as alternative to docker cli to push/pull images
 
 ### 1.2. Select the Desired Cloud Platform for Migration
 
@@ -89,14 +101,18 @@ Choose the Ingress Controller to use. Nginx and HAProxy are supported, or you ca
 Have a valid license for the services to be installed. License files can be in plain text format or base64 encoded format. 
 See [Licensing the Deploy Product](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/concept/xl-deploy-licensing.html)
 
-#### 1.5.4. Keystore
+#### 1.5.4. Repository Keystore File
    
-Prepare your repository keystore file `repository-keystore.jceks` and keystore password in clear-text from the Deploy conf directory. 
+Copy your repository keystore file `repository-keystore.jceks` and keystore password in clear-text from the Deploy conf directory to the client machine. 
+The keystore file is in the `conf` directory of your existing Deploy instance: `conf/repository-keystore.jceks`, it contains an encryption key for DB repository.
 You need to reuse that file during `xl kube install` installation in the step 6.1.
 
 #### 1.5.5. Relational Database
 
-Choose whether you will be using an existing PostgreSQL database server or create a new one during the installation. 
+Choose whether you will be using database:
+- an existing relational database server supported by Deploy's target version, or 
+- create new one external relational database supported by Deploy, or 
+- create a new one PostgreSQL database during the installation that will run inside the Kubernetes cluster. 
 If the former, there is some required information you will need to gather. Check the list of supported databases and version, and storage sizing:
 - [Supported Databases](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/concept/requirements-for-installing-xl-deploy.html#supported-databases)
 - [Database Server Hardware Configuration](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/concept/requirements-for-installing-xl-deploy.html#database-server-hardware-configuration)
@@ -115,9 +131,20 @@ The same decision and process also applies to RabbitMQ server (as for Relational
 #### 1.5.7. Authentication
 
 Optionally, configure OIDC for authentication. It can be:
-- an existing server such as Keycloak, Okta, Azure Active Directory;
-- integrated with Digital.ai's own platform; 
+- an existing server such as [Keycloak](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/concept/deploy-oidc-with-keycloak.html), [Okta, Azure Active Directory](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/concept/xl-deploy-oidc-authentication.html);
+- integrated with [Digital.ai's Identity Service platform](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/how-to/deploy-integrating-with-identity-service.html); 
+- integrated with [LDAP](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/how-to/setup-and-configuration-LDAP-with-deploy.html) 
 - or use no OIDC authentication in favor of Digital.ai's own DB-based local user authentication.
+
+Check the selection details in the documentation [SSO Authentication Options](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/concept/deploy-plan-your-sso-authentication.html)
+
+Configuration of the OIDC part is done during xl kube installation, check documentation: [Select the Type of OIDC Configuration](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-install-oidc-configuration.html)
+
+:::note
+If you plan to use an LDAP, it requires update of the file `conf/deployit-security.xml`, there is an example how to customize that file in 
+[dai-deploy_cr-example.yaml](./yamls/dai-deploy_cr-example.yaml). Check the section in the file 
+`spec.master.extraConfiguration.default-conf_deployit-security` and `spec.worker.extraConfiguration.default-conf_deployit-security`, and in this document section 6.3. how to do changes. 
+:::
 
 #### 1.5.8. Storage
 
@@ -175,13 +202,15 @@ With this option enabled before migration, all plugins will be stored in the dat
 
 ### 5.3. Backup database
 
-Back up your database installations, here is an example with a separated main and report database:
+Back up your database installations, here is an example with a separated main and report PostgreSQL database:
 ```shell
-mkdir /tmp/postgresql/backup
+mkdir -p /tmp/postgresql/backup
 pg_dump -U xld xld-db | gzip > /tmp/postgresql/backup/pg_dump-xld-db.sql.gzip
 # execute this if you have separate xld-report-db 
 pg_dump -U xld-report xld-report-db | gzip > /tmp/postgresql/backup/pg_dump-xld-report-db.sql.gzip
 ```
+
+Use the database username and password according to your PostgreSQL database setup.
 
 :::note
 Make sure that the directory where you are storing backup has enough free space.
@@ -311,22 +340,55 @@ In the default setup the Deploy logging is not persisted to the filesystem, you 
 - [Logging configuration scan & configuration values (not public, ask for the copy)](https://digitalai.atlassian.net/wiki/spaces/Labs/pages/77215137848/Logging+configuration+scan+configuration+values)
 - [File logging with K8s operator (not public, ask for the copy)](https://digitalai.atlassian.net/wiki/spaces/Labs/pages/77215137976/File+logging+with+K8s+operator)
 
-### 6.5. Restore Data to Target DB (optional)
+### 6.5. Test the Setup with Temporary Installation (optional)
+
+If you would like, you can test the configuration before using existing or migrated data. 
+The reason for this could to minimize downtime and to observe possible problems before using existing DB. 
+In this section, we will start prepared configuration without any data so we can test that all is ok with our configuration changes.
+
+#### 6.5.1 Change database configuration to temporary database
+
+In case you are using an existing database, and you have already referenced it in the configuration; we need to change it to some other DB.
+Create some temporary database, or delete the content of the database after this test:
+- If you would like use the external **temporary** database: change the configuration to reference it from the section in the `dai-deploy_cr.yaml`: `spec.external.db`.
+- If you would like to use the same external **empty** database, that same in the final installation: you will need to delete the content of the database after this test installation.
+- If you have a configuration for PostgreSQL database that is part of the operator installation: you don't need to do anything.
+
+#### 6.5.2. Apply temporary installation to cluster
+
+```shell
+xl kube install --files 20240108-120535
+```
+
+That command should apply all the files that are created by dry-run.
+
+#### 6.5.3. Check the Test Installation
+
+See section 7. to validate test installation. 
+
+#### 6.5.4. Restore the Database Configuration
+
+If you were using for tests external **temporary** database, restore the configuration in the `dai-deploy_cr.yaml` file under section `spec.external.db`.
+
+If you were using for tests an external **empty** database, that is the same as in the final installation:
+you will need to delete the content of the database after this test installation to restore migration data.
+
+### 6.6. Restore Data to Target DB (optional)
 
 If you are using an existing database from the previous installation, no need to do anything here, you are already set database configuration by setting external DB params during dry-run.
 
 If the existing DB is not the same that you previously used in on-prem installation, be sure that you migrated the data to the new database, that is not part of this guide. 
 
-In case you are using the PostgreSQL DB that is part of the Deploy operator installation, check this step:
+In case you are using the PostgreSQL DB that is part of the Deploy operator installation, check this steps:
 
-#### 6.5.1 Change replica count for master and worker
+#### 6.6.1 Change replica count for master and worker
 
 We need first to start the PostgreSQL that is part of the operator installation, but without master and worker running.
 Change the replica count for master and worker, put to `0` values under:
 - `spec.master.replicaCount`
 - `spec.worker.replicaCount`
 
-#### 6.5.2. Apply temporary installation to cluster
+#### 6.6.2. Apply temporary installation to cluster
 
 ```shell
 xl kube install --files 20240108-120535
@@ -335,9 +397,13 @@ xl kube install --files 20240108-120535
 That command should apply all the files that are created by dry-run and start PostgreSQL pod 
 (and other pods Deploy operator, RabbitMQ, Central configuration, ingress if enabled). 
 
-#### 6.5.3. Restore the Data
+#### 6.6.3. Restore the Data
+
+In this case, it is essential that Deploy master and worker were not connected to the database. 
+Because restore will fail with errors about duplicate database entities.
 
 For this step, you need to have already prepared dump that is compatible with PostgreSQL restore (check how to do backup in the step: 5.3.).
+Be sure that the target directory on the pod exists (in the example we are using `/bitnami/postgresql/backup` that is mounted to have enough free space).
 
 Execute the code to upload DB dump files to the PostgreSQL pod:
 ```shell
@@ -357,16 +423,17 @@ gunzip -c /bitnami/postgresql/backup/pg_dump-xld-report-db.sql.gzip | psql -U xl
 Make sure that the directory on Pod where you are storing backup has enough free space.
 :::
 
-### 6.6. Apply the Setup on K8S Cluster
+### 6.7. Apply the Setup on K8S Cluster
 
-### 6.6.1 Review the `dai-deploy_cr.yaml`
+### 6.7.1 Review the `dai-deploy_cr.yaml`
 
 Review the content of the `dai-deploy_cr.yaml`. 
 
 Rollback temporary changes in case you have them:
-- replica count from the 6.5.1 step.
+- replica count from the 6.6.1 step;
+- database configuration from the 6.5.1 step.
 
-### 6.6.2 Apply final installation to cluster
+### 6.7.2 Apply final installation to cluster
 
 If you have already resources created on the cluster, this step will update them.
 
@@ -418,7 +485,7 @@ Use the already available installation on-prem Deploy to start it.
 
 To minimize downtime plan your migration, execute the following steps on the end:
 - all the steps from section 5.
-- and after that steps 6.5., 6.6.
+- and after that steps 6.6., 6.7.
 
 Additional plugin management after migration can be done by using `xl plugin` commands, check 
 [Manage Plugins in Kubernetes Environment](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-plugin-management.html)
