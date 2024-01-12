@@ -1,0 +1,168 @@
+apiVersion: xld.digital.ai/v1alpha1
+kind: DigitalaiDeploy
+metadata:
+  name: dai-xld
+spec:
+  k8sSetup:
+    platform: PlainK8s
+  auth:
+    adminPassword: "removed because of security reasons"
+  license: |-
+    removed because of security reasons
+  keystore:
+    passphrase: "removed because of security reasons"
+    keystore: |-
+      removed because of security reasons
+  external:
+    db:
+      enabled: false
+    mq:
+      enabled: false
+  oidc:
+    enabled: false
+    external: false
+
+  centralConfiguration:
+    replicaCount: 1
+    persistence:
+      storageClass: "local-path"
+      accessModes:
+        - ReadWriteOnce
+      size: 0.500000Gi
+    image:
+      repository: xebialabs/central-configuration
+      tag: "23.3.2"
+    diagnosticMode:
+      enabled: false
+    resources:
+      limits:
+        cpu: 4
+        memory: 8G
+      requests:
+        cpu: 250m
+        memory: 512Mi
+    extraConfiguration:
+      central-conf_type-defaults:
+        mode: 432
+        path: central-conf/type-defaults.properties
+        content: |
+          aws.Cloud.allowConcurrentDeployments=true
+          aws.api.Method.integrationType=AWS
+
+  master:
+    replicaCount: 3
+    persistence:
+      storageClass: "local-path"
+      accessModes:
+        - ReadWriteOnce
+      size: 100Gi
+    image:
+      repository: xebialabs/xl-deploy
+      tag: "23.3.2"
+    diagnosticMode:
+      enabled: false
+    resources:
+      limits:
+        cpu: 4
+        memory: 8G
+      requests:
+        cpu: 250m
+        memory: 512Mi
+    extraConfiguration:
+      default-conf_deployit-security:
+        mode: 432
+        path: default-conf/deployit-security.xml
+        content: |
+          <?xml version="1.0" encoding="UTF-8"?>
+  
+          <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+          </beans>
+
+  worker:
+    replicaCount: 3
+    persistence:
+      storageClass: "local-path"
+      accessModes:
+        - ReadWriteOnce
+      size: 100Gi
+    image:
+      repository: xebialabs/deploy-task-engine
+      tag: "23.3.2"
+    diagnosticMode:
+      enabled: false
+    resources:
+      limits:
+        cpu: 4
+        memory: 8G
+      requests:
+        cpu: 250m
+        memory: 512Mi
+    extraConfiguration:
+      default-conf_deployit-security:
+        mode: 432
+        path: default-conf/deployit-security.xml
+        content: |
+          <?xml version="1.0" encoding="UTF-8"?>
+          
+          <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+          </beans>
+
+  ingress:
+    enabled: false
+    hostname: ""
+    path: /
+  route:
+    enabled: false
+  haproxy-ingress:
+    controller:
+      ingressClass: haproxy-dai-xld
+    install: false
+  nginx-ingress-controller:
+    extraArgs:
+      ingress-class: nginx-dai-xld
+    ingressClassResource:
+      controllerClass: k8s.io/ingress-nginx-dai-xld
+      name: nginx-dai-xld
+    install: false
+  postgresql:
+    global:
+      storageClass: "local-path"
+    install: true
+    primary:
+      persistence:
+        size: 100Gi
+        storageClass: "local-path"
+    securityContext:
+      enabled: true
+      fsGroup: 1001
+    resources:
+      limits:
+        cpu: 2
+        memory: 2G
+      requests:
+        cpu: 250m
+        memory: 256Mi
+  rabbitmq:
+    install: true
+    persistence:
+      size: 8Gi
+      storageClass: local-path
+    replicaCount: 3
+    volumePermissions:
+      enabled: true
+    securityContext:
+      enabled: true
+      fsGroup: 1001
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+      runAsUser: 1001
+    resources:
+      limits:
+        cpu: 2
+        memory: 2G
+      requests:
+        cpu: 250m
+        memory: 256Mi
