@@ -2034,6 +2034,8 @@ worker:
       pullSecrets: []
     ## @param worker.volumePermissions.script Script for changing the owner and group of the persistent volume(s). Paths are declared in the 'paths' variable.
     script: |
+      #!/bin/bash
+
       declare -a paths=( {{ range $path := .Values.worker.persistence.paths }} "{{ $path }}"{{ end }} )
       for path in "${paths[@]}"; do
         echo "Changing ownership to {{ .Values.worker.containerSecurityContext.runAsUser }}:{{ .Values.worker.podSecurityContext.fsGroup }} for ${path}"
