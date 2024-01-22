@@ -3,7 +3,7 @@ appVersion: 24.1.0
 description: A Helm chart for Digital.ai Deploy
 name: digitalai-deploy
 version: 24.1.0
-kubeVersion: ">= 1.20.0-0 < 1.29.0-0"
+kubeVersion: ">= 1.20.0-0 < 1.30.0-0"
 sources:
   - https://github.com/xebialabs/xl-deploy-kubernetes-helm-chart
   - https://github.com/xebialabs/xl-deploy
