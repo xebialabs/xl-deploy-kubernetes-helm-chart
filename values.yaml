@@ -652,6 +652,8 @@ centralConfiguration:
       path: "bin/run-in-operator.sh"
       mode: 0755
       content: |
+        #!/bin/bash
+        
         echo "Delete empty files to replace them with latest configuration"
         find /opt/xebialabs/central-configuration-server/centralConfiguration -maxdepth 1 -type f -empty -print -delete
         {{- if .Values.oidc.enabled }}
@@ -1231,6 +1233,8 @@ master:
       pullSecrets: []
     ## @param master.volumePermissions.script Script for changing the owner and group of the persistent volume(s). Paths are declared in the 'paths' variable.
     script: |
+      #!/bin/bash
+      
       declare -a paths=( {{ range $path := .Values.master.persistence.paths }} "{{ $path }}"{{ end }} )
       for path in "${paths[@]}"; do
         echo "Changing ownership to {{ .Values.master.containerSecurityContext.runAsUser }}:{{ .Values.master.podSecurityContext.fsGroup }} for ${path}"
@@ -1329,7 +1333,7 @@ master:
     ## @param master.persistence.paths mounted paths for the Deploy master
     paths:
       - /opt/xebialabs/xl-deploy-server/work
-      
+
   ## @param master.jvmArgs Deploy master JVM arguments
   ##
   jvmArgs: ""
@@ -1403,6 +1407,8 @@ master:
       path: "bin/run-in-operator.sh"
       mode: 0755
       content: |
+        #!/bin/bash
+        
         {{- if .Values.master.podServiceTemplate.enabled }}
         POD_NUMBER=$(echo $POD_NAME | grep -Eo "[0-9]+$")
         {{- if contains .Values.master.podServiceTemplate.serviceMode "SingleHostname;MultiService" }}
@@ -2028,6 +2034,8 @@ worker:
       pullSecrets: []
     ## @param worker.volumePermissions.script Script for changing the owner and group of the persistent volume(s). Paths are declared in the 'paths' variable.
     script: |
+      #!/bin/bash
+
       declare -a paths=( {{ range $path := .Values.worker.persistence.paths }} "{{ $path }}"{{ end }} )
       for path in "${paths[@]}"; do
         echo "Changing ownership to {{ .Values.worker.containerSecurityContext.runAsUser }}:{{ .Values.worker.podSecurityContext.fsGroup }} for ${path}"
@@ -2195,6 +2203,8 @@ worker:
       path: "bin/run-in-operator.sh"
       mode: 0755
       content: |
+        #!/bin/bash
+        
         {{- if .Values.worker.podServiceTemplate.enabled }}
         POD_NUMBER=$(echo $POD_NAME | grep -Eo "[0-9]+$")
         {{- if contains .Values.worker.podServiceTemplate.serviceMode "SingleHostname;MultiService" }}
