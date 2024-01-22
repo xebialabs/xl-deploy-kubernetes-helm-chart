@@ -88,7 +88,7 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.centralConfiguration.terminationGracePeriodSeconds }}
       {{- include "deploy.imagePullSecrets" . | nindent 6 }}
-      {{- if or .Values.centralConfiguration.initContainers (and (eq (.Values.centralConfiguration.migrateFromEmbedded | toString) "true") .Values.centralConfiguration.persistence.enabled) }}
+      {{- if or .Values.centralConfiguration.initContainers (and (eq (.Values.centralConfiguration.migrateFromEmbedded | toString) "true") .Values.centralConfiguration.persistence.enabled) (and .Values.centralConfiguration.volumePermissions.enabled .Values.centralConfiguration.persistence.enabled) }}
       initContainers:
         {{- if and (eq (.Values.centralConfiguration.migrateFromEmbedded | toString) "true") .Values.centralConfiguration.persistence.enabled }}
         - name: wait-for-migrate-from-embedded-cc-to-standalone
@@ -102,6 +102,27 @@ spec:
               name: source-dir
             - mountPath: "/mnt/centralConfiguration-target-dir"
               name: data-dir
+        {{- end }}
+        {{- if and .Values.centralConfiguration.volumePermissions.enabled .Values.centralConfiguration.persistence.enabled }}
+        - name: volume-permissions
+          image: {{ template "deploy.images.image" ( dict "imageRoot" .Values.centralConfiguration.volumePermissions.image "global" .Values.global "context" .) }}
+          imagePullPolicy: {{ .Values.centralConfiguration.volumePermissions.image.pullPolicy | quote }}
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.volumePermissions.script "context" $) | nindent 14 }}
+          securityContext: {{- .Values.centralConfiguration.volumePermissions.containerSecurityContext | toYaml | nindent 12 }}
+          {{- if .Values.centralConfiguration.volumePermissions.resources }}
+          resources: {{- toYaml .Values.centralConfiguration.volumePermissions.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          {{- range $path := .Values.centralConfiguration.persistence.paths }}
+            - name: data-dir
+              mountPath: {{ $path }}
+              subPath: {{ regexFind "[^/]+$" $path }}
+          {{- end }}
         {{- end }}
         {{- if .Values.centralConfiguration.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.initContainers "context" $) | nindent 8 }}
@@ -264,12 +285,11 @@ spec:
               mountPath: /opt/xebialabs/central-configuration-server/{{ $v.path }}
               subPath: {{ $v.path }}
             {{- end }}
+            {{- range $path := .Values.centralConfiguration.persistence.paths }}
             - name: data-dir
-              mountPath: /opt/xebialabs/central-configuration-server/centralConfiguration
-              subPath: centralConfiguration
-            - name: data-dir
-              mountPath: /opt/xebialabs/central-configuration-server/conf
-              subPath: conf
+              mountPath: {{ $path }}
+              subPath: {{ regexFind "[^/]+$" $path }}
+            {{- end }}
             {{- if .Values.centralConfiguration.extraVolumeMounts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.extraVolumeMounts "context" $) | nindent 12 }}
             {{- end }}
