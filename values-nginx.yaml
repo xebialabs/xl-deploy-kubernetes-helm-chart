@@ -589,6 +589,96 @@ oidc:
   loginMethodDescription:
   proxyHost:
   proxyPort:
+
+master:
+  persistence:
+    paths: 
+      - /opt/xebialabs/xl-deploy-server/work
+      - /opt/xebialabs/xl-deploy-server/conf
+      - /opt/xebialabs/xl-deploy-server/centralConfiguration
+      - /opt/xebialabs/xl-deploy-server/ext
+      - /opt/xebialabs/xl-deploy-server/hotfix/lib
+      - /opt/xebialabs/xl-deploy-server/hotfix/plugins
+      - /opt/xebialabs/xl-deploy-server/hotfix/satellite-lib
+      - /opt/xebialabs/xl-deploy-server/log
+  podSecurityContext:
+    enabled: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 10001
+    runAsNonRoot: true
+  ## Init Container parameters
+  ## Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component
+  ## values from the securityContext section of the component
+  ##
+  volumePermissions:
+    ## @param volumePermissions.enabled Enable init container that changes the owner and group of the persistent volume(s) mountpoint to `runAsUser:fsGroup`
+    ##
+    enabled: false
+    ## @param volumePermissions.script Script for changing the owner and group of the persistent volume(s). Paths are declared in the 'paths' variable.
+    script: |
+      paths="{{ range $path := .Values.master.persistence.paths }}{{ $path }} {{ end }}"
+      for path in ${paths}; do
+        echo "Changing ownership to {{ .Values.master.containerSecurityContext.runAsUser }}:{{ .Values.master.podSecurityContext.fsGroup }} for ${path}"
+        chown "{{ .Values.master.containerSecurityContext.runAsUser }}:{{ .Values.master.podSecurityContext.fsGroup }}" "${path}"
+        find "${path}" -mindepth 1 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
+          xargs -r chown -R "{{ .Values.master.containerSecurityContext.runAsUser }}:{{ .Values.master.podSecurityContext.fsGroup }}"
+      done
+    ## Init container' Security Context
+    ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
+    ## and not the below volumePermissions.containerSecurityContext.runAsUser
+    ## @param volumePermissions.containerSecurityContext.runAsUser User ID for the init container
+    ##
+    containerSecurityContext:
+      runAsUser: 0
+
+worker:
+  persistence:
+    paths: 
+      - /opt/xebialabs/deploy-task-engine/work
+      - /opt/xebialabs/deploy-task-engine/conf
+      - /opt/xebialabs/deploy-task-engine/ext
+      - /opt/xebialabs/deploy-task-engine/hotfix/lib
+      - /opt/xebialabs/deploy-task-engine/hotfix/plugins
+      - /opt/xebialabs/deploy-task-engine/hotfix/satellite-lib
+      - /opt/xebialabs/deploy-task-engine/log
+  podSecurityContext:
+    enabled: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 10001
+    runAsNonRoot: true
+  ## Init Container parameters
+  ## Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component
+  ## values from the securityContext section of the component
+  ##
+  volumePermissions:
+    ## @param volumePermissions.enabled Enable init container that changes the owner and group of the persistent volume(s) mountpoint to `runAsUser:fsGroup`
+    ##
+    enabled: false
+    ## @param volumePermissions.script Script for changing the owner and group of the persistent volume(s). Paths are declared in the 'paths' variable.
+    script: |
+      paths="{{ range $path := .Values.worker.persistence.paths }}{{ $path }} {{ end }}"
+      for path in ${paths}; do
+        echo "Changing ownership to {{ .Values.worker.containerSecurityContext.runAsUser }}:{{ .Values.worker.podSecurityContext.fsGroup }} for ${path}"
+        chown "{{ .Values.worker.containerSecurityContext.runAsUser }}:{{ .Values.worker.podSecurityContext.fsGroup }}" "${path}"
+        find "${path}" -mindepth 1 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
+          xargs -r chown -R "{{ .Values.worker.containerSecurityContext.runAsUser }}:{{ .Values.worker.podSecurityContext.fsGroup }}"
+      done
+    ## Init container' Security Context
+    ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
+    ## and not the below volumePermissions.containerSecurityContext.runAsUser
+    ## @param volumePermissions.containerSecurityContext.runAsUser User ID for the init container
+    ##
+    containerSecurityContext:
+      runAsUser: 0
+
 centralConfiguration:
   replicas: 1
   image:
@@ -597,4 +687,41 @@ centralConfiguration:
   persistence:
     annotations: { }
     pvcSize: 500M
+    paths: 
+      - /opt/xebialabs/central-configuration-server/centralConfiguration
+      - /opt/xebialabs/central-configuration-server/conf
   migrateFromEmbedded: "false"
+  podSecurityContext:
+    enabled: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 10001
+    runAsNonRoot: true
+  ## Init Container parameters
+  ## Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component
+  ## values from the securityContext section of the component
+  ##
+  volumePermissions:
+    ## @param volumePermissions.enabled Enable init container that changes the owner and group of the persistent volume(s) mountpoint to `runAsUser:fsGroup`
+    ##
+    enabled: false
+    ## @param volumePermissions.script Script for changing the owner and group of the persistent volume(s). Paths are declared in the 'paths' variable.
+    script: |
+      paths="{{ range $path := .Values.centralConfiguration.persistence.paths }}{{ $path }} {{ end }}"
+      for path in ${paths}; do
+        echo "Changing ownership to {{ .Values.centralConfiguration.containerSecurityContext.runAsUser }}:{{ .Values.centralConfiguration.podSecurityContext.fsGroup }} for ${path}"
+        chown "{{ .Values.centralConfiguration.containerSecurityContext.runAsUser }}:{{ .Values.centralConfiguration.podSecurityContext.fsGroup }}" "${path}"
+        find "${path}" -mindepth 1 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
+          xargs -r chown -R "{{ .Values.centralConfiguration.containerSecurityContext.runAsUser }}:{{ .Values.centralConfiguration.podSecurityContext.fsGroup }}"
+      done
+    ## Init container' Security Context
+    ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
+    ## and not the below volumePermissions.containerSecurityContext.runAsUser
+    ## @param volumePermissions.containerSecurityContext.runAsUser User ID for the init container
+    ##
+    containerSecurityContext:
+      runAsUser: 0
+

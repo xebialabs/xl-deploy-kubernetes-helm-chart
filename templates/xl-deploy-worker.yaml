@@ -28,8 +28,9 @@ spec:
         component: {{ template "xl-deploy.name" . }}-worker
         release: {{ .Release.Name }}
     spec:
-      securityContext:
-        fsGroup: 10001
+      {{- if .Values.worker.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.worker.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
       {{- if .Values.ImagePullSecret }}
       imagePullSecrets:
         - name: {{ .Values.ImagePullSecret }}
@@ -49,6 +50,23 @@ spec:
               value: {{ template "xl-deploy.fullname" . }}-lb
             - name: MASTER_PORT
               value: "4516"
+        {{- if .Values.worker.volumePermissions.enabled }}
+        - name: volume-permissions
+          image: "{{ .Values.TinyToolsImageRepository }}:{{ .Values.TinyToolsImageTag }}"
+          command:
+            - /bin/sh
+          args:
+            - -ec
+            - |
+              {{- include "common.tplvalues.render" (dict "value" .Values.worker.volumePermissions.script "context" $) | nindent 14 }}
+          securityContext: {{- .Values.worker.volumePermissions.containerSecurityContext | toYaml | nindent 12 }}
+          volumeMounts:
+          {{- range $path := .Values.worker.persistence.paths }}
+            - name: data-dir
+              mountPath: {{ $path }}
+              subPath: {{ regexFind "[^/]+$" $path }}
+          {{- end }}
+        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           {{- if .Values.deploy.worker.image.tag }}
@@ -57,6 +75,9 @@ spec:
           image: "{{ .Values.WorkerImageRepository }}:{{ .Values.ImageTag }}"
           {{- end }}
           imagePullPolicy: "{{ .Values.ImagePullPolicy }}"
+          {{- if .Values.worker.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.worker.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           ports:
             - name: jmx-exporter
               containerPort: 9100
@@ -70,27 +91,11 @@ spec:
               /opt/xebialabs/tini -- /opt/xebialabs/xld-configuration-management/op-based-run.sh
           {{- end }}
           volumeMounts:
+            {{- range $path := .Values.worker.persistence.paths }}
             - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/work
-              subPath: work
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/conf
-              subPath: conf
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/ext
-              subPath: ext
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/log
-              subPath: log
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/hotfix/lib
-              subPath: lib
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/hotfix/plugins
-              subPath: plugins
-            - name: data-dir
-              mountPath: /opt/xebialabs/deploy-task-engine/hotfix/satellite-lib
-              subPath: satellite-lib
+              mountPath: {{ $path }}
+              subPath: {{ regexFind "[^/]+$" $path }}
+            {{- end }}
             {{- if .Values.deploy.configurationManagement.worker.volumeMounts.enabled }}
             {{- range $key, $val := .Values.deploy.configurationManagement.worker.volumeMounts.paths }}
             - name: data-dir
