@@ -39,7 +39,7 @@ k8sSetup:
 ## @param license Sets your XL License by passing a base64 string license, which will then be added to the license file.
 ## Convert xl-deploy.lic files content to base64 ( cat xl-deploy.lic | base64 -w 0 ) and put the output here
 ##
-license: ""
+license:
 ## @param licenseAcceptEula Accept EULA, in case of missing license, it will generate temporary license.
 ##
 licenseAcceptEula: false
@@ -61,7 +61,7 @@ appContextRoot: /
 ##
 auth:
   ## @param auth.adminPassword Admin password for Deploy. If user does not provide password, random 10 character alphanumeric string will be generated.
-  adminPassword: ""
+  adminPassword:
 
 external:
   db:
@@ -71,18 +71,18 @@ external:
       ## @param external.db.main.url Main database URL for Deploy
       url: ""
       ## @param external.db.main.username Main database username for Deploy
-      username: ""
+      username: 
       ## @param external.db.main.password Main database password for Deploy
-      password: ""
+      password: 
       ## @param external.db.main.maxPoolSize Main database max pool size for Deploy
       maxPoolSize: ""
     report:
       ## @param external.db.report.url Report database URL for Deploy
       url: ""
       ## @param external.db.report.username Report database username for Deploy
-      username: ""
+      username:
       ## @param external.db.report.password Report database password for Deploy
-      password: ""
+      password: 
       ## @param external.db.report.maxPoolSize Report database max pool size for Deploy
       maxPoolSize: ""
 
@@ -94,9 +94,9 @@ external:
     ## @param external.mq.queueName External message queue name for Deploy
     queueName: ""
     ## @param external.mq.username External message queue broker username for Deploy
-    username: ""
+    username: 
     ## @param external.mq.password External message queue broker password for Deploy
-    password: ""
+    password: 
     ## @param external.mq.driverClassName External message queue driver class name for Deploy
     driverClassName: ""
 ## @param clusterMode This is to specify if the HA setup is needed and to specify the HA mode. Possible values: "default", "hot-standby", "full"
@@ -105,19 +105,19 @@ clusterMode: full
 
 keystore:
   ## @param keystore.passphrase Set passphrase for the keystore
-  passphrase: ""
+  passphrase:
   ## @param keystore.keystore Use repository-keystore.jceks files content ecoded with base64
   # https://docs.xebialabs.com/v.9.8/deploy/how-to/update-the-xl-deploy-digital-certificate/#view-the-certificate
   # Convert repository-keystore.jceks files content to base64
   # ( cat repository-keystore.jceks | base64 -w 0 ) and put the output here
   # if empty during initial run, the default keystore will be generated with provided "passphrase"
-  keystore: ""
+  keystore:
 
 truststore:
   ## @param truststore.type Type of truststore, possible value jks or jceks or pkcs12
   type: "pkcs12"
   ## @param truststore.password Truststore password
-  password: ""
+  password: 
   ## @param truststore.truststore Truststore file base64 encoded
   truststore: {}
 
