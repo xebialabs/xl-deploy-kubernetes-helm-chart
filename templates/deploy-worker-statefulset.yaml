@@ -171,7 +171,6 @@ spec:
             - name: MASTER_PORT
               value: {{ .Values.master.services.lb.ports.deployHttp | quote }}
         {{- end }}
-        {{- end }}
         {{- if and .Values.worker.volumePermissions.enabled .Values.worker.persistence.enabled }}
         - name: volume-permissions
           image: {{ template "deploy.images.image" ( dict "imageRoot" .Values.worker.volumePermissions.image "global" .Values.global "context" .) }}
