@@ -382,7 +382,7 @@ spec:
         {{- if .Values.truststore.truststore }}
         - name: deploy-truststore
           secret:
-            secretName: {{- include "render.secret-name" (dict "value" .Values.truststore.truststore "defaultName" (include "common.names.fullname" .) "context" $ ) }}
+            secretName: {{ include "render.secret-name" (dict "value" .Values.truststore.truststore "defaultName" (include "common.names.fullname" .) "context" $ ) }}
         {{- end }}
         {{- if .Values.worker.configuration }}
         - name: configuration

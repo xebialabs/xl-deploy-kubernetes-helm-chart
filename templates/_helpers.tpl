@@ -542,7 +542,7 @@ deploy: license or licenseAcceptEula
 {{- define "render.secret-name" -}}
   {{- if .value -}}
     {{- if kindIs "map" .value -}}
-{{- tpl (.value.valueFrom.secretKeyRef.name | toYaml) .context }}
+{{- tpl .value.valueFrom.secretKeyRef.name .context }}
     {{- else if kindIs "string" .value -}}
 {{ .defaultName }}
     {{- else -}}
