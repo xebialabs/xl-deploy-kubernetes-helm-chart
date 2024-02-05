@@ -278,7 +278,7 @@ spec:
             {{- end }}
             {{- if .Values.truststore.truststore }}
             - name: TRUSTSTORE
-              value: "/opt/xebialabs/deploy-task-engine/truststore/{{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore" "context" $) }}"
+              value: "/opt/xebialabs/deploy-task-engine/certs/{{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore" "context" $) }}"
             - name: TRUSTSTORE_TYPE
               value: {{ .Values.truststore.type | quote }}
             {{- if .Values.truststore.password }}
@@ -362,7 +362,7 @@ spec:
               subPath: {{ $v.path }}
             {{- end }}
             {{- if .Values.truststore.truststore }}
-            - mountPath: /opt/xebialabs/deploy-task-engine/truststore/{{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore" "context" $) }}
+            - mountPath: /opt/xebialabs/deploy-task-engine/certs/{{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore" "context" $) }}
               name: deploy-truststore
               subPath: {{ include "secrets.key" (dict "secretRef" .Values.truststore.truststore "default" "truststore" "context" $) }}
               readOnly: true
@@ -382,7 +382,7 @@ spec:
         {{- if .Values.truststore.truststore }}
         - name: deploy-truststore
           secret:
-            secretName: {{- include "render.secret-name" (dict "value" .Values.truststore.truststore "defaultName" (include "common.names.fullname" .) "context" $ ) }}
+            secretName: {{ include "render.secret-name" (dict "value" .Values.truststore.truststore "defaultName" (include "common.names.fullname" .) "context" $ ) }}
         {{- end }}
         {{- if .Values.worker.configuration }}
         - name: configuration

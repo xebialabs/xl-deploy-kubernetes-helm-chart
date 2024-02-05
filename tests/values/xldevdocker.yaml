@@ -1,15 +1,15 @@
 centralConfiguration:
   image:
     repository: xebialabsunsupported/central-configuration
-    tag: 24.1.0-1207.113-centos
+    tag: 24.1.0-beta.3
     pullPolicy: Always
 master:
   image:
     repository: xebialabsunsupported/xl-deploy
-    tag: 24.1.0-1207.113-centos
+    tag: 24.1.0-beta.3
     pullPolicy: Always
 worker:
   image:
     repository: xebialabsunsupported/deploy-task-engine
-    tag: 24.1.0-1207.113-centos
+    tag: 24.1.0-beta.3
     pullPolicy: Always
