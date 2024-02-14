@@ -204,7 +204,7 @@ spec:
             {{- end -}}
             {{- end }}
             - name: CONFIG_SERVER_OPTS_EXT
-              value: "{{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.jvmArgs "context" .) }}"
+              value: "{{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.jvmArgs "context" $) }}{{ include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.debugMode.remoteJvmParams "context" $) }}"
             {{- if .Values.centralConfiguration.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
