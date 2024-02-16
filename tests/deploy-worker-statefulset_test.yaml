@@ -1,25 +1,18 @@
 suite: Test Deploy Statefulset
 templates:
-  - deploy-statefulset.yaml
-  - NOTES.txt
+  - deploy-centralconfiguration-configuration.yaml
+  - deploy-master-configuration.yaml
+  - deploy-worker-configuration.yaml
+  - secrets.yaml
+  - deploy-worker-statefulset.yaml
 release:
   name: test-deploy
   namespace: test-namespace
   revision: 1
   upgrade: true
 tests:
-  #  - it: failed `keystore.passphrase` is empty
-  #    asserts:
-  #      - isKind:
-  #          of: StatefulSet
-  #      - failedTemplate:
-  #          errorMessage: |-
-  #            VALUES VALIDATION:
-  #
-  #            deploy: keystore.passphrase
-  #                The `keystore.passphrase` is empty. It is mandatory to set.
   - it: basic should work
-    template: deploy-statefulset.yaml
+    template: deploy-worker-statefulset.yaml
     values:
       - ./values/basic.yaml
     asserts:
@@ -27,24 +20,27 @@ tests:
           of: StatefulSet
       - equal:
           path: metadata.name
-          value: test-deploy-dai-deploy
+          value: test-deploy-digitalai-deploy-worker
+      - equal:
+          path: metadata.namespace
+          value: test-namespace   
       - equal:
           path: spec.replicas
           value: 1
-      - equal:
+      - matchRegex:
           path: spec.template.spec.containers[0].image
-          value: docker.io/xebialabsunsupported/xl-deploy:22.3.1
+          pattern: deploy-task-engine:*
   - it: deploy replicas
-    template: deploy-statefulset.yaml
+    template: deploy-worker-statefulset.yaml
     values:
       - ./values/basic.yaml
       - ./values/replicated.yaml
     asserts:
       - equal:
           path: spec.replicas
-          value: 3
+          value: 2
   - it: diagnostic enabled
-    template: deploy-statefulset.yaml
+    template: deploy-worker-statefulset.yaml
     values:
       - ./values/basic.yaml
       - ./values/diagnostic-default.yaml
@@ -60,7 +56,7 @@ tests:
             - sleep
             - infinity
   - it: diagnostic enhancement enabled
-    template: deploy-statefulset.yaml
+    template: deploy-worker-statefulset.yaml
     values:
       - ./values/basic.yaml
       - ./values/diagnostic-busybox.yaml
