@@ -2,7 +2,7 @@
 sidebar_position: 22
 ---
 
-#  Migrate an existing Digital.ai Deploy installation to Kubernetes (v23.3 and v24.1)
+#  Planning migration of an existing Digital.ai Deploy installation to Kubernetes (v23.3 and v24.1)
 
 :::caution
 This is internal documentation.
@@ -13,10 +13,10 @@ The document can be used only if it was recommended by the Support Team.
 This document is for a Deploy version from 23.3 and up.
 :::
 
-Following steps should cover the general process of moving your Digital.ai software onto a Kubernetes platform. 
+Following steps should cover the general process for planning move of your Digital.ai Deploy software onto a Kubernetes platform.
 Note that details can vary depending on your specific situation, needs, and pre-existing infrastructure.
 
-:::warning:
+:::warning
 This guide is technical in nature. Before starting the migration process, make sure you have a proficient level of understanding about your 
 existing infrastructure, Kubernetes, and the Digital.ai Deploy products.
 If you have more specific questions about any of these steps, feel free to ask!
@@ -29,7 +29,7 @@ Make sure all necessary prerequisites are in place. These include things like:
 - installing and configuring required Kubernetes CLI tools, 
 - preparing necessary information for PostgreSQL and RabbitMQ servers if existing ones are to be used.
 
-:::TIP
+:::tip
 Read through the xl kube workshop to gain a comprehensive understanding of how to install or upgrade Digital.ai Deploy or Release or Remote Runner on a kubernetes cluster.
 See:
 - [xl-kube-workshop](https://github.com/xebialabs/xl-kube-workshop)
