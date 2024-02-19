@@ -2646,9 +2646,9 @@ commonAnnotations: { }
 
 ## @extra commonLabels Labels to add to all deployed objects
 ##
-commonLabels:
-  ## @param commonLabels.app.kubernetes.io/version Labels Deploy server version
-  app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+commonLabels: { }
+## @param commonLabels.app.kubernetes.io/version Labels Deploy server version
+## Eg. app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
 
 ## Configure the ingress resource that allows you to access the
 ## deploy installation. Set up the URL

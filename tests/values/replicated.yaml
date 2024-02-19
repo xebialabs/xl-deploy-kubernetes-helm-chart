@@ -5,4 +5,4 @@ master:
 worker:
   replicaCount: 2
 rabbitmq:
-  replicaCount: 1
+  replicaCount: 2
