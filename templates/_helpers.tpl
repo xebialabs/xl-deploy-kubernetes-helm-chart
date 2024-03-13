@@ -482,6 +482,17 @@ Get the mq class name
 {{- end -}}
 
 {{/*
+Return true if configured rabbitmq queue is a quorum queue
+*/}}
+{{- define "deploy.isRabbitmqQuorumQueue" -}}
+    {{- if .Values.external.mq.isRabbitmqQuorumQueue -}}
+        {{ .Values.external.mq.isRabbitmqQuorumQueue }}
+    {{- else -}}
+        false
+    {{- end -}}
+{{- end -}}
+
+{{/*
 Compile all warnings into a single message, and call fail.
 */}}
 {{- define "deploy.validateValues" -}}
