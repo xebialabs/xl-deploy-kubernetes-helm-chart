@@ -161,7 +161,7 @@ spec:
             - name: XLD_TASK_QUEUE_PASSWORD
               {{- include "render.value-secret" (dict  "value" (include "deploy.mqPassword" .) "source" .Values.external.mq.password "sourceEnabled" .Values.external.mq.enabled "defaultName" (include "common.names.fullname" .) "defaultKey" "rabbitmqPassword" "context" $ ) | nindent 14 }}
             - name: XLD_TASK_QUEUE_IS_QUORUM
-              value: {{ include "deploy.isRabbitmqQuorumQueue" . | quote }}            
+              value: {{ include "deploy.isRabbitmqQuorumQueue" . }}            
              {{- end }}
             {{- if .Values.keystore.keystore }}
             - name: REPOSITORY_KEYSTORE
