@@ -1,0 +1,10 @@
+master:
+  extraVolumeMounts:
+    - name: data-dir
+      mountPath: /opt/xebialabs/xl-deploy-server/log
+      subPath: log
+worker:
+  extraVolumeMounts:
+    - name: data-dir
+      mountPath: /opt/xebialabs/deploy-task-engine/log
+      subPath: log
