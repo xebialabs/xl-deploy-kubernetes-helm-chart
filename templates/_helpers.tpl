@@ -48,11 +48,11 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{- define "postgresql.subchart" -}}
-{{ include "postgresql.primary.fullname" (merge .Subcharts.postgresql (dict "nameOverride" "postgresql")) }}
+{{ include "postgresql.v1.primary.fullname" (merge .Subcharts.postgresql (dict "nameOverride" "postgresql")) }}
 {{- end -}}
 
 {{- define "deploy.postgresql.service.port" -}}
-{{ include "postgresql.service.port" (dict "Values" (dict "global" .Values.global "primary" .Values.postgresql.primary)) }}
+{{ include "postgresql.v1.service.port" (dict "Values" (dict "global" .Values.global "primary" .Values.postgresql.primary)) }}
 {{- end -}}
 
 {{- define "rabbitmq.subchart" -}}
