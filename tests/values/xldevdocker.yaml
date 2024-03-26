@@ -1,15 +1,15 @@
 centralConfiguration:
   image:
-    repository: xldevdocker/central-configuration
-    tag: 23.3.0-SNAPSHOT
+    repository: xebialabsunsupported/central-configuration
+    tag: 23.3.5
     pullPolicy: Always
 master:
   image:
-    repository: xldevdocker/xl-deploy
-    tag: 23.3.0-SNAPSHOT
+    repository: xebialabsunsupported/xl-deploy
+    tag: 23.3.5
     pullPolicy: Always
 worker:
   image:
-    repository: xldevdocker/deploy-task-engine
-    tag: 23.3.0-SNAPSHOT
+    repository: xebialabsunsupported/deploy-task-engine
+    tag: 23.3.5
     pullPolicy: Always
