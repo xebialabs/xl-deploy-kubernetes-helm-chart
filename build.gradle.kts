@@ -22,7 +22,6 @@ buildscript {
         classpath("com.xebialabs.gradle.plugins:gradle-commit:${properties["gradleCommitPluginVersion"]}")
         classpath("com.xebialabs.gradle.plugins:gradle-xl-defaults-plugin:${properties["xlDefaultsPluginVersion"]}")
         classpath("com.xebialabs.gradle.plugins:gradle-xl-plugins-plugin:${properties["xlPluginsPluginVersion"]}")
-        classpath("com.xebialabs.gradle.plugins:integration-server-gradle-plugin:${properties["integrationServerGradlePluginVersion"]}")
     }
 }
 
@@ -36,7 +35,6 @@ plugins {
 }
 
 apply(plugin = "ai.digital.gradle-commit")
-apply(plugin = "integration.server")
 apply(plugin = "com.xebialabs.dependency")
 
 group = "ai.digital.deploy.helm"
