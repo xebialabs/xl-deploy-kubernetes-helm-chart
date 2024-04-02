@@ -485,8 +485,8 @@ Get the mq class name
 Return true if configured rabbitmq queue is a quorum queue
 */}}
 {{- define "deploy.isRabbitmqQuorumQueue" -}}
-    {{- if .Values.external.mq.isRabbitmqQuorumQueue -}}
-        {{ .Values.external.mq.isRabbitmqQuorumQueue | quote }}
+    {{- if eq "quorum" .Values.external.mq.queueType -}}
+        "true"
     {{- else -}}
         "false"
     {{- end -}}
