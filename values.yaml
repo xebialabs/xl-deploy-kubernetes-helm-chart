@@ -99,6 +99,8 @@ external:
     password: 
     ## @param external.mq.driverClassName External message queue driver class name for Deploy
     driverClassName: ""
+    ## @param external.mq.queueType Valid only for External rabbitmq message queue. Possible values: "quorum", "classic"
+    queueType: "classic"    
 ## @param clusterMode This is to specify if the HA setup is needed and to specify the HA mode. Possible values: "default", "hot-standby", "full"
 ##
 clusterMode: full
