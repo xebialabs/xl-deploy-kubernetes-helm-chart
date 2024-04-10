@@ -1,4 +1,4 @@
-suite: Test Deploy Statefulset
+suite: Test Deploy Worker Statefulset
 templates:
   - deploy-centralconfiguration-configuration.yaml
   - deploy-master-configuration.yaml
@@ -14,7 +14,7 @@ tests:
   - it: basic should work
     template: deploy-worker-statefulset.yaml
     values:
-      - ./values/basic.yaml
+      - ../values/basic.yaml
     asserts:
       - isKind:
           of: StatefulSet
@@ -33,8 +33,8 @@ tests:
   - it: deploy replicas
     template: deploy-worker-statefulset.yaml
     values:
-      - ./values/basic.yaml
-      - ./values/replicated.yaml
+      - ../values/basic.yaml
+      - ../values/replicated.yaml
     asserts:
       - equal:
           path: spec.replicas
@@ -42,8 +42,8 @@ tests:
   - it: diagnostic enabled
     template: deploy-worker-statefulset.yaml
     values:
-      - ./values/basic.yaml
-      - ./values/diagnostic-default.yaml
+      - ../values/basic.yaml
+      - ../values/diagnostic-default.yaml
     asserts:
       - equal:
           path: spec.template.spec.containers[0].command
@@ -58,8 +58,8 @@ tests:
   - it: diagnostic enhancement enabled
     template: deploy-worker-statefulset.yaml
     values:
-      - ./values/basic.yaml
-      - ./values/diagnostic-busybox.yaml
+      - ../values/basic.yaml
+      - ../values/diagnostic-busybox.yaml
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
