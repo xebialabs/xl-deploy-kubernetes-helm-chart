@@ -5,9 +5,9 @@ name: digitalai-deploy
 version: 24.1.0
 kubeVersion: ">= 1.23.0-0 < 1.30.0-0"
 sources:
-  - https://github.com/xebialabs/xl-deploy-kubernetes-helm-chart
+  - https://github.com/digital-ai/deploy-helm-chart
   - https://github.com/xebialabs/xl-deploy
-home: https://github.com/xebialabs/xl-deploy-kubernetes-helm-chart
+home: https://github.com/digital-ai/deploy-helm-chart
 keywords:
   - Digital.ai
   - Deploy
