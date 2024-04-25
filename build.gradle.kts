@@ -527,6 +527,11 @@ tasks {
         }
     }
 
+    register<Exec>("publishToDockerHub") {
+        group = "operator"
+        dependsOn("publishOperatorToDockerHub")
+    }
+
     register("checkDependencyVersions") {
         // a placeholder to unify with release in jenkins-job
     }
