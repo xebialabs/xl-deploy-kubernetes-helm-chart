@@ -527,7 +527,7 @@ tasks {
         }
     }
 
-    register<Exec>("publishToDockerHub") {
+    register("publishToDockerHub") {
         group = "operator"
         dependsOn("publishOperatorToDockerHub")
     }
