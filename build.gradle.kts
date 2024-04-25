@@ -3,8 +3,8 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import org.jetbrains.kotlin.de.undercouch.gradle.tasks.download.Download
 import java.io.ByteArrayOutputStream
-import java.util.*
 import org.apache.commons.lang.SystemUtils.*
+import java.time.Instant
 
 buildscript {
     repositories {
@@ -45,8 +45,12 @@ project.defaultTasks = listOf("build")
 
 val helmVersion = properties["helmVersion"]
 val operatorSdkVersion = properties["operatorSdkVersion"]
+val kustomizeVersion = properties["kustomizeVersion"]
+val operatorBundleChannels = properties["operatorBundleChannels"]
+val kubeRbacProxyImage = properties["kubeRbacProxyImage"]?.toString()
 val os = detectOs()
 val arch = detectHostArch()
+val currentTime = Instant.now().toString()
 val dockerHubRepository = System.getenv()["DOCKER_HUB_REPOSITORY"] ?: "xebialabsunsupported"
 val releasedVersion = System.getenv()["RELEASE_EXPLICIT"] ?: "24.1.0-${
     LocalDateTime.now().format(DateTimeFormatter.ofPattern("Mdd.Hmm"))
@@ -133,44 +137,60 @@ tasks {
         kotlinOptions.jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
+    val operatorImageUrl = "docker.io/$dockerHubRepository/deploy-operator:$releasedVersion"
+    val bundleImageUrl = "docker.io/$dockerHubRepository/deploy-operator-bundle:$releasedVersion"
     val buildXldDir = layout.buildDirectory.dir("xld")
     val buildXldOperatorDir = layout.buildDirectory.dir("xld/${project.name}")
+    val operatorFolder = projectDir.resolve("operator")
     val helmDir = layout.buildDirectory.dir("helm").get()
     val helmCli = helmDir.dir("$os-$arch").file("helm")
     val operatorSdkDir = layout.buildDirectory.dir("operatorSdk").get()
     val operatorSdkCli = operatorSdkDir.file("operator-sdk")
+    val kustomizeDir = layout.buildDirectory.dir("kustomize").get()
+    val kustomizeCli = kustomizeDir.file("kustomize")
 
-    register<Download>("downloadHelm") {
+    register<Download>("installHelm") {
         group = "helm"
         src("https://get.helm.sh/helm-v$helmVersion-$os-$arch.tar.gz")
         dest(helmDir.file("helm.tar.gz").getAsFile())
-    }
-    register<Copy>("unzipHelm") {
-        group = "helm"
-        dependsOn("downloadHelm")
-        doNotTrackState("")
-        from(tarTree(helmDir.file("helm.tar.gz")))
-        into(helmDir)
-        fileMode = 0b111101101
+        doLast {
+           copy {
+               from(tarTree(helmDir.file("helm.tar.gz")))
+               into(helmDir)
+               fileMode = 0b111101101
+           }
+        }
     }
 
-    register<Download>("downloadOperatorSdk") {
+    register<Download>("installOperatorSdk") {
         group = "operatorSdk"
         src("https://github.com/operator-framework/operator-sdk/releases/download/v$operatorSdkVersion/operator-sdk_${os}_$arch")
         dest(operatorSdkDir.dir("operator-sdk-tool").file("operator-sdk").getAsFile())
+        doLast {
+            copy {
+                from(operatorSdkDir.dir("operator-sdk-tool").file("operator-sdk"))
+                into(operatorSdkDir)
+                fileMode = 0b111101101
+            }
+        }
     }
-    register<Copy>("unzipOperatorSdk") {
-        group = "helm"
-        dependsOn("downloadOperatorSdk")
-        doNotTrackState("")
-        from(operatorSdkDir.dir("operator-sdk-tool").file("operator-sdk"))
-        into(operatorSdkDir)
-        fileMode = 0b111101101
+
+    register<Download>("installKustomize") {
+        group = "kustomize"
+        src("https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$kustomizeVersion/kustomize_v5.0.1_${os}_$arch.tar.gz")
+        dest(kustomizeDir.file("kustomize.tar.gz").getAsFile())
+        doLast {
+            copy {
+                from(tarTree(kustomizeDir.file("kustomize.tar.gz")))
+                into(kustomizeDir)
+                fileMode = 0b111101101
+            }
+        }
     }
 
     register<Copy>("prepareHelmPackage") {
         group = "helm"
-        dependsOn("dumpVersion", "unzipHelm")
+        dependsOn("dumpVersion", "installHelm")
         from(layout.projectDirectory)
         exclude(
             layout.buildDirectory.get().asFile.name,
@@ -179,6 +199,7 @@ tasks {
             "documentation/",
             "gradle/",
             "integration-tests/",
+            "operator/",
             "scripts/",
             "tests/",
             "*gradle*",
@@ -295,14 +316,22 @@ tasks {
 
     register<Exec>("prepareOperatorImage") {
         group = "operator"
-        dependsOn("buildHelmPackage", "unzipOperatorSdk")
+        dependsOn("buildHelmPackage", "installOperatorSdk")
         workingDir(buildXldDir)
         commandLine(operatorSdkCli, "init", "--domain=digital.ai", "--plugins=helm")
 
         standardOutput = ByteArrayOutputStream()
         errorOutput = ByteArrayOutputStream()
 
+        val targetFile = buildXldDir.get().file("config/manager/manager.yaml")
+
         doLast {
+            exec {
+                workingDir(buildXldDir)
+                commandLine("sed", "-i", ".bak",
+                    "-e", "s#memory: 128Mi#memory: 512Mi#g",
+                    targetFile)
+            }
             logger.lifecycle(standardOutput.toString())
             logger.error(errorOutput.toString())
             logger.lifecycle("Init operator image finished")
@@ -324,7 +353,7 @@ tasks {
         }
     }
 
-    register<Exec>("buildOperatorImage") {
+    register<Exec>("buildOperatorApi") {
         group = "operator"
         dependsOn("prepareOperatorImage")
         workingDir(buildXldDir)
@@ -340,12 +369,58 @@ tasks {
         }
     }
 
-    register<Exec>("publishToDockerHub") {
+    register<Exec>("buildOperatorImage") {
         group = "operator"
-        dependsOn("buildOperatorImage")
+        dependsOn("installKustomize", "buildOperatorApi")
         workingDir(buildXldDir)
-        val imageUrl = "docker.io/$dockerHubRepository/deploy-operator:$releasedVersion"
-        commandLine("make", "docker-build", "docker-push", "IMG=$imageUrl")
+        commandLine("make", "docker-build",
+            "IMG=$operatorImageUrl", "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
+
+        standardOutput = ByteArrayOutputStream()
+        errorOutput = ByteArrayOutputStream()
+
+        val sourceDockerFile = operatorFolder.resolve("Dockerfile")
+        val targetDockerFile = buildXldDir.get().dir("Dockerfile")
+
+        doFirst {
+            exec {
+                workingDir(buildXldDir)
+                commandLine("sed", "-i", ".bak",
+                    "-e", "/^FROM.*/r $sourceDockerFile",
+                    targetDockerFile)
+            }
+            exec {
+                workingDir(buildXldDir)
+                commandLine("sed", "-i", ".bak",
+                    "-e", "s#\${VERSION}#$releasedVersion#g",
+                    targetDockerFile)
+            }
+            copy {
+                from(operatorFolder)
+                include("licenses/*")
+                into(buildXldDir)
+                duplicatesStrategy = DuplicatesStrategy.WARN
+            }
+        }
+        doLast {
+            if (!kubeRbacProxyImage.isNullOrBlank()) {
+                exec {
+                    workingDir(buildXldDir.get().dir("config/default"))
+                    commandLine(kustomizeCli, "edit", "set", "image", kubeRbacProxyImage)
+                }
+            }
+            logger.lifecycle(standardOutput.toString())
+            logger.error(errorOutput.toString())
+            logger.lifecycle("Build operator image $operatorImageUrl finished")
+        }
+    }
+
+    register<Exec>("publishOperatorToDockerHub") {
+        group = "operator"
+        dependsOn("installKustomize", "buildOperatorImage")
+        workingDir(buildXldDir)
+        commandLine("make", "docker-push",
+            "IMG=$operatorImageUrl", "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
 
         standardOutput = ByteArrayOutputStream()
         errorOutput = ByteArrayOutputStream()
@@ -353,8 +428,108 @@ tasks {
         doLast {
             logger.lifecycle(standardOutput.toString())
             logger.error(errorOutput.toString())
-            logger.lifecycle("Publish to DockerHub $imageUrl finished")
+            logger.lifecycle("Publish to DockerHub $operatorImageUrl finished")
         }
+    }
+
+    register<Exec>("buildOperatorBundle") {
+        group = "operator-bundle"
+        dependsOn("installKustomize", "buildOperatorApi")
+        workingDir(buildXldDir)
+        commandLine("make", "bundle",
+            "IMG=$operatorImageUrl", "BUNDLE_GEN_FLAGS=--overwrite --version=$releasedVersion --channels=$operatorBundleChannels",
+            "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
+
+        standardOutput = ByteArrayOutputStream()
+        errorOutput = ByteArrayOutputStream()
+
+        val sourceDockerFile = operatorFolder.resolve("bundle.Dockerfile")
+        val targetDockerFile = buildXldDir.get().dir("bundle.Dockerfile")
+
+        doFirst {
+            copy {
+                from(operatorFolder)
+                include("config/**/*.yaml")
+                into(buildXldDir)
+                duplicatesStrategy = DuplicatesStrategy.WARN
+            }
+            exec {
+                workingDir(buildXldDir.get().dir("config/samples"))
+                commandLine(kustomizeCli, "edit", "add", "resource", "xld_minimal.yaml")
+            }
+            exec {
+                workingDir(buildXldDir.get().dir("config/samples"))
+                commandLine(kustomizeCli, "edit", "add", "resource", "xld_placeholders.yaml")
+            }
+            exec {
+                workingDir(buildXldDir)
+                commandLine("sed", "-i", ".bak",
+                    "-e", "s#\${VERSION}#$releasedVersion#g",
+                    buildXldDir.get().dir("config/manifests/bases/xld.clusterserviceversion.yaml"))
+            }
+            exec {
+                workingDir(buildXldDir)
+                commandLine("sed", "-i", ".bak",
+                    "-e", "s#\${CONTAINER_IMAGE}#$operatorImageUrl#g",
+                    buildXldDir.get().dir("config/manifests/bases/xld.clusterserviceversion.yaml"))
+            }
+            exec {
+                workingDir(buildXldDir)
+                commandLine("sed", "-i", ".bak",
+                    "-e", "s#\${CURRENT_TIME}#$currentTime#g",
+                    buildXldDir.get().dir("config/manifests/bases/xld.clusterserviceversion.yaml"))
+            }
+        }
+        doLast {
+            exec {
+                workingDir(buildXldDir)
+                commandLine("sed", "-i", ".bak",
+                    "-e", "/^LABEL operators.operatorframework.io.test.config.*/r $sourceDockerFile",
+                    targetDockerFile)
+            }
+            logger.lifecycle(standardOutput.toString())
+            logger.error(errorOutput.toString())
+            logger.lifecycle("Build operator bundle finished")
+        }
+    }
+
+    register<Exec>("buildBundleImage") {
+        group = "operator-bundle"
+        dependsOn("installKustomize", "buildOperatorBundle")
+        workingDir(buildXldDir)
+        commandLine("make", "bundle-build",
+            "BUNDLE_IMG=$bundleImageUrl", "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
+
+        standardOutput = ByteArrayOutputStream()
+        errorOutput = ByteArrayOutputStream()
+
+        doLast {
+            logger.lifecycle(standardOutput.toString())
+            logger.error(errorOutput.toString())
+            logger.lifecycle("Build bundle image $bundleImageUrl finished")
+        }
+    }
+
+    register<Exec>("publishBundleToDockerHub") {
+        group = "operator-bundle"
+        dependsOn("installKustomize", "buildBundleImage")
+        workingDir(buildXldDir)
+        commandLine("make", "bundle-push",
+            "BUNDLE_IMG=$bundleImageUrl", "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
+
+        standardOutput = ByteArrayOutputStream()
+        errorOutput = ByteArrayOutputStream()
+
+        doLast {
+            logger.lifecycle(standardOutput.toString())
+            logger.error(errorOutput.toString())
+            logger.lifecycle("Publish to DockerHub $bundleImageUrl finished")
+        }
+    }
+
+    register("publishToDockerHub") {
+        group = "operator"
+        dependsOn("publishOperatorToDockerHub")
     }
 
     register("checkDependencyVersions") {
@@ -428,6 +603,7 @@ tasks.withType<AbstractPublishToMaven> {
 
 tasks.named("build") {
     dependsOn("buildOperatorImage")
+    dependsOn("buildOperatorBundle")
 }
 
 publishing {
