@@ -11,7 +11,7 @@ Check [Installing the opm CLI](https://docs.openshift.com/container-platform/4.1
 
 ```shell
 opm index add \
-  --bundles docker.io/xebialabsunsupported/deploy-operator-bundle:24.1.0-429.1032 \
+  --bundles docker.io/xebialabsunsupported/deploy-operator-bundle:24.1.0-429.1602 \
   --tag docker.io/xebialabsunsupported/deploy-operator-index:latest \
   --generate
 ```
@@ -90,7 +90,7 @@ oc create -n deploy-test-operator -f ../config/samples/xld_minimal.yaml
 
 ```shell
 opm index add \
-  --bundles docker.io/xebialabsunsupported/deploy-operator-bundle:24.1.0-429.1032 \
+  --bundles docker.io/xebialabsunsupported/deploy-operator-bundle:24.1.0-429.1601 \
   --from-index docker.io/xebialabsunsupported/deploy-operator-index:latest \
   --tag docker.io/xebialabsunsupported/deploy-operator-index:latest \
   --generate
