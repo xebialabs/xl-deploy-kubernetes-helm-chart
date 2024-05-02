@@ -190,9 +190,14 @@ tasks {
         }
     }
 
+    register<Delete>("cleanHelmAndOperator") {
+        group = "helm"
+        delete(buildXldDir)
+    }
+
     register<Copy>("prepareHelmPackage") {
         group = "helm"
-        dependsOn("dumpVersion", "installHelm")
+        dependsOn("dumpVersion", "installHelm", "cleanHelmAndOperator")
         from(layout.projectDirectory)
         exclude(
             layout.buildDirectory.get().asFile.name,
@@ -312,7 +317,7 @@ tasks {
             }
             logger.lifecycle(standardOutput.toString())
             logger.error(errorOutput.toString())
-            logger.lifecycle("Helm package finished created ${buildDir}/xld/xld.tgz")
+            logger.lifecycle("Helm package finished created ${buildXldDir}/xld.tgz")
         }
     }
 
