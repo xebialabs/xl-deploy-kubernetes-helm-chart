@@ -453,7 +453,7 @@ tasks {
         dependsOn("installKustomize", "buildOperatorApi")
         workingDir(buildXldDir)
         commandLine("make", "bundle",
-            "IMG=$operatorImageUrl", "BUNDLE_GEN_FLAGS=--overwrite --version=$releasedVersion --channels=$operatorBundleChannels --package=digitalai-deploy-operator",
+            "IMG=$operatorImageUrl", "BUNDLE_GEN_FLAGS=--overwrite --version=$releasedVersion --channels=$operatorBundleChannels --package=digitalai-deploy-operator --use-image-digests",
             "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
 
         standardOutput = ByteArrayOutputStream()
