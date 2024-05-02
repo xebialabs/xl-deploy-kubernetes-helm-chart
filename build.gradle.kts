@@ -56,6 +56,8 @@ val releasedVersion = System.getenv()["RELEASE_EXPLICIT"] ?: "24.1.0-${
     LocalDateTime.now().format(DateTimeFormatter.ofPattern("Mdd.Hmm"))
 }"
 project.extra.set("releasedVersion", releasedVersion)
+val releasedAppVersion = System.getenv()["RELEASE_APP_EXPLICIT"] ?: releasedVersion
+project.extra.set("releasedAppVersion", releasedAppVersion)
 
 enum class Os {
     DARWIN {
@@ -295,7 +297,7 @@ tasks {
         group = "helm"
         dependsOn("prepareHelmDeps")
         workingDir(buildXldDir)
-        commandLine(helmCli, "package", "--app-version=$releasedVersion", project.name)
+        commandLine(helmCli, "package", "--app-version=$releasedAppVersion", project.name)
 
         standardOutput = ByteArrayOutputStream()
         errorOutput = ByteArrayOutputStream()
@@ -326,6 +328,7 @@ tasks {
         val targetFile = buildXldDir.get().file("config/manager/manager.yaml")
 
         doLast {
+            // config/manager/manager.yaml replace resource memory
             exec {
                 workingDir(buildXldDir)
                 commandLine("sed", "-i.bak",
@@ -382,19 +385,32 @@ tasks {
         val sourceDockerFile = operatorFolder.resolve("Dockerfile")
         val targetDockerFile = buildXldDir.get().dir("Dockerfile")
 
+        val sourceWatchesFile = operatorFolder.resolve("watches.yaml")
+        val targetWatchesFile = buildXldDir.get().dir("watches.yaml")
+
         doFirst {
+            // operator/Dockerfile -> Dockerfile
             exec {
                 workingDir(buildXldDir)
                 commandLine("sed", "-i.bak",
                     "-e", "/^FROM.*/r $sourceDockerFile",
                     targetDockerFile)
             }
+            // operator/Dockerfile replace VERSION
             exec {
                 workingDir(buildXldDir)
                 commandLine("sed", "-i.bak",
                     "-e", "s#\${VERSION}#$releasedVersion#g",
                     targetDockerFile)
             }
+            // operator/watches.yaml -> watches.yaml
+            exec {
+                workingDir(buildXldDir)
+                commandLine("sed", "-i", ".bak",
+                    "-e", "/^#+kubebuilder:scaffold:watch.*/r $sourceWatchesFile",
+                    targetWatchesFile)
+            }
+            // operator/licenses/* -> licenses
             copy {
                 from(operatorFolder)
                 include("licenses/*")
@@ -437,7 +453,7 @@ tasks {
         dependsOn("installKustomize", "buildOperatorApi")
         workingDir(buildXldDir)
         commandLine("make", "bundle",
-            "IMG=$operatorImageUrl", "BUNDLE_GEN_FLAGS=--overwrite --version=$releasedVersion --channels=$operatorBundleChannels",
+            "IMG=$operatorImageUrl", "BUNDLE_GEN_FLAGS=--overwrite --version=$releasedVersion --channels=$operatorBundleChannels --package=digitalai-deploy-operator",
             "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
 
         standardOutput = ByteArrayOutputStream()
@@ -447,6 +463,7 @@ tasks {
         val targetDockerFile = buildXldDir.get().dir("bundle.Dockerfile")
 
         doFirst {
+            // config/**/*.yaml -> config
             copy {
                 from(operatorFolder)
                 include("config/**/*.yaml")
@@ -462,17 +479,42 @@ tasks {
                 commandLine(kustomizeCli, "edit", "add", "resource", "xld_placeholders.yaml")
             }
             exec {
+                workingDir(buildXldDir.get().dir("config/default"))
+                commandLine(kustomizeCli, "edit", "remove", "resource", "../manager")
+            }
+            exec {
+                workingDir(buildXldDir.get().dir("config/default"))
+                commandLine(kustomizeCli, "edit", "add", "resource", "../custom")
+            }
+            // config/manifests/bases/xlr.clusterserviceversion.yaml replace VERSION
+            exec {
                 workingDir(buildXldDir)
                 commandLine("sed", "-i.bak",
                     "-e", "s#\${VERSION}#$releasedVersion#g",
                     buildXldDir.get().dir("config/manifests/bases/xld.clusterserviceversion.yaml"))
             }
+            // config/manifests/bases/xlr.clusterserviceversion.yaml replace APP_VERSION
+            exec {
+                workingDir(buildXldDir)
+                commandLine("sed", "-i", ".bak",
+                    "-e", "s#\${APP_VERSION}#$releasedAppVersion#g",
+                    buildXldDir.get().dir("config/manifests/bases/xld.clusterserviceversion.yaml"))
+            }
+            // config/custom/manager_config_patch.yaml replace APP_VERSION
+            exec {
+                workingDir(buildXldDir)
+                commandLine("sed", "-i", ".bak",
+                    "-e", "s#\${APP_VERSION}#$releasedAppVersion#g",
+                    buildXldDir.get().dir("config/custom/manager_config_patch.yaml"))
+            }
+            // config/manifests/bases/xlr.clusterserviceversion.yaml replace CONTAINER_IMAGE
             exec {
                 workingDir(buildXldDir)
                 commandLine("sed", "-i.bak",
                     "-e", "s#\${CONTAINER_IMAGE}#$operatorImageUrl#g",
                     buildXldDir.get().dir("config/manifests/bases/xld.clusterserviceversion.yaml"))
             }
+            // config/manifests/bases/xlr.clusterserviceversion.yaml replace CURRENT_TIME
             exec {
                 workingDir(buildXldDir)
                 commandLine("sed", "-i.bak",
@@ -481,6 +523,7 @@ tasks {
             }
         }
         doLast {
+            // bundle.Dockerfile -> bundle.Dockerfile
             exec {
                 workingDir(buildXldDir)
                 commandLine("sed", "-i.bak",
@@ -530,6 +573,7 @@ tasks {
     register("publishToDockerHub") {
         group = "operator"
         dependsOn("publishOperatorToDockerHub")
+        dependsOn("publishBundleToDockerHub")
     }
 
     register("checkDependencyVersions") {

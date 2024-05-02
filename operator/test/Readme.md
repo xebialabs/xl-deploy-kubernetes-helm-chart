@@ -3,11 +3,15 @@
 
 Check [Installing the opm CLI](https://docs.openshift.com/container-platform/4.15/cli_reference/opm/cli-opm-install.html)
 
+## References
+
+- [Deploying onto OpenShift](https://redhat-connect.gitbook.io/certified-operator-guide/ocp-deployment/openshift-deployment)
+
 ## Creating an index image
 
 ```shell
 opm index add \
-  --bundles docker.io/xebialabsunsupported/deploy-operator-bundle:24.1.0-405.825 \
+  --bundles docker.io/xebialabsunsupported/deploy-operator-bundle:24.1.0-429.1602 \
   --tag docker.io/xebialabsunsupported/deploy-operator-index:latest \
   --generate
 ```
@@ -79,14 +83,14 @@ oc get pods -n deploy-test-operator
 ```
 
 ```shell
-oc apply -n deploy-test-operator -f ../config/samples/xld_minimal.yaml
+oc create -n deploy-test-operator -f ../config/samples/xld_minimal.yaml
 ```
 
 ## Upgrade an existing image
 
 ```shell
 opm index add \
-  --bundles docker.io/xebialabsunsupported/deploy-operator-bundle:24.1.0-405.829 \
+  --bundles docker.io/xebialabsunsupported/deploy-operator-bundle:24.1.0-429.1601 \
   --from-index docker.io/xebialabsunsupported/deploy-operator-index:latest \
   --tag docker.io/xebialabsunsupported/deploy-operator-index:latest \
   --generate
