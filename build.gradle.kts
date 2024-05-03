@@ -406,7 +406,7 @@ tasks {
             // operator/watches.yaml -> watches.yaml
             exec {
                 workingDir(buildXldDir)
-                commandLine("sed", "-i", ".bak",
+                commandLine("sed", "-i.bak",
                     "-e", "/^#+kubebuilder:scaffold:watch.*/r $sourceWatchesFile",
                     targetWatchesFile)
             }
@@ -496,14 +496,14 @@ tasks {
             // config/manifests/bases/xlr.clusterserviceversion.yaml replace APP_VERSION
             exec {
                 workingDir(buildXldDir)
-                commandLine("sed", "-i", ".bak",
+                commandLine("sed", "-i.bak",
                     "-e", "s#\${APP_VERSION}#$releasedAppVersion#g",
                     buildXldDir.get().dir("config/manifests/bases/xld.clusterserviceversion.yaml"))
             }
             // config/custom/manager_config_patch.yaml replace APP_VERSION
             exec {
                 workingDir(buildXldDir)
-                commandLine("sed", "-i", ".bak",
+                commandLine("sed", "-i.bak",
                     "-e", "s#\${APP_VERSION}#$releasedAppVersion#g",
                     buildXldDir.get().dir("config/custom/manager_config_patch.yaml"))
             }
