@@ -103,7 +103,7 @@ spec:
       initContainers:
         {{- if not .Values.worker.diagnosticMode.enabled }}
         - name: wait-for-central-configuration
-          image: {{ include "deploy.busyBox.image" . }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
           command:
             - /bin/sh
@@ -124,7 +124,7 @@ spec:
               {{- end }}
         {{- if and (not .Values.external.db.enabled) .Values.postgresql.install }}
         - name: wait-for-postgresql
-          image: {{ include "deploy.busyBox.image" . }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
           command:
             - /bin/sh
@@ -142,7 +142,7 @@ spec:
         {{- end }}
         {{- if and (not .Values.external.mq.enabled) .Values.rabbitmq.install }}
         - name: wait-for-rabbitmq
-          image: {{ include "deploy.busyBox.image" . }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
           command:
             - /bin/sh
@@ -159,7 +159,7 @@ spec:
               value: {{ .Values.rabbitmq.service.ports.amqp | quote }}
         {{- end }}
         - name: wait-for-master
-          image: {{ include "deploy.busyBox.image" . }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
           command:
             - /bin/sh
@@ -181,7 +181,7 @@ spec:
         {{- end }}
         {{- if and .Values.worker.volumePermissions.enabled .Values.worker.persistence.enabled }}
         - name: volume-permissions
-          image: {{ template "deploy.images.image" ( dict "imageRoot" .Values.worker.volumePermissions.image "global" .Values.global "context" .) }}
+          image: {{ template "common.images.image" ( dict "imageRoot" .Values.worker.volumePermissions.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.worker.volumePermissions.image.pullPolicy | quote }}
           command:
             - /bin/bash
@@ -198,14 +198,14 @@ spec:
             - name: data-dir
               mountPath: {{ $path }}
               subPath: {{ regexFind "[^/]+$" $path }}
-            {{- end }}    
-        {{- end }}        
+            {{- end }}
+        {{- end }}
         {{- if .Values.worker.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.worker.initContainers "context" $) | nindent 8 }}
         {{- end }}
       containers:
         - name: deploy-worker
-          image: {{ template "deploy.images.image" ( dict "imageRoot" .Values.worker.image "global" .Values.global "context" .) }}
+          image: {{ template "common.images.image" ( dict "imageRoot" .Values.worker.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.worker.image.pullPolicy | quote }}
           {{- if .Values.worker.containerSecurityContext.enabled }}
           securityContext: {{- omit .Values.worker.containerSecurityContext "enabled" | toYaml | nindent 12 }}
@@ -258,7 +258,7 @@ spec:
                 secretKeyRef:
                   name: "{{ include "common.tplvalues.render" ( dict "value" .Values.hooks.getLicense.name "context" $ ) }}"
                   key: deployit-license.lic
-            {{- end }}              
+            {{- end }}
             {{- end }}
             {{- if or .Values.external.db.enabled .Values.postgresql.install }}
             - name: XL_DB_URL

@@ -96,7 +96,7 @@ spec:
       {{- end }}
       containers:
         - name: deploy
-          image: {{ template "deploy.images.image" ( dict "imageRoot" .Values.centralConfiguration.image "global" .Values.global "context" .) }}
+          image: {{ template "common.images.image" ( dict "imageRoot" .Values.centralConfiguration.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.centralConfiguration.image.pullPolicy | quote }}
           {{- if .Values.centralConfiguration.containerSecurityContext.enabled }}
           securityContext: {{- omit .Values.centralConfiguration.containerSecurityContext "enabled" | toYaml | nindent 12 }}
@@ -161,7 +161,7 @@ spec:
             - name: XLD_TASK_QUEUE_PASSWORD
               {{- include "render.value-secret" (dict  "value" (include "deploy.mqPassword" .) "source" .Values.external.mq.password "sourceEnabled" .Values.external.mq.enabled "defaultName" (include "common.names.fullname" .) "defaultKey" "rabbitmqPassword" "context" $ ) | nindent 14 }}
             - name: XLD_TASK_QUEUE_IS_QUORUM
-              value: {{ include "deploy.isRabbitmqQuorumQueue" . }}            
+              value: {{ include "deploy.isRabbitmqQuorumQueue" . }}
              {{- end }}
             {{- if .Values.keystore.keystore }}
             - name: REPOSITORY_KEYSTORE

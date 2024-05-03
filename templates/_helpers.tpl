@@ -60,22 +60,35 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{/*
-Return the proper image name
-{{ include "deploy.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" .Values.global "context" .) }}
+Return the proper image name. Replaces template from the common package with support for one-line image definition.
+{{ include "common.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" .Values.global ) }}
 */}}
-{{- define "deploy.images.image" -}}
-{{- $registryName := .imageRoot.registry -}}
-{{- $repositoryName := .imageRoot.repository -}}
-{{- $tag := (tpl .imageRoot.tag .context) | toString -}}
-{{- if .global }}
-    {{- if .global.imageRegistry }}
-     {{- $registryName = .global.imageRegistry -}}
-    {{- end -}}
-{{- end -}}
-{{- if $registryName }}
-{{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
+{{- define "common.images.image" -}}
+{{- $imageOneLine := .imageRoot.image -}}
+{{- if $imageOneLine }}
+    {{- print $imageOneLine -}}
 {{- else -}}
-{{- printf "%s:%s" $repositoryName $tag -}}
+    {{- $registryName := .imageRoot.registry -}}
+    {{- $repositoryName := .imageRoot.repository -}}
+    {{- $separator := ":" -}}
+    {{- $termination := .imageRoot.tag | toString -}}
+    {{- if .context }}
+        {{- $termination = (tpl .imageRoot.tag .context) | toString -}}
+    {{- end -}}
+    {{- if .global }}
+        {{- if .global.imageRegistry }}
+         {{- $registryName = .global.imageRegistry -}}
+        {{- end -}}
+    {{- end -}}
+    {{- if .imageRoot.digest }}
+        {{- $separator = "@" -}}
+        {{- $termination = .imageRoot.digest | toString -}}
+    {{- end -}}
+    {{- if $registryName }}
+        {{- printf "%s/%s%s%s" $registryName $repositoryName $separator $termination -}}
+    {{- else -}}
+        {{- printf "%s%s%s"  $repositoryName $separator $termination -}}
+    {{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -87,13 +100,6 @@ Return the proper Docker Image Registry Secret Names
 {{ include "common.images.renderPullSecrets" (dict "images" (list .Values.master.image .Values.worker.image .Values.centralConfiguration.image .Values.busyBox.image) "context" $) }}
 {{- end -}}
 {{- end -}}
-
-{{/*
-BusyBox image
-*/}}
-{{- define "deploy.busyBox.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global) }}
-{{- end }}
 
 {{/*
 shared central config encrypt key will be generated if not defined in values.yaml.
@@ -217,7 +223,7 @@ Use the service name with namespace. In case of ssl enabled the SNI check will f
     {{- else -}}
         {{- if .Values.route.enabled }}
             {{- .Values.route.hostname }}
-        {{- else -}}        
+        {{- else -}}
             {{- include "deploy.masterLbName" . }}
         {{- end }}
     {{- end }}
