@@ -578,7 +578,6 @@ tasks {
     register("publishToDockerHub") {
         group = "operator"
         dependsOn("publishOperatorToDockerHub")
-        dependsOn("publishBundleToDockerHub")
     }
 
     register("checkDependencyVersions") {
@@ -652,7 +651,6 @@ tasks.withType<AbstractPublishToMaven> {
 
 tasks.named("build") {
     dependsOn("buildOperatorImage")
-    dependsOn("buildOperatorBundle")
 }
 
 publishing {
