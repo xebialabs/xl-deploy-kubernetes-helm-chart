@@ -466,6 +466,8 @@ tasks {
 
         val sourceDockerFile = operatorFolder.resolve("bundle.Dockerfile")
         val targetDockerFile = buildXldDir.get().dir("bundle.Dockerfile")
+        val sourceAnnotationsFile = operatorFolder.resolve("annotations.yaml")
+        val targetAnnotationsFile = buildXldDir.get().dir("bundle").dir("metadata").dir("annotations.yaml")
 
         doFirst {
             // config/**/*.yaml -> config
@@ -534,6 +536,20 @@ tasks {
                 commandLine("sed", "-i.bak",
                     "-e", "/^LABEL operators.operatorframework.io.test.config.*/r $sourceDockerFile",
                     targetDockerFile)
+            }
+            // annotations.yaml -> bundle/annotations.yaml
+            exec {
+                workingDir(buildXldDir)
+                commandLine("sed", "-i.bak",
+                    "-e", "/^.*operators.operatorframework.io.test.config.v1.*/r $sourceAnnotationsFile",
+                    targetAnnotationsFile)
+            }
+            // bundle/annotations.yaml remove empty lines
+            exec {
+                workingDir(buildXldDir)
+                commandLine("sed", "-i.bak",
+                    "-e", "/^\$/d",
+                    targetAnnotationsFile)
             }
             logger.lifecycle(standardOutput.toString())
             logger.error(errorOutput.toString())
