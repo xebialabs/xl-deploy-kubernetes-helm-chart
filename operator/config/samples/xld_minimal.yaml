@@ -1,7 +1,7 @@
 apiVersion: xld.digital.ai/v1alpha1
 kind: DigitalaiDeploy
 metadata:
-  name: daideploy-minimal
+  name: min
 spec:
   k8sSetup:
     platform: Openshift
