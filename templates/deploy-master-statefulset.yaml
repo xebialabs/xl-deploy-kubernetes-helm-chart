@@ -168,6 +168,8 @@ spec:
           securityContext: {{- .Values.master.volumePermissions.containerSecurityContext | toYaml | nindent 12 }}
           {{- if .Values.master.volumePermissions.resources }}
           resources: {{- toYaml .Values.master.volumePermissions.resources | nindent 12 }}
+          {{- else if ne .Values.master.volumePermissions.resourcesPreset "none" }}
+          resources: {{- include "deploy.resources.preset" (dict "type" .Values.master.volumePermissions.resourcesPreset) | nindent 12 }}           
           {{- end }}
           volumeMounts:
           {{- range $path := .Values.master.persistence.paths }}
@@ -376,6 +378,8 @@ spec:
           {{- end }}
           {{- if .Values.master.resources }}
           resources: {{- toYaml .Values.master.resources | nindent 12 }}
+          {{- else if ne .Values.master.resourcesPreset "none" }}
+          resources: {{- include "deploy.resources.preset" (dict "type" .Values.master.resourcesPreset) | nindent 12 }}           
           {{- end }}
           volumeMounts:
             {{- range $k, $v := .Values.master.configuration }}
