@@ -226,9 +226,6 @@ tasks {
         workingDir(buildXldOperatorDir)
         commandLine(helmCli, "dependency", "update", ".")
 
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
         doLast {
             exec {
                 workingDir(buildXldOperatorDir)
@@ -236,8 +233,6 @@ tasks {
             }
         }
         doLast {
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
             logger.lifecycle("Prepare helm deps finished")
         }
     }
@@ -248,12 +243,7 @@ tasks {
 
         commandLine(helmCli, "lint", "-f", "tests/values/basic.yaml")
 
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
         doLast {
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
             logger.lifecycle("Finished running helm lint")
         }
     }
@@ -262,19 +252,12 @@ tasks {
         group = "helm-test"
         dependsOn("prepareHelmDeps")
 
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
         commandLine(helmCli, "plugin", "list")
-        logger.lifecycle(standardOutput.toString())
-        logger.error(errorOutput.toString())
 
         doLast {
             val unitTestPluginExists = standardOutput.toString()
             if(!unitTestPluginExists.contains("unittest")) {
                 commandLine(helmCli, "plugin", "install", "https://github.com/helm-unittest/helm-unittest")
-                logger.lifecycle(standardOutput.toString())
-                logger.error(errorOutput.toString())
                 logger.lifecycle("Install helm unit test plugin finished")
             } else {
                 logger.info("Plugin exists. Skipping helm unit test plugin installation")
@@ -288,12 +271,7 @@ tasks {
 
         commandLine(helmCli, "unittest", "--file=tests/unit/*_test.yaml", ".")
 
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
         doLast {
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
             logger.lifecycle("Finished running unit tests")
         }
     }
@@ -304,9 +282,6 @@ tasks {
         workingDir(buildXldDir)
         commandLine(helmCli, "package", "--app-version=$releasedAppVersion", project.name)
 
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
         doLast {
             copy {
                 from(buildXldDir)
@@ -315,8 +290,6 @@ tasks {
                 rename("digitalai-deploy-.*.tgz", "xld.tgz")
                 duplicatesStrategy = DuplicatesStrategy.WARN
             }
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
             logger.lifecycle("Helm package finished created ${buildXldDir}/xld.tgz")
         }
     }
@@ -326,9 +299,6 @@ tasks {
         dependsOn("buildHelmPackage", "installOperatorSdk")
         workingDir(buildXldDir)
         commandLine(operatorSdkCli, "init", "--domain=digital.ai", "--plugins=helm")
-
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
 
         val targetFile = buildXldDir.get().file("config/manager/manager.yaml")
 
@@ -340,8 +310,6 @@ tasks {
                     "-e", "s#memory: 128Mi#memory: 512Mi#g",
                     targetFile)
             }
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
             logger.lifecycle("Init operator image finished")
         }
     }
@@ -351,12 +319,7 @@ tasks {
         workingDir(layout.projectDirectory)
         commandLine("readme-generator-for-helm", "--readme", "README.md", "--values", "values.yaml")
 
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
         doLast {
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
             logger.lifecycle("Update README.md finished")
         }
     }
@@ -367,12 +330,7 @@ tasks {
         workingDir(buildXldDir)
         commandLine(operatorSdkCli, "create", "api", "--group=xld", "--version=v1alpha1", "--helm-chart=xld.tgz")
 
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
         doLast {
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
             logger.lifecycle("Create operator image finished")
         }
     }
@@ -383,9 +341,6 @@ tasks {
         workingDir(buildXldDir)
         commandLine("make", "docker-build",
             "IMG=$operatorImageUrl", "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
-
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
 
         val sourceDockerFile = operatorFolder.resolve("Dockerfile")
         val targetDockerFile = buildXldDir.get().dir("Dockerfile")
@@ -430,8 +385,6 @@ tasks {
                     commandLine(kustomizeCli, "edit", "set", "image", kubeRbacProxyImage)
                 }
             }
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
             logger.lifecycle("Build operator image $operatorImageUrl finished")
         }
     }
@@ -443,12 +396,7 @@ tasks {
         commandLine("make", "docker-push",
             "IMG=$operatorImageUrl", "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
 
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
         doLast {
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
             logger.lifecycle("Publish to DockerHub $operatorImageUrl finished")
         }
     }
@@ -460,9 +408,6 @@ tasks {
         commandLine("make", "bundle",
             "IMG=$operatorImageUrl", "BUNDLE_GEN_FLAGS=--overwrite --version=$releasedVersion --channels=$operatorBundleChannels --package=digitalai-deploy-operator --use-image-digests",
             "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
-
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
 
         val sourceDockerFile = operatorFolder.resolve("bundle.Dockerfile")
         val targetDockerFile = buildXldDir.get().dir("bundle.Dockerfile")
@@ -551,8 +496,6 @@ tasks {
                     "-e", "/^\$/d",
                     targetAnnotationsFile)
             }
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
             logger.lifecycle("Build operator bundle finished")
         }
     }
@@ -564,12 +507,7 @@ tasks {
         commandLine("make", "bundle-build",
             "BUNDLE_IMG=$bundleImageUrl", "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
 
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
         doLast {
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
             logger.lifecycle("Build bundle image $bundleImageUrl finished")
         }
     }
@@ -581,12 +519,7 @@ tasks {
         commandLine("make", "bundle-push",
             "BUNDLE_IMG=$bundleImageUrl", "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
 
-        standardOutput = ByteArrayOutputStream()
-        errorOutput = ByteArrayOutputStream()
-
         doLast {
-            logger.lifecycle(standardOutput.toString())
-            logger.error(errorOutput.toString())
             logger.lifecycle("Publish to DockerHub $bundleImageUrl finished")
         }
     }
