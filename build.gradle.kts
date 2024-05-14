@@ -150,6 +150,8 @@ tasks {
     val operatorSdkCli = operatorSdkDir.file("operator-sdk")
     val kustomizeDir = layout.buildDirectory.dir("kustomize").get()
     val kustomizeCli = kustomizeDir.file("kustomize")
+    val operatorSdkCliVar = "OPERATOR_SDK=${operatorSdkCli.toString().replace(" ", "\\ ")}"
+    val kustomizeCliVar = "KUSTOMIZE=${kustomizeCli.toString().replace(" ", "\\ ")}"
 
     register<Download>("installHelm") {
         group = "helm"
@@ -340,7 +342,7 @@ tasks {
         dependsOn("installKustomize", "buildOperatorApi")
         workingDir(buildXldDir)
         commandLine("make", "docker-build",
-            "IMG=$operatorImageUrl", "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
+            "IMG=$operatorImageUrl", operatorSdkCliVar, kustomizeCliVar)
 
         val sourceDockerFile = operatorFolder.resolve("Dockerfile")
         val targetDockerFile = buildXldDir.get().dir("Dockerfile")
@@ -394,7 +396,7 @@ tasks {
         dependsOn("installKustomize", "buildOperatorImage")
         workingDir(buildXldDir)
         commandLine("make", "docker-push",
-            "IMG=$operatorImageUrl", "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
+            "IMG=$operatorImageUrl", operatorSdkCliVar, kustomizeCliVar)
 
         doLast {
             logger.lifecycle("Publish to DockerHub $operatorImageUrl finished")
@@ -407,7 +409,7 @@ tasks {
         workingDir(buildXldDir)
         commandLine("make", "bundle",
             "IMG=$operatorImageUrl", "BUNDLE_GEN_FLAGS=--overwrite --version=$releasedVersion --channels=$operatorBundleChannels --package=digitalai-deploy-operator --use-image-digests",
-            "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
+            operatorSdkCliVar, kustomizeCliVar)
 
         val sourceDockerFile = operatorFolder.resolve("bundle.Dockerfile")
         val targetDockerFile = buildXldDir.get().dir("bundle.Dockerfile")
@@ -505,7 +507,7 @@ tasks {
         dependsOn("installKustomize", "buildOperatorBundle")
         workingDir(buildXldDir)
         commandLine("make", "bundle-build",
-            "BUNDLE_IMG=$bundleImageUrl", "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
+            "BUNDLE_IMG=$bundleImageUrl", operatorSdkCliVar, kustomizeCliVar)
 
         doLast {
             logger.lifecycle("Build bundle image $bundleImageUrl finished")
@@ -517,7 +519,7 @@ tasks {
         dependsOn("installKustomize", "buildBundleImage")
         workingDir(buildXldDir)
         commandLine("make", "bundle-push",
-            "BUNDLE_IMG=$bundleImageUrl", "OPERATOR_SDK=$operatorSdkCli", "KUSTOMIZE=$kustomizeCli")
+            "BUNDLE_IMG=$bundleImageUrl", operatorSdkCliVar, kustomizeCliVar)
 
         doLast {
             logger.lifecycle("Publish to DockerHub $bundleImageUrl finished")
