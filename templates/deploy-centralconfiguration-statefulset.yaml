@@ -263,7 +263,7 @@ spec:
           {{- if .Values.centralConfiguration.resources }}
           resources: {{- toYaml .Values.centralConfiguration.resources | nindent 12 }}
           {{- else if ne .Values.centralConfiguration.resourcesPreset "none" }}
-          resources: {{- include "deploy.resources.preset" (dict "type" .Values.centralConfiguration.resourcesPreset) | nindent 12 }}
+          resources: {{- include "centralConfiguration.resources.preset" (dict "type" .Values.centralConfiguration.resourcesPreset) | nindent 12 }}
           {{- end }}
           volumeMounts:
             {{- range $k, $v := .Values.centralConfiguration.configuration }}
