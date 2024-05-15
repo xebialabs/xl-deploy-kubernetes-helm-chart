@@ -122,6 +122,7 @@ spec:
               {{- else }}
               value: {{ .Values.centralConfiguration.service.ports.ccHttp | quote }}
               {{- end }}
+          resources: {{- include "common.resources.preset" (dict "type" "nano") | nindent 12 }}
         {{- if and (not .Values.external.db.enabled) .Values.postgresql.install }}
         - name: wait-for-postgresql
           image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
@@ -139,6 +140,7 @@ spec:
               value: {{ include "postgresql.subchart" . }}
             - name: POSTGRESQL_PORT
               value: {{ (include "deploy.postgresql.service.port" .) | quote }}
+          resources: {{- include "common.resources.preset" (dict "type" "nano") | nindent 12 }}
         {{- end }}
         {{- if and (not .Values.external.mq.enabled) .Values.rabbitmq.install }}
         - name: wait-for-rabbitmq
@@ -157,6 +159,7 @@ spec:
               value: {{ include "rabbitmq.subchart" . }}
             - name: RABBITMQ_PORT
               value: {{ .Values.rabbitmq.service.ports.amqp | quote }}
+          resources: {{- include "common.resources.preset" (dict "type" "nano") | nindent 12 }}
         {{- end }}
         - name: wait-for-master
           image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
@@ -178,6 +181,7 @@ spec:
               {{- else }}
               value: {{ .Values.master.services.lb.ports.deployHttp | quote }}
               {{- end }}
+          resources: {{- include "common.resources.preset" (dict "type" "nano") | nindent 12 }}
         {{- end }}
         {{- if and .Values.worker.volumePermissions.enabled .Values.worker.persistence.enabled }}
         - name: volume-permissions
@@ -192,8 +196,8 @@ spec:
           securityContext: {{- .Values.worker.volumePermissions.containerSecurityContext | toYaml | nindent 12 }}
           {{- if .Values.worker.volumePermissions.resources }}
           resources: {{- toYaml .Values.worker.volumePermissions.resources | nindent 12 }}
-          {{- else if ne .Values.worker.volumePermissions.resourcesPreset "none" }}
-          resources: {{- include "deploy.resources.preset" (dict "type" .Values.worker.volumePermissions.resourcesPreset) | nindent 12 }}          
+          {{- else }}
+          resources: {{- include "common.resources.preset" (dict "type" "nano") | nindent 12 }}
           {{- end }}
           volumeMounts:
             {{- range $path := .Values.worker.persistence.paths }}
