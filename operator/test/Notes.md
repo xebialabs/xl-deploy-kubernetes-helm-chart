@@ -77,11 +77,11 @@ The sample configuration uses:
 
 Configurations can be further personalized. Here are some areas you might want to consider:
 
-- **External DB:** For avoiding uncertified container images required by the subcharts, refer to these [instructions for setting up an external DB](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-external-db-migration.html).
-- **External Message Queue:** To set up an external message queue, follow this [guide](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-external-mq-migration.html).
-- **Custom License:** To apply a custom license, refer to this [process](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-license-update.html).
-- **Custom Configuration:** For modifying the configuration files, use this [guide](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-customize.html).
-- **Truststore Setup:** For modifying default truststore for Deploy, use this [guide](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-setup-truststore.html)
+- **External DB:** For avoiding uncertified container images required by the subcharts, refer to these [instructions for setting up an external DB](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-external-db-migration.html).
+- **External Message Queue:** To set up an external message queue, follow this [guide](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-external-mq-migration.html).
+- **Custom License:** To apply a custom license, refer to this [process](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-license-update.html).
+- **Custom Configuration:** For modifying the configuration files, use this [guide](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-customize.html).
+- **Truststore Setup:** For modifying default truststore for Deploy, use this [guide](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-setup-truststore.html)
 - **Plugin Management:** Managing plugins can be done using the following methods:
-    - [Plugin Management using XL CLI](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-plugin-management.html)
-    - [Managing Plugins Offline for Kubernetes Environment](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-offline-plugin-management.html)
+    - [Plugin Management using XL CLI](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-plugin-management.html)
+    - [Managing Plugins Offline for Kubernetes Environment](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-offline-plugin-management.html)
