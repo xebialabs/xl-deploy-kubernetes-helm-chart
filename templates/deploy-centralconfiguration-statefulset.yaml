@@ -88,8 +88,29 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.centralConfiguration.terminationGracePeriodSeconds }}
       {{- include "deploy.imagePullSecrets" . | nindent 6 }}
-      {{- if or .Values.centralConfiguration.initContainers }}
+      {{- if or .Values.centralConfiguration.initContainers (and .Values.centralConfiguration.volumePermissions.enabled .Values.centralConfiguration.persistence.enabled) }}
       initContainers:
+        {{- if and .Values.centralConfiguration.volumePermissions.enabled .Values.centralConfiguration.persistence.enabled }}
+        - name: volume-permissions
+          image: {{ template "common.images.image" ( dict "imageRoot" .Values.centralConfiguration.volumePermissions.image "global" .Values.global "context" .) }}
+          imagePullPolicy: {{ .Values.centralConfiguration.volumePermissions.image.pullPolicy | quote }}
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.volumePermissions.script "context" $) | nindent 14 }}
+          securityContext: {{- .Values.centralConfiguration.volumePermissions.containerSecurityContext | toYaml | nindent 12 }}
+          {{- if .Values.centralConfiguration.volumePermissions.resources }}
+          resources: {{- toYaml .Values.centralConfiguration.volumePermissions.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          {{- range $path := .Values.centralConfiguration.persistence.paths }}
+            - name: data-dir
+              mountPath: {{ $path }}
+              subPath: {{ regexFind "[^/]+$" $path }}
+          {{- end }}
+        {{- end }}      
         {{- if .Values.centralConfiguration.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.initContainers "context" $) | nindent 8 }}
         {{- end }}
@@ -274,6 +295,11 @@ spec:
               mountPath: /opt/xebialabs/central-configuration-server/{{ $v.path }}
               subPath: {{ $v.path }}
             {{- end }}
+            {{- range $path := .Values.centralConfiguration.persistence.paths }}
+            - name: data-dir
+              mountPath: {{ $path }}
+              subPath: {{ regexFind "[^/]+$" $path }}
+            {{- end }}            
             {{- if .Values.centralConfiguration.extraVolumeMounts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.extraVolumeMounts "context" $) | nindent 12 }}
             {{- end }}
@@ -310,3 +336,38 @@ spec:
         {{- if .Values.centralConfiguration.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.extraVolumes "context" $)  | nindent 8 }}
         {{- end }}
+        {{- if not .Values.centralConfiguration.persistence.enabled }}
+        - name: data-dir
+          emptyDir: {}
+        {{- else if .Values.centralConfiguration.persistence.existingClaim }}
+        - name: data-dir
+          persistentVolumeClaim:
+            {{- with .Values.centralConfiguration.persistence.existingClaim }}
+            claimName: {{ tpl . $ }}
+            {{- end }}
+        {{- else if .Values.centralConfiguration.persistence.single }}
+        - name: data-dir
+          persistentVolumeClaim:
+            claimName: data-dir-{{ include "deploy.names.centralConfiguration" . }}
+        {{- else }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data-dir
+        labels: {{- include "common.labels.matchLabels" . | nindent 10 }}
+        {{- if .Values.centralConfiguration.persistence.annotations }}
+        annotations:
+          {{- include "common.tplvalues.render" ( dict "value" .Values.centralConfiguration.persistence.annotations "context" $) | nindent 10 }}
+        {{- end }}
+      spec:
+        accessModes:
+          {{- range .Values.centralConfiguration.persistence.accessModes }}
+            - {{ . | quote }}
+          {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.centralConfiguration.persistence.size | quote }}
+        {{ include "common.storage.class" (dict "persistence" .Values.centralConfiguration.persistence "global" .Values.global) }}
+        {{- if .Values.centralConfiguration.persistence.selector }}
+        selector: {{- include "common.tplvalues.render" (dict "value" .Values.centralConfiguration.persistence.selector "context" $) | nindent 10 }}
+        {{- end -}}
+  {{- end }}
