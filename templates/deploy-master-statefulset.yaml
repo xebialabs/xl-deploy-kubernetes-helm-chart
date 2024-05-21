@@ -99,7 +99,7 @@ spec:
       initContainers:
         {{- if not .Values.master.diagnosticMode.enabled }}
         - name: wait-for-central-configuration
-          image: {{ include "deploy.busyBox.image" . }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
           command:
             - /bin/sh
@@ -120,7 +120,7 @@ spec:
               {{- end }}
         {{- if and (not .Values.external.db.enabled) .Values.postgresql.install }}
         - name: wait-for-postgresql
-          image: {{ include "deploy.busyBox.image" . }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
           command:
             - /bin/sh
@@ -138,7 +138,7 @@ spec:
         {{- end }}
         {{- if and (not .Values.external.mq.enabled) .Values.rabbitmq.install }}
         - name: wait-for-rabbitmq
-          image: {{ include "deploy.busyBox.image" . }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
           command:
             - /bin/sh
@@ -157,7 +157,7 @@ spec:
         {{- end }}
         {{- if and .Values.master.volumePermissions.enabled .Values.master.persistence.enabled }}
         - name: volume-permissions
-          image: {{ template "deploy.images.image" ( dict "imageRoot" .Values.master.volumePermissions.image "global" .Values.global "context" .) }}
+          image: {{ template "common.images.image" ( dict "imageRoot" .Values.master.volumePermissions.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.master.volumePermissions.image.pullPolicy | quote }}
           command:
             - /bin/bash
@@ -181,7 +181,7 @@ spec:
         {{- end }}
       containers:
         - name: deploy-master
-          image: {{ template "deploy.images.image" ( dict "imageRoot" .Values.master.image "global" .Values.global "context" .) }}
+          image: {{ template "common.images.image" ( dict "imageRoot" .Values.master.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.master.image.pullPolicy | quote }}
           {{- if .Values.master.containerSecurityContext.enabled }}
           securityContext: {{- omit .Values.master.containerSecurityContext "enabled" | toYaml | nindent 12 }}

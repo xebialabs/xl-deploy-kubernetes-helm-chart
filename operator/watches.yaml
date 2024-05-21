@@ -1,0 +1,8 @@
+
+  overrideValues:
+    centralConfiguration.image.image: $RELATED_IMAGE_DEPLOY_CENTRAL_CONFIGURATION
+    master.image.image: $RELATED_IMAGE_DEPLOY_MASTER
+    master.volumePermissions.image.image: $RELATED_IMAGE_DEPLOY_MASTER_VOLUME_PERMISSIONS
+    worker.image.image: $RELATED_IMAGE_DEPLOY_WORKER
+    worker.volumePermissions.image.image: $RELATED_IMAGE_DEPLOY_WORKER_VOLUME_PERMISSIONS
+    busyBox.image.image: $RELATED_IMAGE_DEPLOY_BUSY_BOX

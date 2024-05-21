@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: RELATED_IMAGE_DEPLOY_CENTRAL_CONFIGURATION
+            value: docker.io/xebialabsunsupported/central-configuration:${APP_VERSION}
+          - name: RELATED_IMAGE_DEPLOY_MASTER
+            value: docker.io/xebialabsunsupported/xl-deploy:${APP_VERSION}
+          - name: RELATED_IMAGE_DEPLOY_MASTER_VOLUME_PERMISSIONS
+            value: docker.io/xebialabsunsupported/xl-deploy:${APP_VERSION}
+          - name: RELATED_IMAGE_DEPLOY_WORKER
+            value: docker.io/xebialabsunsupported/deploy-task-engine:${APP_VERSION}
+          - name: RELATED_IMAGE_DEPLOY_WORKER_VOLUME_PERMISSIONS
+            value: docker.io/xebialabsunsupported/xl-deploy:${APP_VERSION}
+          - name: RELATED_IMAGE_DEPLOY_BUSY_BOX
+            value: docker.io/xebialabsunsupported/xl-deploy:${APP_VERSION}
