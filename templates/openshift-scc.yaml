@@ -10,10 +10,12 @@ allowHostPID: false
 allowHostDirVolumePlugin: false
 allowHostIPC: false
 allowHostPorts: false
-allowPrivilegeEscalation: true
-allowPrivilegedContainer: true
-allowedCapabilities: []
-defaultAddCapabilities: []
+allowPrivilegeEscalation: false
+allowPrivilegedContainer: false
+allowedCapabilities: null
+seccompProfiles:
+- runtime/default
+defaultAddCapabilities: null
 fsGroup:
   type: RunAsAny
 groups: []
@@ -48,9 +50,11 @@ allowHostIPC: false
 allowHostNetwork: false
 allowHostPID: false
 allowHostPorts: false
-allowPrivilegeEscalation: true
+allowPrivilegeEscalation: false
 allowPrivilegedContainer: false
 allowedCapabilities: null
+seccompProfiles:
+- runtime/default
 defaultAddCapabilities: null
 fsGroup:
   type: RunAsAny
@@ -92,7 +96,7 @@ allowHostIPC: false
 allowHostNetwork: false
 allowHostPID: false
 allowHostPorts: false
-allowPrivilegeEscalation: true
+allowPrivilegeEscalation: false
 allowPrivilegedContainer: false
 allowedCapabilities: null
 seccompProfiles:
