@@ -1,8 +1,63 @@
+securityContextConstraints:
+  enabled: false
+centralConfiguration:
+  podSecurityContext:
+    runAsUser: null
+    runAsGroup: null
+    fsGroup: null
+  containerSecurityContext:
+    runAsUser: null
+    runAsGroup: null
+  volumePermissions:
+    enabled: false
+master:
+  podSecurityContext:
+    runAsUser: null
+    runAsGroup: null
+    fsGroup: null
+  containerSecurityContext:
+    runAsUser: null
+    runAsGroup: null
+  volumePermissions:
+    enabled: false
+worker:
+  podSecurityContext:
+    runAsUser: null
+    runAsGroup: null
+    fsGroup: null
+  containerSecurityContext:
+    runAsUser: null
+    runAsGroup: null
+  volumePermissions:
+    enabled: false
 postgresql:
+  primary:
+    podSecurityContext:
+      # see https://github.com/helm/helm/issues/12637
+      enabled: false
+      runAsUser: null
+      runAsGroup: null
+      fsGroup: null
+    containerSecurityContext:
+      enabled: false
+      runAsUser: null
+      runAsGroup: null
     securityContextConstraints:
       enabled: false
+  volumePermissions:
+    enabled: false
 rabbitmq:
+  podSecurityContext:
+    # see https://github.com/helm/helm/issues/12637
+    enabled: false
+    runAsUser: null
+    runAsGroup: null
+    fsGroup: null
+  containerSecurityContext:
+    enabled: false
+    runAsUser: null
+    runAsGroup: null
   securityContextConstraints:
     enabled: false
-securityContextConstraints:
-  enabled: true
+  volumePermissions:
+    enabled: false
