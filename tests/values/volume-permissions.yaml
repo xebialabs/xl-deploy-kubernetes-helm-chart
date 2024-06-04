@@ -1,3 +1,10 @@
+centralConfiguration:
+  volumePermissions:
+    enabled: true
+  persistence:
+    enabled: true
+    paths:
+      - /opt/xebialabs/central-configuration-server/centralConfiguration
 master:
   volumePermissions:
     enabled: true
