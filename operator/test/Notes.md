@@ -21,7 +21,7 @@ The installation can be done using the sample configuration provided below. Plea
 apiVersion: xld.digital.ai/v1alpha1
 kind: DigitalaiDeploy
 metadata:
-  name: daideploy-doc
+  name: daid-doc
 spec:
   k8sSetup:
     platform: Openshift
@@ -34,30 +34,77 @@ spec:
   hooks:
     getLicense:
       enabled: true
+  securityContextConstraints:
+    enabled: true
   centralConfiguration:
     replicaCount: 1
+    podSecurityContext:
+      enabled: true
+    containerSecurityContext:
+      enabled: true   
+    volumePermissions:
+      enabled: false
   master:
     replicaCount: 1
     persistence:
       storageClass: ''
       size: 1Gi
+    podSecurityContext:
+      enabled: true
+    containerSecurityContext:
+      enabled: true
+    volumePermissions:
+      enabled: false
   worker:
     replicaCount: 1
     persistence:
       storageClass: ''
       size: 1Gi
+    podSecurityContext:
+      enabled: true
+    containerSecurityContext:
+      enabled: true
+    volumePermissions:
+      enabled: false
+  route:
+    enabled: false
+    annotations:
+      haproxy.router.openshift.io/cookie_name: SESSION_XLD
+      haproxy.router.openshift.io/disable_cookies: "false"
+      haproxy.router.openshift.io/rewrite-target: /
+    hostname: '<mandatory-deploy-hostname>'
+    path: /
+    tls:
+      enabled: true
+      termination: edge
   postgresql:
     install: true
     primary:
       persistence:
         size: 1Gi
         storageClass: ''
+      podSecurityContext:
+        enabled: true
+      containerSecurityContext:
+        enabled: true
+      securityContextConstraints:
+        enabled: true
+    volumePermissions:
+      enabled: true
   rabbitmq:
     install: true
     persistence:
       size: 1Gi
       storageClass: ''
     replicaCount: 1
+    podSecurityContext:
+      enabled: true
+    containerSecurityContext:
+      enabled: true
+    securityContextConstraints:
+      enabled: true
+    volumePermissions:
+      enabled: true
 ```
 
 ### Configuration Details

@@ -125,6 +125,10 @@ truststore:
   ## @param truststore.params Truststore params in the command line
   params: "{{- if .Values.truststore.truststore }} -Djavax.net.ssl.trustStore=$(TRUSTSTORE) -Djavax.net.ssl.trustStorePassword=$(TRUSTSTORE_PASSWORD) -Djavax.net.ssl.trustStoreType=$(TRUSTSTORE_TYPE){{- end }}"
 
+## @param securityContextConstraints.enabled Enabled SecurityContextConstraints for Deploy (only on Openshift)
+securityContextConstraints:
+  enabled: true
+
 hooks:
   ## @param busyBox.image.registry busyBox container image registry
   ## @param busyBox.image.repository busyBox container image repository
@@ -168,6 +172,15 @@ hooks:
       ##   - myRegistryKeySecretName
       ##
       pullSecrets: []
+    containerSecurityContext:
+      enabled: true
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
     ## @extra hooks.getLicense.configuration Release Configuration file content
     ## Do not override unless you know what you are doing.
     ##
@@ -240,6 +253,15 @@ hooks:
       ##   - myRegistryKeySecretName
       ##
       pullSecrets: []
+    containerSecurityContext:
+      enabled: true
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
     ## @extra hooks.genSelfSigned.configuration Release Configuration file content
     ## Do not override unless you know what you are doing.
     ##
@@ -525,7 +547,6 @@ centralConfiguration:
   podSecurityContext:
     enabled: true
     runAsUser: 10001
-    runAsGroup: 10001
     fsGroup: 10001
 
   ## @param centralConfiguration.containerSecurityContext.enabled Enabled deploy containers' Security Context
@@ -540,8 +561,13 @@ centralConfiguration:
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 10001
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param centralConfiguration.initContainers Add init containers to the deploy pod
   ## Example:
@@ -566,6 +592,83 @@ centralConfiguration:
   ##
   sidecars: []
 
+  ## Init Container parameters
+  ## Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component
+  ## values from the securityContext section of the component
+  ##
+  volumePermissions:
+    ## @param centralConfiguration.volumePermissions.enabled Enable init container that changes the owner and group of the persistent volume(s) mountpoint to `runAsUser:fsGroup`
+    ##
+    enabled: false
+    ## @param centralConfiguration.volumePermissions.image.registry Init container volume-permissions image registry
+    ## @param centralConfiguration.volumePermissions.image.repository Init container volume-permissions image repository
+    ## @param centralConfiguration.volumePermissions.image.tag Init container volume-permissions image tag
+    ## @param centralConfiguration.volumePermissions.image.digest Init container volume-permissions image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
+    ## @param centralConfiguration.volumePermissions.image.pullPolicy Init container volume-permissions image pull policy
+    ## @param centralConfiguration.volumePermissions.image.pullSecrets Specify docker-registry secret names as an array
+    ##
+    image:
+      registry: docker.io
+      repository: bitnami/os-shell
+      tag: 12-debian-12-r16
+      digest: ""
+      ## Specify a imagePullPolicy
+      ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+      ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+      ##
+      pullPolicy: IfNotPresent
+      ## Optionally specify an array of imagePullSecrets (secrets must be manually created in the namespace)
+      ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+      ## Example:
+      ## pullSecrets:
+      ##   - myRegistryKeySecretName
+      ##
+      pullSecrets: []
+    ## @param centralConfiguration.volumePermissions.script Script for changing the owner and group of the persistent volume(s). Paths are declared in the 'paths' variable.
+    script: |
+      #!/bin/bash
+      
+      declare -a paths=( {{ range $path := .Values.centralConfiguration.persistence.paths }} "{{ $path }}"{{ end }} )
+      for path in "${paths[@]}"; do
+        echo "Changing ownership to {{ .Values.centralConfiguration.containerSecurityContext.runAsUser }}:{{ .Values.centralConfiguration.podSecurityContext.fsGroup }} for ${path}"
+        chown "{{ .Values.centralConfiguration.containerSecurityContext.runAsUser }}:{{ .Values.centralConfiguration.podSecurityContext.fsGroup }}" "${path}"
+        find "${path}" -mindepth 1 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
+          xargs -r chown -R "{{ .Values.centralConfiguration.containerSecurityContext.runAsUser }}:{{ .Values.centralConfiguration.podSecurityContext.fsGroup }}"
+      done
+    ## Init Container resource requests and limits
+    ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+    ## We usually recommend not to specify default resources and to leave this as a conscious
+    ## choice for the user. This also increases chances charts run on environments with little
+    ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+    ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    ## @param centralConfiguration.volumePermissions.resources.limits Init container volume-permissions resource limits
+    ## @param centralConfiguration.volumePermissions.resources.requests Init container volume-permissions resource requests
+    ##
+    resources:
+      ## Example:
+      ## limits:
+      ##    cpu: 100m
+      ##    memory: 128Mi
+      ##
+      limits: {}
+      ## Examples:
+      ## requests:
+      ##    cpu: 100m
+      ##    memory: 128Mi
+      ##
+      requests: {}
+    ## Init container' Security Context
+    ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
+    ## and not the below volumePermissions.containerSecurityContext.runAsUser
+    ## @param centralConfiguration.volumePermissions.containerSecurityContext.runAsUser User ID for the init container
+    ##
+    containerSecurityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      seccompProfile:
+        type: RuntimeDefault
+
   ## Pod Disruption Budget configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
   ##
@@ -579,6 +682,53 @@ centralConfiguration:
     ## @param centralConfiguration.pdb.maxUnavailable Maximum number/percentage of pods that may be made unavailable
     ##
     maxUnavailable: ""
+
+  ## @section Persistence parameters
+  ##
+
+  persistence:
+    ## @param centralConfiguration.persistence.enabled Enable deploy data persistence using PVC
+    ##
+    enabled: false
+    ## @param centralConfiguration.persistence.single Enable deploy data to use single PVC
+    ##
+    single: false
+    ## @param centralConfiguration.persistence.storageClass PVC Storage Class for deploy data volume
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    storageClass: ""
+    ## @param centralConfiguration.persistence.selector Selector to match an existing Persistent Volume
+    ## selector:
+    ##   matchLabels:
+    ##     app: my-app
+    ##
+    selector: { }
+    ## @param centralConfiguration.persistence.accessModes PVC Access Modes for deploy data volume
+    ##
+    accessModes:
+      - ReadWriteOnce
+    ## @param centralConfiguration.persistence.existingClaim Provide an existing PersistentVolumeClaims
+    ## The value is evaluated as a template
+    ## So, for example, the name can depend on .Release or .Chart
+    ##
+    existingClaim: ""
+    ## @param centralConfiguration.persistence.size PVC Storage Request for deploy data volume
+    ##
+    size: 1Gi
+    ## @extra centralConfiguration.persistence.annotations Persistence annotations. Evaluated as a template
+    ## @param centralConfiguration.persistence.annotations.helm.sh/resource-policy Persistence annotation for keeping created PVCs
+    ## Example:
+    ## annotations:
+    ##   example.io/disk-volume-type: SSD
+    ##
+    annotations:
+      helm.sh/resource-policy: "keep"
+    ## @param centralConfiguration.persistence.paths mounted paths for the Deploy master
+    paths: []
 
   ## @param centralConfiguration.jvmArgs Deploy centralConfiguration JVM arguments
   ##
@@ -1180,7 +1330,6 @@ master:
   podSecurityContext:
     enabled: true
     runAsUser: 10001
-    runAsGroup: 10001
     fsGroup: 10001
 
   ## @param master.containerSecurityContext.enabled Enabled deploy containers' Security Context
@@ -1195,8 +1344,13 @@ master:
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 10001
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param master.initContainers Add init containers to the deploy master pod
   ## Example:
@@ -1293,6 +1447,10 @@ master:
     ##
     containerSecurityContext:
       runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      seccompProfile:
+        type: RuntimeDefault
 
   ## Pod Disruption Budget configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
@@ -1990,7 +2148,6 @@ worker:
   podSecurityContext:
     enabled: true
     runAsUser: 10001
-    runAsGroup: 10001
     fsGroup: 10001
 
   ## @param worker.containerSecurityContext.enabled Enabled deploy containers' Security Context
@@ -2005,8 +2162,13 @@ worker:
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 10001
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param worker.initContainers Add init containers to the Deploy worker pod
   ## Example:
@@ -2103,6 +2265,10 @@ worker:
     ##
     containerSecurityContext:
       runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      seccompProfile:
+        type: RuntimeDefault
 
   ## Pod Disruption Budget configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
@@ -2998,6 +3164,11 @@ postgresql:
       ## @param postgresql.primary.service.type Kubernetes Service type
       ##
       type: ClusterIP
+
+    ## @param postgresql.primary.securityContextConstraints.enabled Enabled SecurityContextConstraints for Postgresql (only on Openshift)
+    securityContextConstraints:
+      enabled: true
+
   ## Authentication parameters
   ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#setting-the-root-password-on-first-run
   ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#creating-a-database-on-first-run
@@ -3114,6 +3285,19 @@ rabbitmq:
     ## If you change this value, you might have to adjust `rabbitmq.diskFreeLimit` as well
     ##
     size: 8Gi
+    
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    seccompProfile:
+      type: RuntimeDefault
+
+  ## @param rabbitmq.securityContextConstraints.enabled Enabled SecurityContextConstraints for Rabbitmq (only on Openshift)
+  securityContextConstraints:
+    enabled: true
+
   ## @section Exposure parameters
   ##
 
@@ -3123,6 +3307,7 @@ rabbitmq:
     ## @param rabbitmq.service.type Kubernetes Service type
     ##
     type: ClusterIP
+
   ## @section Init Container Parameters
   ##
 
@@ -3137,3 +3322,9 @@ rabbitmq:
     ## @param rabbitmq.volumePermissions.image.tag Init container volume-permissions image tag (immutable tags are recommended)
     image:
       tag: 12-debian-12-r16
+    containerSecurityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      seccompProfile:
+        type: RuntimeDefault

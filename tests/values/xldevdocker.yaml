@@ -1,15 +1,15 @@
 centralConfiguration:
   image:
     repository: xebialabsunsupported/central-configuration
-    tag: 24.1.0-beta.6
-    pullPolicy: Always
+    tag: 24.1.2-rc.1-redhat
+    pullPolicy: IfNotPresent
 master:
   image:
     repository: xebialabsunsupported/xl-deploy
-    tag: 24.1.0-beta.6
-    pullPolicy: Always
+    tag: 24.1.2-rc.1-redhat
+    pullPolicy: IfNotPresent
 worker:
   image:
     repository: xebialabsunsupported/deploy-task-engine
-    tag: 24.1.0-beta.6
-    pullPolicy: Always
+    tag: 24.1.2-rc.1-redhat
+    pullPolicy: IfNotPresent
