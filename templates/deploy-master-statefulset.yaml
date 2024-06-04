@@ -101,6 +101,9 @@ spec:
         - name: wait-for-central-configuration
           image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
+          {{- if .Values.master.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.master.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           command:
             - /bin/sh
           args:
@@ -122,6 +125,9 @@ spec:
         - name: wait-for-postgresql
           image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
+          {{- if .Values.master.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.master.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           command:
             - /bin/sh
           args:
@@ -140,6 +146,9 @@ spec:
         - name: wait-for-rabbitmq
           image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
           imagePullPolicy: {{ .Values.busyBox.image.pullPolicy | quote }}
+          {{- if .Values.master.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.master.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           command:
             - /bin/sh
           args:

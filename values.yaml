@@ -172,6 +172,15 @@ hooks:
       ##   - myRegistryKeySecretName
       ##
       pullSecrets: []
+    containerSecurityContext:
+      enabled: true
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
     ## @extra hooks.getLicense.configuration Release Configuration file content
     ## Do not override unless you know what you are doing.
     ##
@@ -244,6 +253,15 @@ hooks:
       ##   - myRegistryKeySecretName
       ##
       pullSecrets: []
+    containerSecurityContext:
+      enabled: true
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
     ## @extra hooks.genSelfSigned.configuration Release Configuration file content
     ## Do not override unless you know what you are doing.
     ##
@@ -529,7 +547,6 @@ centralConfiguration:
   podSecurityContext:
     enabled: true
     runAsUser: 10001
-    runAsGroup: 10001
     fsGroup: 10001
 
   ## @param centralConfiguration.containerSecurityContext.enabled Enabled deploy containers' Security Context
@@ -544,8 +561,13 @@ centralConfiguration:
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 10001
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param centralConfiguration.initContainers Add init containers to the deploy pod
   ## Example:
@@ -642,6 +664,10 @@ centralConfiguration:
     ##
     containerSecurityContext:
       runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      seccompProfile:
+        type: RuntimeDefault
 
   ## Pod Disruption Budget configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
@@ -692,7 +718,7 @@ centralConfiguration:
     existingClaim: ""
     ## @param centralConfiguration.persistence.size PVC Storage Request for deploy data volume
     ##
-    size: 8Gi
+    size: 1Gi
     ## @extra centralConfiguration.persistence.annotations Persistence annotations. Evaluated as a template
     ## @param centralConfiguration.persistence.annotations.helm.sh/resource-policy Persistence annotation for keeping created PVCs
     ## Example:
@@ -1304,7 +1330,6 @@ master:
   podSecurityContext:
     enabled: true
     runAsUser: 10001
-    runAsGroup: 10001
     fsGroup: 10001
 
   ## @param master.containerSecurityContext.enabled Enabled deploy containers' Security Context
@@ -1319,8 +1344,13 @@ master:
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 10001
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param master.initContainers Add init containers to the deploy master pod
   ## Example:
@@ -1417,6 +1447,10 @@ master:
     ##
     containerSecurityContext:
       runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      seccompProfile:
+        type: RuntimeDefault
 
   ## Pod Disruption Budget configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
@@ -2114,7 +2148,6 @@ worker:
   podSecurityContext:
     enabled: true
     runAsUser: 10001
-    runAsGroup: 10001
     fsGroup: 10001
 
   ## @param worker.containerSecurityContext.enabled Enabled deploy containers' Security Context
@@ -2129,8 +2162,13 @@ worker:
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 10001
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param worker.initContainers Add init containers to the Deploy worker pod
   ## Example:
@@ -2227,6 +2265,10 @@ worker:
     ##
     containerSecurityContext:
       runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      seccompProfile:
+        type: RuntimeDefault
 
   ## Pod Disruption Budget configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
@@ -3243,6 +3285,14 @@ rabbitmq:
     ## If you change this value, you might have to adjust `rabbitmq.diskFreeLimit` as well
     ##
     size: 8Gi
+    
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param rabbitmq.securityContextConstraints.enabled Enabled SecurityContextConstraints for Rabbitmq (only on Openshift)
   securityContextConstraints:
@@ -3272,3 +3322,9 @@ rabbitmq:
     ## @param rabbitmq.volumePermissions.image.tag Init container volume-permissions image tag (immutable tags are recommended)
     image:
       tag: 12-debian-12-r16
+    containerSecurityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      seccompProfile:
+        type: RuntimeDefault
