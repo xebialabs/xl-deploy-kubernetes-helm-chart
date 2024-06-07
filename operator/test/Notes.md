@@ -17,7 +17,7 @@ Nginx Ingress and Haproxy ingress are disabled and not used with installations o
 
 The installation can be done using the sample configuration provided below. Please note that this is a minimal configuration and it's not recommended for production use.
 
-```
+```yaml
 apiVersion: xld.digital.ai/v1alpha1
 kind: DigitalaiDeploy
 metadata:
@@ -107,7 +107,7 @@ spec:
       enabled: true
 ```
 
-### Configuration Details
+#### Configuration Details
 
 The sample configuration uses:
 
@@ -119,6 +119,127 @@ The sample configuration uses:
 - Default storage class and minimal size for persistent storage
 - Embedded PostgreSQL for DB management
 - Embedded RabbitMQ for message queue management
+
+### Sample configuration without Security Context Constraints
+
+For cases when you would avoid using SCC, here is a similar configuration to the above but with disabled SCCs:
+
+```yaml
+apiVersion: xld.digital.ai/v1alpha1
+kind: DigitalaiDeploy
+metadata:
+  name: daid-min
+spec:
+  k8sSetup:
+    platform: Openshift
+  auth:
+    adminPassword: 'admin'
+  licenseAcceptEula: true
+  keystore:
+    passphrase: 'test1234'
+    keystore: 'zs7OzgAAAAIAAAABAAAAAwAWZGVwbG95aXQtcGFzc3N3b3JkLWtleQAAAY66C46srO0ABXNyADNjb20uc3VuLmNyeXB0by5wcm92aWRlci5TZWFsZWRPYmplY3RGb3JLZXlQcm90ZWN0b3LNV8pZ5zC7UwIAAHhyABlqYXZheC5jcnlwdG8uU2VhbGVkT2JqZWN0PjY9psO3VHACAARbAA1lbmNvZGVkUGFyYW1zdAACW0JbABBlbmNyeXB0ZWRDb250ZW50cQB+AAJMAAlwYXJhbXNBbGd0ABJMamF2YS9sYW5nL1N0cmluZztMAAdzZWFsQWxncQB+AAN4cHVyAAJbQqzzF/gGCFTgAgAAeHAAAAARMA8ECPqEw2Wp+c6yAgMDDUB1cQB+AAUAAACQFrl6s2pnsB+GJD8vlN3Y0SItmbtfPy6n2A5qREEJWWLN9OYLu7BokScBMyFChFjIhQGwCpjMP4j+VLCgpW6GKREmYHQgKjWqWn7A+DMF9eT68ygZAD+ceIZB5buvsGM2LCYzyHJcmtujv+hpqevoTgOKKMd4U3wVV96n4B5QbkVXHYtGZWbWxk5gCHLoWhV5dAAWUEJFV2l0aE1ENUFuZFRyaXBsZURFU3QAFlBCRVdpdGhNRDVBbmRUcmlwbGVERVP+nQgVx6wurZB9hBxaIkk/6EEAPQ=='
+  hooks:
+    getLicense:
+      enabled: true
+  securityContextConstraints:
+    enabled: false
+  centralConfiguration:
+    replicaCount: 1
+    podSecurityContext:
+      runAsUser: null
+      runAsGroup: null
+      fsGroup: null
+    containerSecurityContext:
+      runAsUser: null
+      runAsGroup: null
+    volumePermissions:
+      enabled: false
+  master:
+    replicaCount: 1
+    persistence:
+      storageClass: ''
+      size: 1Gi
+    podSecurityContext:
+      runAsUser: null
+      runAsGroup: null
+      fsGroup: null
+    containerSecurityContext:
+      runAsUser: null
+      runAsGroup: null
+    volumePermissions:
+      enabled: false
+  worker:
+    replicaCount: 1
+    persistence:
+      storageClass: ''
+      size: 1Gi
+    podSecurityContext:
+      runAsUser: null
+      runAsGroup: null
+      fsGroup: null
+    containerSecurityContext:
+      runAsUser: null
+      runAsGroup: null
+    volumePermissions:
+      enabled: false
+  route:
+    enabled: false
+    annotations:
+      haproxy.router.openshift.io/cookie_name: SESSION_XLD
+      haproxy.router.openshift.io/disable_cookies: "false"
+      haproxy.router.openshift.io/rewrite-target: /
+    hostname: '<mandatory-deploy-hostname>'
+    path: /
+    tls:
+      enabled: true
+      termination: edge
+  postgresql:
+    install: true
+    primary:
+      persistence:
+        size: 1Gi
+        storageClass: ''
+      podSecurityContext:
+        enabled: false
+        runAsUser: null
+        runAsGroup: null
+        fsGroup: null
+      containerSecurityContext:
+        enabled: false
+        runAsUser: null
+        runAsGroup: null
+      securityContextConstraints:
+        enabled: false
+    volumePermissions:
+      enabled: false
+  rabbitmq:
+    install: true
+    persistence:
+      size: 1Gi
+      storageClass: ''
+    replicaCount: 1
+    podSecurityContext:
+      enabled: false
+      runAsUser: null
+      runAsGroup: null
+      fsGroup: null
+    containerSecurityContext:
+      enabled: false
+      runAsUser: null
+      runAsGroup: null
+    securityContextConstraints:
+      enabled: false
+    volumePermissions:
+      enabled: false
+```
+
+#### Configuration Details
+
+This sample configuration has all the same settings as the previous one, but it has additionally:
+
+- `securityContextConstraints.enabled: false` - disables creation of SCCs;
+- `podSecurityContext/containerSecurityContext` - that disables the use of specific UIDs or GIDs, so the IDs can be assigned from the defined ranges (for example from restricted SCC);
+- `volumePermissions.enabled: false` - disables automatic corrections of the mounted folders.
 
 ## Customize Your Configuration
 
