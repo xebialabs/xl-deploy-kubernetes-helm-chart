@@ -125,6 +125,9 @@ spec:
               {{- else }}
               value: {{ .Values.centralConfiguration.service.ports.ccHttp | quote }}
               {{- end }}
+          {{- if .Values.worker.defaultInitContainers.resources }}
+          resources: {{- toYaml .Values.worker.defaultInitContainers.resources | nindent 12 }}
+          {{- end }}
         {{- if and (not .Values.external.db.enabled) .Values.postgresql.install }}
         - name: wait-for-postgresql
           image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
@@ -145,6 +148,9 @@ spec:
               value: {{ include "postgresql.subchart" . }}
             - name: POSTGRESQL_PORT
               value: {{ (include "deploy.postgresql.service.port" .) | quote }}
+          {{- if .Values.worker.defaultInitContainers.resources }}
+          resources: {{- toYaml .Values.worker.defaultInitContainers.resources | nindent 12 }}
+          {{- end }}
         {{- end }}
         {{- if and (not .Values.external.mq.enabled) .Values.rabbitmq.install }}
         - name: wait-for-rabbitmq
@@ -166,6 +172,9 @@ spec:
               value: {{ include "rabbitmq.subchart" . }}
             - name: RABBITMQ_PORT
               value: {{ .Values.rabbitmq.service.ports.amqp | quote }}
+          {{- if .Values.worker.defaultInitContainers.resources }}
+          resources: {{- toYaml .Values.worker.defaultInitContainers.resources | nindent 12 }}
+          {{- end }}
         {{- end }}
         - name: wait-for-master
           image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
@@ -190,6 +199,9 @@ spec:
               {{- else }}
               value: {{ .Values.master.services.lb.ports.deployHttp | quote }}
               {{- end }}
+          {{- if .Values.worker.defaultInitContainers.resources }}
+          resources: {{- toYaml .Values.worker.defaultInitContainers.resources | nindent 12 }}
+          {{- end }}
         {{- end }}
         {{- if and .Values.worker.volumePermissions.enabled .Values.worker.persistence.enabled }}
         - name: volume-permissions
@@ -361,6 +373,8 @@ spec:
           {{- end }}
           {{- if .Values.worker.resources }}
           resources: {{- toYaml .Values.worker.resources | nindent 12 }}
+          {{- else if ne .Values.worker.resourcesPreset "none" }}
+          resources: {{- include "deploy.resources.preset" (dict "type" .Values.worker.resourcesPreset) | nindent 12 }}           
           {{- end }}
           volumeMounts:
             {{- range $k, $v := .Values.worker.configuration }}
