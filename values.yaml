@@ -23,7 +23,7 @@ global:
       ports:
         postgresql: ""
 
-## @section Env parameters
+## @section K8S Env parameters
 ##
 
 ## @param k8sSetup.platform The platform on which you install the chart. Possible values: AWSEKS/AzureAKS/GoogleGKE/PlainK8s
@@ -33,7 +33,7 @@ k8sSetup:
   platform: PlainK8s
   validateValues: true
 
-## @section Deploy common parameters
+## @section Deploy servers common parameters
 ##
 
 ## @param license Sets your XL License by passing a base64 string license, which will then be added to the license file.
@@ -53,15 +53,15 @@ externalCentralConfig: true
 xldInProcess: false
 ## @param usaCache Flag to disable/enable the use of application cache
 usaCache: false
-## @param appContextRoot Release context root.
+## @param appContextRoot Deploy context root.
 ##
 appContextRoot: /
 
-## Deploy Authentication parameters
+## @param clusterMode This is to specify if the HA setup is needed and to specify the HA mode. Possible values: "default", "hot-standby", "full"
 ##
-auth:
-  ## @param auth.adminPassword Admin password for Deploy. If user does not provide password, random 10 character alphanumeric string will be generated.
-  adminPassword:
+clusterMode: full
+
+## @section Deploy external resources
 
 external:
   db:
@@ -100,10 +100,9 @@ external:
     ## @param external.mq.driverClassName External message queue driver class name for Deploy
     driverClassName: ""
     ## @param external.mq.queueType Valid only for External rabbitmq message queue. Possible values: "quorum", "classic"
-    queueType: "classic"    
-## @param clusterMode This is to specify if the HA setup is needed and to specify the HA mode. Possible values: "default", "hot-standby", "full"
-##
-clusterMode: full
+    queueType: "classic"
+
+## @section Deploy keystore and truststore parameters
 
 keystore:
   ## @param keystore.passphrase Set passphrase for the keystore
@@ -128,6 +127,9 @@ truststore:
 ## @param securityContextConstraints.enabled Enabled SecurityContextConstraints for Deploy (only on Openshift)
 securityContextConstraints:
   enabled: true
+
+## @section Deploy hooks
+##
 
 hooks:
   ## @param busyBox.image.registry busyBox container image registry
@@ -172,6 +174,20 @@ hooks:
       ##   - myRegistryKeySecretName
       ##
       pullSecrets: []
+    ## @param hooks.getLicense.containerSecurityContext.enabled Enabled get licence containers' Security Context
+    ## @param hooks.getLicense.containerSecurityContext.runAsNonRoot Set get licence container's Security Context runAsNonRoot
+    ## @param hooks.getLicense.containerSecurityContext.allowPrivilegeEscalation Set get licence container's Security Context allowPrivilegeEscalation
+    ## @extra hooks.getLicense.containerSecurityContext.capabilities Set get licence container's Security Context capabilities
+    ## @skip hooks.getLicense.containerSecurityContext.capabilities
+    ## @extra hooks.getLicense.containerSecurityContext.seccompProfile Set get licence container's Security Context seccompProfile
+    ## @skip hooks.getLicense.containerSecurityContext.seccompProfile
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+    ## Example:
+    ##   containerSecurityContext:
+    ##     capabilities:
+    ##       drop: ["NET_RAW"]
+    ##     readOnlyRootFilesystem: true
+    ##
     containerSecurityContext:
       enabled: true
       runAsNonRoot: true
@@ -181,7 +197,7 @@ hooks:
         - ALL
       seccompProfile:
         type: RuntimeDefault
-    ## @extra hooks.getLicense.configuration Release Configuration file content
+    ## @extra hooks.getLicense.configuration Deploy Configuration file content
     ## Do not override unless you know what you are doing.
     ##
     configuration:
@@ -253,6 +269,20 @@ hooks:
       ##   - myRegistryKeySecretName
       ##
       pullSecrets: []
+    ## @param hooks.genSelfSigned.containerSecurityContext.enabled Enabled generate self-signed containers' Security Context
+    ## @param hooks.genSelfSigned.containerSecurityContext.runAsNonRoot Set generate self-signed container's Security Context runAsNonRoot
+    ## @param hooks.genSelfSigned.containerSecurityContext.allowPrivilegeEscalation Set generate self-signed container's Security Context allowPrivilegeEscalation
+    ## @extra hooks.genSelfSigned.containerSecurityContext.capabilities Set generate self-signed container's Security Context capabilities
+    ## @skip hooks.genSelfSigned.containerSecurityContext.capabilities
+    ## @extra hooks.genSelfSigned.containerSecurityContext.seccompProfile Set generate self-signed container's Security Context seccompProfile
+    ## @skip hooks.genSelfSigned.containerSecurityContext.seccompProfile
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+    ## Example:
+    ##   containerSecurityContext:
+    ##     capabilities:
+    ##       drop: ["NET_RAW"]
+    ##     readOnlyRootFilesystem: true
+    ##
     containerSecurityContext:
       enabled: true
       runAsNonRoot: true
@@ -262,7 +292,7 @@ hooks:
         - ALL
       seccompProfile:
         type: RuntimeDefault
-    ## @extra hooks.genSelfSigned.configuration Release Configuration file content
+    ## @extra hooks.genSelfSigned.configuration Deploy Configuration file content
     ## Do not override unless you know what you are doing.
     ##
     configuration:
@@ -300,12 +330,24 @@ hooks:
           CERT_FILE_PATH="/opt/xebialabs/xl-deploy-server/conf/public.cert"
           kubectl create secret generic {{ include "common.tplvalues.render" ( dict "value" $.Values.hooks.genSelfSigned.name "context" $ ) }} --from-file=$KEYSTORE_FILE_PATH --from-file=$CERT_FILE_PATH
 
+## @section Deploy satellite parameters
+##
+
 satellite:
-  ## @param satellite.enabled Enable support to work with Deploy SAtellites
+  ## @param satellite.enabled Enable support to work with Deploy Satellites
   enabled: false
 
+## @section Deploy security parameters
+##
+
+## Deploy Authentication parameters
+##
+auth:
+  ## @param auth.adminPassword Admin password for Deploy. If user does not provide password, random 10 character alphanumeric string will be generated.
+  adminPassword:
+
 ssl:
-  ## @param ssl.enabled Enable SSL to be used on Release
+  ## @param ssl.enabled Enable SSL to be used on Deploy
   enabled: false
   ## @param ssl.keystorePassword Keystore password with SSL key.
   keystorePassword: changeme
@@ -321,6 +363,9 @@ ssl:
       secretKeyRef:
         name: '{{ include "common.tplvalues.render" ( dict "value" .Values.hooks.genSelfSigned.name "context" $ ) }}'
         key: keystore.{{ .Values.ssl.keystoreType }}
+
+## @section Deploy Central Configuration parameters
+##
 
 centralConfiguration:
   ## @param centralConfiguration.overrideName If set the template will override the STS name.
@@ -344,7 +389,7 @@ centralConfiguration:
   ##
   replicaCount: 1
 
-  ## @section deploy Image parameters
+  ## @section deploy Central Configuration Image parameters
   ## deploy image version
   ## ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags/
   ## @param centralConfiguration.image.registry deploy image registry
@@ -369,6 +414,9 @@ centralConfiguration:
     ##   - myRegistryKeySecretName
     ##
     pullSecrets: []
+
+  ## @section Central Configuration debug parameters
+  ##
 
   ## Enable diagnostic mode in the deployment
   ##
@@ -395,6 +443,10 @@ centralConfiguration:
     ## @param centralConfiguration.debugMode.remoteJvmParams Agent lib configuration line with port. Do port forwarding to the port you would like to use.
     ##
     remoteJvmParams: "{{- if .Values.centralConfiguration.debugMode.enabled }} -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8001{{- end }}"      
+
+  ## @section Central configuration DNS parameters
+  ##
+
   ## @param centralConfiguration.hostAliases Deployment pod host aliases
   ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
   ##
@@ -412,6 +464,9 @@ centralConfiguration:
   ##   - name: ndots
   ##     value: "4"
   dnsConfig: { }
+
+  ## @section Central configuration resource parameters
+  ##
 
   ## deploy containers' resource requests and limits
   ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
@@ -435,6 +490,9 @@ centralConfiguration:
     ##    memory: 2Gi
     ##
     requests: { }
+
+  ## @section Central configuration Statefulset parameters
+  ##
 
   ## Configure containers' extra options for liveness and readiness probe for the Deploy central configuration
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
@@ -542,6 +600,7 @@ centralConfiguration:
   ## deploy pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param centralConfiguration.podSecurityContext.enabled Enable deploy pods' Security Context
+  ## @param centralConfiguration.podSecurityContext.runAsUser Set Deploy pod's Security Context runAsUser
   ## @param centralConfiguration.podSecurityContext.fsGroup Set deploy pod's Security Context fsGroup
   ##
   podSecurityContext:
@@ -550,8 +609,12 @@ centralConfiguration:
     fsGroup: 10001
 
   ## @param centralConfiguration.containerSecurityContext.enabled Enabled deploy containers' Security Context
-  ## @param centralConfiguration.containerSecurityContext.runAsUser Set deploy containers' Security Context runAsUser
   ## @param centralConfiguration.containerSecurityContext.runAsNonRoot Set deploy container's Security Context runAsNonRoot
+  ## @param centralConfiguration.containerSecurityContext.allowPrivilegeEscalation Set deploy container's Security Context allowPrivilegeEscalation
+  ## @extra centralConfiguration.containerSecurityContext.capabilities Set deploy container's Security Context capabilities
+  ## @skip centralConfiguration.containerSecurityContext.capabilities
+  ## @extra centralConfiguration.containerSecurityContext.seccompProfile Set deploy container's Security Context seccompProfile
+  ## @skip centralConfiguration.containerSecurityContext.seccompProfile
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## Example:
   ##   containerSecurityContext:
@@ -592,7 +655,9 @@ centralConfiguration:
   ##
   sidecars: []
 
-  ## Init Container parameters
+  ## @section Central Configuration Init Container parameters
+  ##
+
   ## Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component
   ## values from the securityContext section of the component
   ##
@@ -661,6 +726,10 @@ centralConfiguration:
     ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
     ## and not the below volumePermissions.containerSecurityContext.runAsUser
     ## @param centralConfiguration.volumePermissions.containerSecurityContext.runAsUser User ID for the init container
+    ## @param centralConfiguration.volumePermissions.containerSecurityContext.runAsGroup Group ID for the init container
+    ## @param centralConfiguration.volumePermissions.containerSecurityContext.runAsNonRoot Set volume permissions init container's Security Context runAsNonRoot
+    ## @extra centralConfiguration.volumePermissions.containerSecurityContext.seccompProfile Set volume permissions init container's Security Context seccompProfile
+    ## @skip centralConfiguration.volumePermissions.containerSecurityContext.seccompProfile
     ##
     containerSecurityContext:
       runAsUser: 0
@@ -669,7 +738,9 @@ centralConfiguration:
       seccompProfile:
         type: RuntimeDefault
 
-  ## Pod Disruption Budget configuration
+  ## @section Central Configuration Pod Disruption Budget configuration
+  ##
+
   ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
   ##
   pdb:
@@ -683,7 +754,7 @@ centralConfiguration:
     ##
     maxUnavailable: ""
 
-  ## @section Persistence parameters
+  ## @section Central Configuration Persistence parameters
   ##
 
   persistence:
@@ -730,6 +801,9 @@ centralConfiguration:
     ## @param centralConfiguration.persistence.paths mounted paths for the Deploy master
     paths: []
 
+  ## @section Central Configuration Deploy runtime parameters
+  ##
+
   ## @param centralConfiguration.jvmArgs Deploy centralConfiguration JVM arguments
   ##
   jvmArgs: ""
@@ -748,7 +822,7 @@ centralConfiguration:
   lifecycleHooks: { }
   ## @extra centralConfiguration.ssl This section exists as placeholder, but the CC HTTPS is not yet supported.
   ssl:
-    ## @param centralConfiguration.ssl.enabled Enable SSL to be used on Release
+    ## @param centralConfiguration.ssl.enabled Enable SSL to be used on Deploy
     enabled: false
     ## @param centralConfiguration.ssl.keystorePassword Keystore password with SSL key.
     keystorePassword: changeme
@@ -1016,7 +1090,7 @@ centralConfiguration:
   ##
   extraSecretsPrependReleaseName: false
 
-  ## @section Exposure parameters
+  ## @section Central Configuration Exposure parameters
   ##
 
   ## Kubernetes service type
@@ -1104,6 +1178,9 @@ centralConfiguration:
     ##
     sessionAffinityConfig: { }
 
+## @section Deploy master parameters
+##
+
 master:
   ## @param master.overrideName If set the template will override the STS name.
   ##
@@ -1128,7 +1205,7 @@ master:
   ##
   replicaCount: 3
 
-  ## @section deploy Image parameters
+  ## @section Deploy Master Image parameters
   ## deploy image version
   ## ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags/
   ## @param master.image.registry deploy master image registry
@@ -1153,6 +1230,9 @@ master:
     ##   - myRegistryKeySecretName
     ##
     pullSecrets: []
+
+  ## @section Master debug parameters
+  ##
 
   ## Enable diagnostic mode in the deployment
   ##
@@ -1179,6 +1259,10 @@ master:
     ## @param master.debugMode.remoteJvmParams Agent lib configuration line with port. Do port forwarding to the port you would like to use.
     ##
     remoteJvmParams: "{{- if .Values.master.debugMode.enabled }} -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8001{{- end }}"  
+
+  ## @section Master DNS parameters
+  ##
+
   ## @param master.hostAliases Deployment pod host aliases
   ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
   ##
@@ -1196,6 +1280,9 @@ master:
   ##   - name: ndots
   ##     value: "4"
   dnsConfig: { }
+
+  ## @section Master resource parameters
+  ##
 
   ## deploy containers' resource requests and limits
   ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
@@ -1219,6 +1306,9 @@ master:
     ##    memory: 2Gi
     ##
     requests: { }
+
+  ## @section Master Statefulset parameters
+  ##
 
   ## Configure containers' extra options for liveness and readiness probe for the Deploy master
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
@@ -1325,6 +1415,7 @@ master:
   ## deploy pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param master.podSecurityContext.enabled Enable deploy pods' Security Context
+  ## @param master.podSecurityContext.runAsUser Set Deploy pod's Security Context runAsUser
   ## @param master.podSecurityContext.fsGroup Set deploy pod's Security Context fsGroup
   ##
   podSecurityContext:
@@ -1333,8 +1424,12 @@ master:
     fsGroup: 10001
 
   ## @param master.containerSecurityContext.enabled Enabled deploy containers' Security Context
-  ## @param master.containerSecurityContext.runAsUser Set deploy containers' Security Context runAsUser
   ## @param master.containerSecurityContext.runAsNonRoot Set deploy container's Security Context runAsNonRoot
+  ## @param master.containerSecurityContext.allowPrivilegeEscalation Set deploy container's Security Context allowPrivilegeEscalation
+  ## @extra master.containerSecurityContext.capabilities Set deploy container's Security Context capabilities
+  ## @skip master.containerSecurityContext.capabilities
+  ## @extra master.containerSecurityContext.seccompProfile Set deploy container's Security Context seccompProfile
+  ## @skip master.containerSecurityContext.seccompProfile
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## Example:
   ##   containerSecurityContext:
@@ -1375,7 +1470,9 @@ master:
   ##
   sidecars: []
 
-  ## Init Container parameters
+  ## @section Master Init Container parameters
+  ##
+
   ## Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component
   ## values from the securityContext section of the component
   ##
@@ -1444,6 +1541,10 @@ master:
     ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
     ## and not the below volumePermissions.containerSecurityContext.runAsUser
     ## @param master.volumePermissions.containerSecurityContext.runAsUser User ID for the init container
+    ## @param master.volumePermissions.containerSecurityContext.runAsGroup Group ID for the init container
+    ## @param master.volumePermissions.containerSecurityContext.runAsNonRoot Set volume permissions init container's Security Context runAsNonRoot
+    ## @extra master.volumePermissions.containerSecurityContext.seccompProfile Set volume permissions init container's Security Context seccompProfile
+    ## @skip master.volumePermissions.containerSecurityContext.seccompProfile
     ##
     containerSecurityContext:
       runAsUser: 0
@@ -1452,7 +1553,9 @@ master:
       seccompProfile:
         type: RuntimeDefault
 
-  ## Pod Disruption Budget configuration
+  ## @section Master Pod Disruption Budget configuration
+  ##
+
   ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
   ##
   pdb:
@@ -1466,7 +1569,7 @@ master:
     ##
     maxUnavailable: ""
 
-  ## @section Persistence parameters
+  ## @section Master Persistence parameters
   ##
 
   persistence:
@@ -1513,6 +1616,9 @@ master:
     ## @param master.persistence.paths mounted paths for the Deploy master
     paths:
       - /opt/xebialabs/xl-deploy-server/work
+
+  ## @section Master runtime parameters
+  ##
 
   ## @param master.jvmArgs Deploy master JVM arguments
   ##
@@ -1643,6 +1749,9 @@ master:
   ## @param master.extraSecretsPrependReleaseName Set this flag to true if extraSecrets should be created with <release-name> prepended.
   ##
   extraSecretsPrependReleaseName: false
+
+  ## @section Master Exposure parameters
+  ##
 
   ## Kubernetes service types
   ##
@@ -1946,7 +2055,7 @@ worker:
   ##
   replicaCount: 3
 
-  ## @section deploy Image parameters
+  ## @section Deploy Worker Image parameters
   ## deploy image version
   ## ref: https://hub.docker.com/r/xebialabs/xl-deploy/tags/
   ## @param worker.image.registry deploy worker image registry
@@ -1971,6 +2080,9 @@ worker:
     ##   - myRegistryKeySecretName
     ##
     pullSecrets: []
+
+  ## @section Worker debug parameters
+  ##
 
   ## Enable diagnostic mode in the deployment
   ##
@@ -1997,6 +2109,10 @@ worker:
     ## @param worker.debugMode.remoteJvmParams Agent lib configuration line with port. Do port forwarding to the port you would like to use.
     ##
     remoteJvmParams: "{{- if .Values.worker.debugMode.enabled }} -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8001{{- end }}" 
+
+  ## @section Worker DNS parameters
+  ##
+
   ## @param worker.hostAliases Deployment pod host aliases
   ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
   ##
@@ -2014,6 +2130,9 @@ worker:
   ##   - name: ndots
   ##     value: "4"
   dnsConfig: { }
+
+  ## @section Worker resource parameters
+  ##
 
   ## deploy containers' resource requests and limits
   ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
@@ -2037,6 +2156,9 @@ worker:
     ##    memory: 2Gi
     ##
     requests: { }
+
+  ## @section Worker Statefulset parameters
+  ##
 
   ## Configure containers' extra options for liveness and readiness probe for the Deploy worker
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
@@ -2143,6 +2265,7 @@ worker:
   ## deploy pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param worker.podSecurityContext.enabled Enable deploy pods' Security Context
+  ## @param worker.podSecurityContext.runAsUser Set Deploy pod's Security Context runAsUser
   ## @param worker.podSecurityContext.fsGroup Set deploy pod's Security Context fsGroup
   ##
   podSecurityContext:
@@ -2151,8 +2274,12 @@ worker:
     fsGroup: 10001
 
   ## @param worker.containerSecurityContext.enabled Enabled deploy containers' Security Context
-  ## @param worker.containerSecurityContext.runAsUser Set deploy containers' Security Context runAsUser
   ## @param worker.containerSecurityContext.runAsNonRoot Set deploy container's Security Context runAsNonRoot
+  ## @param worker.containerSecurityContext.allowPrivilegeEscalation Set deploy container's Security Context allowPrivilegeEscalation
+  ## @extra worker.containerSecurityContext.capabilities Set deploy container's Security Context capabilities
+  ## @skip worker.containerSecurityContext.capabilities
+  ## @extra worker.containerSecurityContext.seccompProfile Set deploy container's Security Context seccompProfile
+  ## @skip worker.containerSecurityContext.seccompProfile
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## Example:
   ##   containerSecurityContext:
@@ -2193,7 +2320,9 @@ worker:
   ##
   sidecars: []
 
-  ## Init Container parameters
+  ## @section Master Init Container parameters
+  ##
+
   ## Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component
   ## values from the securityContext section of the component
   ##
@@ -2262,6 +2391,10 @@ worker:
     ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
     ## and not the below volumePermissions.containerSecurityContext.runAsUser
     ## @param worker.volumePermissions.containerSecurityContext.runAsUser User ID for the init container
+    ## @param worker.volumePermissions.containerSecurityContext.runAsGroup Group ID for the init container
+    ## @param worker.volumePermissions.containerSecurityContext.runAsNonRoot Set volume permissions init container's Security Context runAsNonRoot
+    ## @extra worker.volumePermissions.containerSecurityContext.seccompProfile Set volume permissions init container's Security Context seccompProfile
+    ## @skip worker.volumePermissions.containerSecurityContext.seccompProfile
     ##
     containerSecurityContext:
       runAsUser: 0
@@ -2270,7 +2403,9 @@ worker:
       seccompProfile:
         type: RuntimeDefault
 
-  ## Pod Disruption Budget configuration
+  ## @section Worker Pod Disruption Budget configuration
+  ##
+
   ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
   ##
   pdb:
@@ -2284,7 +2419,7 @@ worker:
     ##
     maxUnavailable: ""
 
-  ## @section Persistence parameters for worker
+  ## @section Worker Persistence parameters
   ##
 
   persistence:
@@ -2331,6 +2466,9 @@ worker:
     ## @param worker.persistence.paths mounted paths for the Deploy worker
     paths:
       - /opt/xebialabs/deploy-task-engine/work
+
+  ## @section Worker runtime parameters
+  ##
 
   ## @param worker.jvmArgs Deploy worker JVM arguments
   ##
@@ -2467,6 +2605,9 @@ worker:
   ## @param worker.extraSecretsPrependReleaseName Set this flag to true if extraSecrets should be created with <release-name> prepended.
   ##
   extraSecretsPrependReleaseName: false
+
+  ## @section Worker Exposure parameters
+  ##
 
   ## Kubernetes service type for the Deploy worker
   ##
@@ -2664,7 +2805,9 @@ worker:
     podLabels:
       statefulset.kubernetes.io/pod-name: '{{ printf "%s-%d" (include "deploy.names.worker" $) .podNumber }}'
 
-## Network Policy configuration
+## @section Deploy Network Policy configuration
+##
+
 ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
 ##
 networkPolicy:
@@ -2691,7 +2834,7 @@ networkPolicy:
   ##
   additionalRules: []
 
-## @section Metrics Parameters
+## @section Deploy Metrics Parameters
 ##
 
 ## Metrics
@@ -2703,7 +2846,7 @@ metrics:
   ##
   enabled: false
 
-## @section OIDC parameters
+## @section Deploy OIDC parameters
 ##
 
 oidc:
@@ -2787,7 +2930,7 @@ oidc:
   ## @param oidc.proxyPort Proxy port
   proxyPort:
 
-## @section Common parameters
+## @section Deploy Common parameters
 ##
 
 ## @param nameOverride String to partially override deploy.fullname template (will maintain the deploy name)
@@ -2812,11 +2955,13 @@ extraDeploy: [ ]
 ##
 commonAnnotations: { }
 
-## @extra commonLabels Labels to add to all deployed objects
+## @param commonLabels Labels to add to all deployed objects
+## Eg. app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
 ##
 commonLabels: { }
-## @param commonLabels.app.kubernetes.io/version Labels Deploy server version
-## Eg. app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+
+## @section Ingress parameters
+##
 
 ## Configure the ingress resource that allows you to access the
 ## deploy installation. Set up the URL
@@ -2984,7 +3129,7 @@ route:
     ## @param route.tls.selfSigned if set to `true` the key and certificate will be auto generated and set in the route configuration
     selfSigned: false
 
-## @section RBAC parameters
+## @section Deploy RBAC parameters
 ##
 
 ## deploy pods ServiceAccount
@@ -3015,6 +3160,9 @@ rbac:
   ##
   create: true
 
+## @section Deploy Busy-box parameters
+##
+
 ## @param busyBox.image.registry busyBox container image registry
 ## @param busyBox.image.repository busyBox container image repository
 ## @param busyBox.image.tag busyBox container image tag
@@ -3039,6 +3187,9 @@ busyBox:
     ##
     pullSecrets: []
 
+## @section Ingress HAProxy
+##
+
 ## Install haproxy subchart. If you have haproxy already installed, set 'install' to 'false'.
 ## If you have any other ingress controller installed, you can set the 'install' to 'false'.
 haproxy-ingress:
@@ -3053,6 +3204,9 @@ haproxy-ingress:
       ##
       type: LoadBalancer
 
+## @section Ingress Nginx
+##
+
 ## Install nginx subchart. If you have nginx already installed, set 'install' to 'false'.
 ## If you have any other ingress controller installed, you can set the 'install' to 'false'.
 ## Ref: https://github.com/bitnami/charts/blob/master/bitnami/nginx-ingress-controller/README.md
@@ -3065,7 +3219,7 @@ nginx-ingress-controller:
   ## Default 404 backend
   ##
   defaultBackend:
-    ## @skip nginx-ingress-controller.defaultBackend.image.tag Default backend image tag (immutable tags are recommended)
+    ## @param nginx-ingress-controller.defaultBackend.image.tag Default backend image tag (immutable tags are recommended)
     image:
       tag: 1.25.4-debian-12-r3
   ## @extra nginx-ingress-controller.extraArgs Additional command line arguments to pass to nginx-ingress-controller
@@ -3096,6 +3250,9 @@ nginx-ingress-controller:
     ##
     type: LoadBalancer
 
+## @section Postgresql
+##
+
 ## Ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/README.md
 ## Install postgresql chart. If you have an existing database deployment, set 'install' to 'false'.
 postgresql:
@@ -3107,8 +3264,10 @@ postgresql:
   ## @param postgresql.hasReport Indicating that reporting database is enabled
   ##
   hasReport: true
+
   ## @section PostgreSQL Primary parameters
   ##
+
   primary:
     ## Initdb configuration
     ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#specifying-initdb-arguments
@@ -3171,7 +3330,9 @@ postgresql:
     securityContextConstraints:
       enabled: true
 
-  ## Authentication parameters
+  ## @section Postgresql Authentication parameters
+  ##
+
   ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#setting-the-root-password-on-first-run
   ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#creating-a-database-on-first-run
   ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#creating-a-database-user-on-first-run
@@ -3193,8 +3354,10 @@ postgresql:
     ## @param postgresql.serviceAccount.create Enable creation of ServiceAccount for PostgreSQL pod
     ##
     create: true
-  ## @section Volume Permissions parameters
+
+  ## @section Postgresql Volume Permissions parameters
   ##
+
   ## Init containers parameters:
   ## volumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node
   ##
@@ -3205,6 +3368,9 @@ postgresql:
     ## @param postgresql.volumePermissions.image.tag Init container volume-permissions image tag (immutable tags are recommended)
     image:
       tag: 12-debian-12-r16
+
+## @section RabbitMQ
+##
 
 ## Install rabbitmq chart. If you have an existing message queue deployment, set 'install' to 'false'.
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/rabbitmq/README.md
@@ -3265,7 +3431,8 @@ rabbitmq:
   ##
   extraConfiguration: |
     raft.wal_max_size_bytes = 1048576
-  ## @section Persistence parameters
+
+  ## @section RabbitMQ persistence parameters
   ##
   persistence:
     ## @param rabbitmq.persistence.enabled Enable RabbitMQ data persistence using PVC
@@ -3287,7 +3454,12 @@ rabbitmq:
     ## If you change this value, you might have to adjust `rabbitmq.diskFreeLimit` as well
     ##
     size: 8Gi
-    
+
+  ## @param rabbitmq.containerSecurityContext.allowPrivilegeEscalation Set volume permissions init container's Security Context allowPrivilegeEscalation
+  ## @extra rabbitmq.containerSecurityContext.capabilities Set volume permissions init container's Security Context capabilities
+  ## @skip rabbitmq.containerSecurityContext.capabilities
+  ## @extra rabbitmq.containerSecurityContext.seccompProfile Set volume permissions init container's Security Context seccompProfile
+  ## @skip rabbitmq.containerSecurityContext.seccompProfile
   containerSecurityContext:
     allowPrivilegeEscalation: false
     capabilities:
@@ -3300,7 +3472,7 @@ rabbitmq:
   securityContextConstraints:
     enabled: true
 
-  ## @section Exposure parameters
+  ## @section RabbitMQ Exposure parameters
   ##
 
   ## Kubernetes service type
@@ -3310,7 +3482,7 @@ rabbitmq:
     ##
     type: ClusterIP
 
-  ## @section Init Container Parameters
+  ## @section RabbitMQ Init Container Parameters
   ##
 
   ## Init Container parameters
@@ -3324,6 +3496,15 @@ rabbitmq:
     ## @param rabbitmq.volumePermissions.image.tag Init container volume-permissions image tag (immutable tags are recommended)
     image:
       tag: 12-debian-12-r16
+
+    ## Init container' Security Context
+    ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
+    ## and not the below volumePermissions.containerSecurityContext.runAsUser
+    ## @param rabbitmq.volumePermissions.containerSecurityContext.runAsUser User ID for the init container
+    ## @param rabbitmq.volumePermissions.containerSecurityContext.runAsGroup Group ID for the init container
+    ## @param rabbitmq.volumePermissions.containerSecurityContext.runAsNonRoot Set volume permissions init container's Security Context runAsNonRoot
+    ## @extra rabbitmq.volumePermissions.containerSecurityContext.seccompProfile Set volume permissions init container's Security Context seccompProfile
+    ## @skip rabbitmq.volumePermissions.containerSecurityContext.seccompProfile
     containerSecurityContext:
       runAsUser: 0
       runAsGroup: 0
