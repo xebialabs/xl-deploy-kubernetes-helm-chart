@@ -566,23 +566,27 @@ tasks {
     }
 
     named<YarnTask>("yarn_install") {
+        group = "docusaurus"
         args.set(listOf("--mutex", "network"))
         workingDir.set(file("${rootDir}/documentation"))
     }
 
     register<YarnTask>("yarnRunStart") {
+        group = "docusaurus"
         dependsOn(named("yarn_install"))
         args.set(listOf("run", "start"))
         workingDir.set(file("${rootDir}/documentation"))
     }
 
     register<YarnTask>("yarnRunBuild") {
+        group = "docusaurus"
         dependsOn(named("yarn_install"))
         args.set(listOf("run", "build"))
         workingDir.set(file("${rootDir}/documentation"))
     }
 
     register<Delete>("docCleanUp") {
+        group = "docusaurus"
         delete(file("${rootDir}/docs"))
         delete(file("${rootDir}/documentation/build"))
         delete(file("${rootDir}/documentation/.docusaurus"))
@@ -590,12 +594,14 @@ tasks {
     }
 
     register<Copy>("docBuild") {
+        group = "docusaurus"
         dependsOn(named("yarnRunBuild"), named("docCleanUp"))
         from(file("${rootDir}/documentation/build"))
         into(file("${rootDir}/docs"))
     }
 
     register<GenerateDocumentation>("updateDocs") {
+        group = "docusaurus"
         dependsOn(named("docBuild"))
     }
 }
