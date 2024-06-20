@@ -17,11 +17,11 @@ Nginx Ingress and Haproxy ingress are disabled and not used with installations o
 
 The installation can be done using the sample configuration provided below. Please note that this is a minimal configuration and it's not recommended for production use.
 
-```
+```yaml
 apiVersion: xld.digital.ai/v1alpha1
 kind: DigitalaiDeploy
 metadata:
-  name: daideploy-doc
+  name: daid-doc
 spec:
   k8sSetup:
     platform: Openshift
@@ -34,33 +34,80 @@ spec:
   hooks:
     getLicense:
       enabled: true
+  securityContextConstraints:
+    enabled: true
   centralConfiguration:
     replicaCount: 1
+    podSecurityContext:
+      enabled: true
+    containerSecurityContext:
+      enabled: true   
+    volumePermissions:
+      enabled: false
   master:
     replicaCount: 1
     persistence:
       storageClass: ''
       size: 1Gi
+    podSecurityContext:
+      enabled: true
+    containerSecurityContext:
+      enabled: true
+    volumePermissions:
+      enabled: false
   worker:
     replicaCount: 1
     persistence:
       storageClass: ''
       size: 1Gi
+    podSecurityContext:
+      enabled: true
+    containerSecurityContext:
+      enabled: true
+    volumePermissions:
+      enabled: false
+  route:
+    enabled: false
+    annotations:
+      haproxy.router.openshift.io/cookie_name: SESSION_XLD
+      haproxy.router.openshift.io/disable_cookies: "false"
+      haproxy.router.openshift.io/rewrite-target: /
+    hostname: '<mandatory-deploy-hostname>'
+    path: /
+    tls:
+      enabled: true
+      termination: edge
   postgresql:
     install: true
     primary:
       persistence:
         size: 1Gi
         storageClass: ''
+      podSecurityContext:
+        enabled: true
+      containerSecurityContext:
+        enabled: true
+      securityContextConstraints:
+        enabled: true
+    volumePermissions:
+      enabled: true
   rabbitmq:
     install: true
     persistence:
       size: 1Gi
       storageClass: ''
     replicaCount: 1
+    podSecurityContext:
+      enabled: true
+    containerSecurityContext:
+      enabled: true
+    securityContextConstraints:
+      enabled: true
+    volumePermissions:
+      enabled: true
 ```
 
-### Configuration Details
+#### Configuration Details
 
 The sample configuration uses:
 
@@ -73,15 +120,136 @@ The sample configuration uses:
 - Embedded PostgreSQL for DB management
 - Embedded RabbitMQ for message queue management
 
+### Sample configuration without Security Context Constraints
+
+For cases when you would avoid using SCC, here is a similar configuration to the above but with disabled SCCs:
+
+```yaml
+apiVersion: xld.digital.ai/v1alpha1
+kind: DigitalaiDeploy
+metadata:
+  name: daid-min
+spec:
+  k8sSetup:
+    platform: Openshift
+  auth:
+    adminPassword: 'admin'
+  licenseAcceptEula: true
+  keystore:
+    passphrase: 'test1234'
+    keystore: 'zs7OzgAAAAIAAAABAAAAAwAWZGVwbG95aXQtcGFzc3N3b3JkLWtleQAAAY66C46srO0ABXNyADNjb20uc3VuLmNyeXB0by5wcm92aWRlci5TZWFsZWRPYmplY3RGb3JLZXlQcm90ZWN0b3LNV8pZ5zC7UwIAAHhyABlqYXZheC5jcnlwdG8uU2VhbGVkT2JqZWN0PjY9psO3VHACAARbAA1lbmNvZGVkUGFyYW1zdAACW0JbABBlbmNyeXB0ZWRDb250ZW50cQB+AAJMAAlwYXJhbXNBbGd0ABJMamF2YS9sYW5nL1N0cmluZztMAAdzZWFsQWxncQB+AAN4cHVyAAJbQqzzF/gGCFTgAgAAeHAAAAARMA8ECPqEw2Wp+c6yAgMDDUB1cQB+AAUAAACQFrl6s2pnsB+GJD8vlN3Y0SItmbtfPy6n2A5qREEJWWLN9OYLu7BokScBMyFChFjIhQGwCpjMP4j+VLCgpW6GKREmYHQgKjWqWn7A+DMF9eT68ygZAD+ceIZB5buvsGM2LCYzyHJcmtujv+hpqevoTgOKKMd4U3wVV96n4B5QbkVXHYtGZWbWxk5gCHLoWhV5dAAWUEJFV2l0aE1ENUFuZFRyaXBsZURFU3QAFlBCRVdpdGhNRDVBbmRUcmlwbGVERVP+nQgVx6wurZB9hBxaIkk/6EEAPQ=='
+  hooks:
+    getLicense:
+      enabled: true
+  securityContextConstraints:
+    enabled: false
+  centralConfiguration:
+    replicaCount: 1
+    podSecurityContext:
+      runAsUser: null
+      runAsGroup: null
+      fsGroup: null
+    containerSecurityContext:
+      runAsUser: null
+      runAsGroup: null
+    volumePermissions:
+      enabled: false
+  master:
+    replicaCount: 1
+    persistence:
+      storageClass: ''
+      size: 1Gi
+    podSecurityContext:
+      runAsUser: null
+      runAsGroup: null
+      fsGroup: null
+    containerSecurityContext:
+      runAsUser: null
+      runAsGroup: null
+    volumePermissions:
+      enabled: false
+  worker:
+    replicaCount: 1
+    persistence:
+      storageClass: ''
+      size: 1Gi
+    podSecurityContext:
+      runAsUser: null
+      runAsGroup: null
+      fsGroup: null
+    containerSecurityContext:
+      runAsUser: null
+      runAsGroup: null
+    volumePermissions:
+      enabled: false
+  route:
+    enabled: false
+    annotations:
+      haproxy.router.openshift.io/cookie_name: SESSION_XLD
+      haproxy.router.openshift.io/disable_cookies: "false"
+      haproxy.router.openshift.io/rewrite-target: /
+    hostname: '<mandatory-deploy-hostname>'
+    path: /
+    tls:
+      enabled: true
+      termination: edge
+  postgresql:
+    install: true
+    primary:
+      persistence:
+        size: 1Gi
+        storageClass: ''
+      podSecurityContext:
+        enabled: false
+        runAsUser: null
+        runAsGroup: null
+        fsGroup: null
+      containerSecurityContext:
+        enabled: false
+        runAsUser: null
+        runAsGroup: null
+      securityContextConstraints:
+        enabled: false
+    volumePermissions:
+      enabled: false
+  rabbitmq:
+    install: true
+    persistence:
+      size: 1Gi
+      storageClass: ''
+    replicaCount: 1
+    podSecurityContext:
+      enabled: false
+      runAsUser: null
+      runAsGroup: null
+      fsGroup: null
+    containerSecurityContext:
+      enabled: false
+      runAsUser: null
+      runAsGroup: null
+    securityContextConstraints:
+      enabled: false
+    volumePermissions:
+      enabled: false
+```
+
+#### Configuration Details
+
+This sample configuration has all the same settings as the previous one, but it has additionally:
+
+- `securityContextConstraints.enabled: false` - disables creation of SCCs;
+- `podSecurityContext/containerSecurityContext` - that disables the use of specific UIDs or GIDs, so the IDs can be assigned from the defined ranges (for example from restricted SCC);
+- `volumePermissions.enabled: false` - disables automatic corrections of the mounted folders.
+
 ## Customize Your Configuration
 
 Configurations can be further personalized. Here are some areas you might want to consider:
 
-- **External DB:** For avoiding uncertified container images required by the subcharts, refer to these [instructions for setting up an external DB](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-external-db-migration.html).
-- **External Message Queue:** To set up an external message queue, follow this [guide](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-external-mq-migration.html).
-- **Custom License:** To apply a custom license, refer to this [process](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-license-update.html).
-- **Custom Configuration:** For modifying the configuration files, use this [guide](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-customize.html).
-- **Truststore Setup:** For modifying default truststore for Deploy, use this [guide](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-setup-truststore.html)
+- **External DB:** For avoiding uncertified container images required by the subcharts, refer to these [instructions for setting up an external DB](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-external-db-migration.html).
+- **External Message Queue:** To set up an external message queue, follow this [guide](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-external-mq-migration.html).
+- **Custom License:** To apply a custom license, refer to this [process](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-license-update.html).
+- **Custom Configuration:** For modifying the configuration files, use this [guide](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-customize.html).
+- **Truststore Setup:** For modifying default truststore for Deploy, use this [guide](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-setup-truststore.html)
 - **Plugin Management:** Managing plugins can be done using the following methods:
-    - [Plugin Management using XL CLI](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-plugin-management.html)
-    - [Managing Plugins Offline for Kubernetes Environment](https://docs.digital.ai/bundle/devops-deploy-version-v.23.3/page/deploy/operator/xl-op-deploy-offline-plugin-management.html)
+    - [Plugin Management using XL CLI](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-plugin-management.html)
+    - [Managing Plugins Offline for Kubernetes Environment](https://docs.digital.ai/bundle/devops-deploy-version-v.24.1/page/deploy/operator/xl-op-deploy-offline-plugin-management.html)
