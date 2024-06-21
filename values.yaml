@@ -468,28 +468,28 @@ centralConfiguration:
   ## @section Central configuration resource parameters
   ##
 
-  ## deploy containers' resource requests and limits
-  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+  ## Deploy central configuration containers' resource requests and limits
+  ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
   ## We usually recommend not to specify default resources and to leave this as a conscious
   ## choice for the user. This also increases chances charts run on environments with little
   ## resources, such as Minikube. If you do want to specify resources, uncomment the following
   ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  ## @param centralConfiguration.resourcesPreset Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
+  ##
+  resourcesPreset: "micro"
+  ## @param centralConfiguration.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
   ## @param centralConfiguration.resources.limits The resources limits for deploy containers
   ## @param centralConfiguration.resources.requests The requested resources for deploy containers
+  ## Example:
+  ## resources: 
+  ##   limits:
+  ##     cpu: 1000m
+  ##     memory: 2Gi
+  ##   requests:
+  ##     cpu: 1000m
+  ##     memory: 2Gi
   ##
-  resources:
-    ## Example:
-    ## limits:
-    ##    cpu: 1000m
-    ##    memory: 2Gi
-    ##
-    limits: { }
-    ## Examples:
-    ## requests:
-    ##    cpu: 1000m
-    ##    memory: 2Gi
-    ##
-    requests: { }
+  resources: {}
 
   ## @section Central configuration Statefulset parameters
   ##
@@ -641,6 +641,7 @@ centralConfiguration:
   ##     ports:
   ##       - name: portname
   ##         containerPort: 1234
+  ##     resources: {}
   ##
   initContainers: []
   ## @param centralConfiguration.sidecars Add sidecar containers to the deploy pod
@@ -652,6 +653,7 @@ centralConfiguration:
   ##     ports:
   ##       - name: portname
   ##         containerPort: 1234
+  ##     resources: {}
   ##
   sidecars: []
 
@@ -701,27 +703,16 @@ centralConfiguration:
           xargs -r chown -R "{{ .Values.centralConfiguration.containerSecurityContext.runAsUser }}:{{ .Values.centralConfiguration.podSecurityContext.fsGroup }}"
       done
     ## Init Container resource requests and limits
-    ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
-    ## We usually recommend not to specify default resources and to leave this as a conscious
-    ## choice for the user. This also increases chances charts run on environments with little
-    ## resources, such as Minikube. If you do want to specify resources, uncomment the following
-    ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
     ## @param centralConfiguration.volumePermissions.resources.limits Init container volume-permissions resource limits
     ## @param centralConfiguration.volumePermissions.resources.requests Init container volume-permissions resource requests
     ##
     resources:
-      ## Example:
-      ## limits:
-      ##    cpu: 100m
-      ##    memory: 128Mi
-      ##
-      limits: {}
-      ## Examples:
-      ## requests:
-      ##    cpu: 100m
-      ##    memory: 128Mi
-      ##
-      requests: {}
+      limits:
+        cpu: "150m"
+        memory: "192Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
     ## Init container' Security Context
     ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
     ## and not the below volumePermissions.containerSecurityContext.runAsUser
@@ -1284,28 +1275,28 @@ master:
   ## @section Master resource parameters
   ##
 
-  ## deploy containers' resource requests and limits
-  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+  ## Deploy master containers' resource requests and limits
+  ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
   ## We usually recommend not to specify default resources and to leave this as a conscious
   ## choice for the user. This also increases chances charts run on environments with little
   ## resources, such as Minikube. If you do want to specify resources, uncomment the following
   ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  ## @param master.resources.limits The resources limits for deploy containers
-  ## @param master.resources.requests The requested resources for deploy containers
+  ## @param master.resourcesPreset Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
   ##
-  resources:
-    ## Example:
-    ## limits:
-    ##    cpu: 1000m
-    ##    memory: 2Gi
-    ##
-    limits: { }
-    ## Examples:
-    ## requests:
-    ##    cpu: 1000m
-    ##    memory: 2Gi
-    ##
-    requests: { }
+  resourcesPreset: "micro"
+  ## @param master.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
+  ## @param master.resources.limits The resources limits for deploy master containers
+  ## @param master.resources.requests The requested resources for deploy master containers
+  ## Example:
+  ## resources: 
+  ##   limits:
+  ##     cpu: 1000m
+  ##     memory: 2Gi
+  ##   requests:
+  ##     cpu: 1000m
+  ##     memory: 2Gi
+  ##
+  resources: {}
 
   ## @section Master Statefulset parameters
   ##
@@ -1447,6 +1438,17 @@ master:
     seccompProfile:
       type: RuntimeDefault
 
+  ## Default init containers for the Deploy pod
+  defaultInitContainers:
+    ## @param master.defaultInitContainers.resources Set default init container requests and limits for different resources like CPU or memory (essential for production workloads)
+    ##
+    resources:
+      limits:
+        cpu: "150m"
+        memory: "192Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
   ## @param master.initContainers Add init containers to the deploy master pod
   ## Example:
   ## initContainers:
@@ -1456,6 +1458,7 @@ master:
   ##     ports:
   ##       - name: portname
   ##         containerPort: 1234
+  ##     resources: {}
   ##
   initContainers: []
   ## @param master.sidecars Add sidecar containers to the deploy master pod
@@ -1467,6 +1470,7 @@ master:
   ##     ports:
   ##       - name: portname
   ##         containerPort: 1234
+  ##     resources: {}
   ##
   sidecars: []
 
@@ -1516,27 +1520,16 @@ master:
           xargs -r chown -R "{{ .Values.master.containerSecurityContext.runAsUser }}:{{ .Values.master.podSecurityContext.fsGroup }}"
       done
     ## Init Container resource requests and limits
-    ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
-    ## We usually recommend not to specify default resources and to leave this as a conscious
-    ## choice for the user. This also increases chances charts run on environments with little
-    ## resources, such as Minikube. If you do want to specify resources, uncomment the following
-    ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
     ## @param master.volumePermissions.resources.limits Init container volume-permissions resource limits
     ## @param master.volumePermissions.resources.requests Init container volume-permissions resource requests
     ##
     resources:
-      ## Example:
-      ## limits:
-      ##    cpu: 100m
-      ##    memory: 128Mi
-      ##
-      limits: {}
-      ## Examples:
-      ## requests:
-      ##    cpu: 100m
-      ##    memory: 128Mi
-      ##
-      requests: {}
+      limits:
+        cpu: "150m"
+        memory: "192Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
     ## Init container' Security Context
     ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
     ## and not the below volumePermissions.containerSecurityContext.runAsUser
@@ -2134,28 +2127,28 @@ worker:
   ## @section Worker resource parameters
   ##
 
-  ## deploy containers' resource requests and limits
-  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+  ## Deploy worker containers' resource requests and limits
+  ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
   ## We usually recommend not to specify default resources and to leave this as a conscious
   ## choice for the user. This also increases chances charts run on environments with little
   ## resources, such as Minikube. If you do want to specify resources, uncomment the following
   ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  ## @param worker.resourcesPreset Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
+  ##
+  resourcesPreset: "micro"
+  ## @param resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
   ## @param worker.resources.limits The resources limits for deploy containers
   ## @param worker.resources.requests The requested resources for deploy containers
+  ## Example:
+  ## resources: 
+  ##   limits:
+  ##     cpu: 1000m
+  ##     memory: 2Gi
+  ##   requests:
+  ##     cpu: 1000m
+  ##     memory: 2Gi
   ##
-  resources:
-    ## Example:
-    ## limits:
-    ##    cpu: 1000m
-    ##    memory: 2Gi
-    ##
-    limits: { }
-    ## Examples:
-    ## requests:
-    ##    cpu: 1000m
-    ##    memory: 2Gi
-    ##
-    requests: { }
+  resources: {}
 
   ## @section Worker Statefulset parameters
   ##
@@ -2297,6 +2290,17 @@ worker:
     seccompProfile:
       type: RuntimeDefault
 
+  ## Default init containers for the worker pod
+  defaultInitContainers:
+    ## @param worker.defaultInitContainers.resources Set default init container requests and limits for different resources like CPU or memory (essential for production workloads)
+    ##
+    resources:
+      limits:
+        cpu: "150m"
+        memory: "192Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
   ## @param worker.initContainers Add init containers to the Deploy worker pod
   ## Example:
   ## initContainers:
@@ -2306,6 +2310,7 @@ worker:
   ##     ports:
   ##       - name: portname
   ##         containerPort: 1234
+  ##     resources: {}
   ##
   initContainers: []
   ## @param worker.sidecars Add sidecar containers to the Deploy worker pod
@@ -2317,6 +2322,7 @@ worker:
   ##     ports:
   ##       - name: portname
   ##         containerPort: 1234
+  ##     resources: {}
   ##
   sidecars: []
 
@@ -2366,27 +2372,16 @@ worker:
           xargs -r chown -R "{{ .Values.worker.containerSecurityContext.runAsUser }}:{{ .Values.worker.podSecurityContext.fsGroup }}"
       done
     ## Init Container resource requests and limits
-    ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
-    ## We usually recommend not to specify default resources and to leave this as a conscious
-    ## choice for the user. This also increases chances charts run on environments with little
-    ## resources, such as Minikube. If you do want to specify resources, uncomment the following
-    ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
     ## @param worker.volumePermissions.resources.limits Init container volume-permissions resource limits
     ## @param worker.volumePermissions.resources.requests Init container volume-permissions resource requests
     ##
     resources:
-      ## Example:
-      ## limits:
-      ##    cpu: 100m
-      ##    memory: 128Mi
-      ##
-      limits: {}
-      ## Examples:
-      ## requests:
-      ##    cpu: 100m
-      ##    memory: 128Mi
-      ##
-      requests: {}
+      limits:
+        cpu: "150m"
+        memory: "192Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
     ## Init container' Security Context
     ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
     ## and not the below volumePermissions.containerSecurityContext.runAsUser
@@ -3215,13 +3210,13 @@ nginx-ingress-controller:
   install: false
   ## @param nginx-ingress-controller.image.tag NGINX Ingress Controller image tag (immutable tags are recommended)
   image:
-    tag: 1.9.6-debian-12-r8
+    tag: 1.10.1-debian-12-r5
   ## Default 404 backend
   ##
   defaultBackend:
     ## @param nginx-ingress-controller.defaultBackend.image.tag Default backend image tag (immutable tags are recommended)
     image:
-      tag: 1.25.4-debian-12-r3
+      tag: 1.26.0-debian-12-r1
   ## @extra nginx-ingress-controller.extraArgs Additional command line arguments to pass to nginx-ingress-controller
   ## E.g. to specify the default SSL certificate you can use
   ## extraArgs:
@@ -3260,7 +3255,7 @@ postgresql:
   install: true
   ## @param postgresql.image.tag PostgreSQL image tag (immutable tags are recommended)
   image:
-    tag: 15.6.0-debian-12-r7
+    tag: 16.1.0-debian-11-r27
   ## @param postgresql.hasReport Indicating that reporting database is enabled
   ##
   hasReport: true
@@ -3306,15 +3301,7 @@ postgresql:
       ## @param postgresql.primary.persistence.existingClaim Name of an existing PVC to use
       ##
       existingClaim: ""
-    ## PostgreSQL Primary resource requests and limits
-    ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
-    ## @param postgresql.primary.resources.requests.memory The requested memory for the PostgreSQL Primary containers
-    ## @param postgresql.primary.resources.requests.cpu The requested cpu for the PostgreSQL Primary containers
-    ##
-    resources:
-      requests:
-        memory: 256Mi
-        cpu: 250m
+
     ## PostgreSQL Primary service configuration
     ##
     service:
@@ -3367,7 +3354,7 @@ postgresql:
     enabled: true
     ## @param postgresql.volumePermissions.image.tag Init container volume-permissions image tag (immutable tags are recommended)
     image:
-      tag: 12-debian-12-r16
+      tag: 12-debian-12-r21
 
 ## @section RabbitMQ
 ##
@@ -3379,7 +3366,7 @@ rabbitmq:
   install: true
   ## @param rabbitmq.image.tag RabbitMQ image tag (immutable tags are recommended)
   image:
-    tag: 3.12.13-debian-12-r2
+    tag: 3.13.2-debian-12-r4
   ## Clustering settings
   ##
   clustering:
@@ -3495,7 +3482,7 @@ rabbitmq:
     enabled: true
     ## @param rabbitmq.volumePermissions.image.tag Init container volume-permissions image tag (immutable tags are recommended)
     image:
-      tag: 12-debian-12-r16
+      tag: 12-debian-12-r21
 
     ## Init container' Security Context
     ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
