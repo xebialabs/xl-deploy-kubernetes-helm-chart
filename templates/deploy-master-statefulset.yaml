@@ -121,6 +121,9 @@ spec:
               {{- else }}
               value: {{ .Values.centralConfiguration.service.ports.ccHttp | quote }}
               {{- end }}
+          {{- if .Values.master.defaultInitContainers.resources }}
+          resources: {{- toYaml .Values.master.defaultInitContainers.resources | nindent 12 }}
+          {{- end }}
         {{- if and (not .Values.external.db.enabled) .Values.postgresql.install }}
         - name: wait-for-postgresql
           image: {{ include "common.images.image" (dict "imageRoot" .Values.busyBox.image "global" .Values.global "context" .) }}
@@ -141,6 +144,9 @@ spec:
               value: {{ include "postgresql.subchart" . }}
             - name: POSTGRESQL_PORT
               value: {{ (include "deploy.postgresql.service.port" .) | quote }}
+          {{- if .Values.master.defaultInitContainers.resources }}
+          resources: {{- toYaml .Values.master.defaultInitContainers.resources | nindent 12 }}
+          {{- end }}
         {{- end }}
         {{- if and (not .Values.external.mq.enabled) .Values.rabbitmq.install }}
         - name: wait-for-rabbitmq
@@ -162,6 +168,9 @@ spec:
               value: {{ include "rabbitmq.subchart" . }}
             - name: RABBITMQ_PORT
               value: {{ .Values.rabbitmq.service.ports.amqp | quote }}
+          {{- if .Values.master.defaultInitContainers.resources }}
+          resources: {{- toYaml .Values.master.defaultInitContainers.resources | nindent 12 }}
+          {{- end }}
         {{- end }}
         {{- end }}
         {{- if and .Values.master.volumePermissions.enabled .Values.master.persistence.enabled }}
@@ -385,6 +394,8 @@ spec:
           {{- end }}
           {{- if .Values.master.resources }}
           resources: {{- toYaml .Values.master.resources | nindent 12 }}
+          {{- else if ne .Values.master.resourcesPreset "none" }}
+          resources: {{- include "deploy.resources.preset" (dict "type" .Values.master.resourcesPreset) | nindent 12 }}           
           {{- end }}
           volumeMounts:
             {{- range $k, $v := .Values.master.configuration }}
