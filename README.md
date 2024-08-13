@@ -1,3 +1,8 @@
+# Repository Deprecated
+
+⚠️ **This repository is no longer maintained.** ⚠️
+
+Please use the [deploy-helm-chart](https://github.com/digital-ai/deploy-helm-chart) repository for the latest updates and support.
 
 # Helm chart for Digital.ai Deploy
 
